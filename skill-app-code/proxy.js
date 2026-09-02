@@ -42,7 +42,11 @@ export async function proxy(request) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup");
+  const isAuthRoute =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    // Dev-only component gallery (app/design-preview). 404s in production.
+    pathname.startsWith("/design-preview");
 
   if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone();
