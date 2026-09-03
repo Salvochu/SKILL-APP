@@ -36,10 +36,12 @@ export default async function LogPage({ searchParams }) {
     preload = [{ exercise: e, sets: 3, reps: "" }];
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+
   return (
     <WorkoutLogger
       allExercises={allExercises}
-      initial={{ title, exercises: preload, splitId, dayTemplateId, variant }}
+      initial={{ title, date: today, exercises: preload, splitId, dayTemplateId, variant }}
     />
   );
 }

@@ -3,6 +3,8 @@ import NavBar from "@/components/NavBar";
 import LibraryBrowser from "@/components/library/LibraryBrowser";
 import SplitsBrowser from "@/components/splits/SplitsBrowser";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
+import BarChart from "@/components/progress/BarChart";
+import StrengthChart from "@/components/progress/StrengthChart";
 
 // Dev-only gallery for reviewing the theme and shared components without a
 // login. 404s in production; proxy.js lets it through unauthenticated.
@@ -47,6 +49,32 @@ const SPLITS = [
   },
 ];
 
+const VOL = [
+  ["2026-08-04", "Full Body", 3800], ["2026-08-07", "Upper", 4200], ["2026-08-10", "Lower", 5100],
+  ["2026-08-14", "Full Body", 4050], ["2026-08-18", "Upper", 4600], ["2026-08-21", "Lower", 5400],
+  ["2026-08-25", "Push", 3900], ["2026-08-28", "Pull", 4700], ["2026-09-01", "Legs", 5800],
+].map(([date, label, volumeKg], i) => ({ id: String(i), date, label, volumeKg }));
+
+const STRENGTH = [
+  {
+    id: "bs", name: "Back Squat",
+    points: [
+      { date: "2026-08-04", best1rm: 110, topWeight: 100, topReps: 3 },
+      { date: "2026-08-14", best1rm: 116, topWeight: 105, topReps: 3 },
+      { date: "2026-08-21", best1rm: 120, topWeight: 110, topReps: 3 },
+      { date: "2026-09-01", best1rm: 127, topWeight: 115, topReps: 3 },
+    ],
+  },
+  {
+    id: "bp", name: "Bench Press",
+    points: [
+      { date: "2026-08-07", best1rm: 82, topWeight: 75, topReps: 3 },
+      { date: "2026-08-18", best1rm: 85, topWeight: 77, topReps: 3 },
+      { date: "2026-08-28", best1rm: 90, topWeight: 82, topReps: 3 },
+    ],
+  },
+];
+
 export default function DesignPreviewPage() {
   if (process.env.NODE_ENV === "production") notFound();
 
@@ -60,11 +88,22 @@ export default function DesignPreviewPage() {
         <Section title="/splits">
           <SplitsBrowser splits={SPLITS} />
         </Section>
+        <Section title="/progress">
+          <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
+            <h2 className="font-display text-base font-semibold text-fg">Training volume</h2>
+            <BarChart data={VOL} />
+          </div>
+          <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
+            <h2 className="font-display text-base font-semibold text-fg">Strength over time</h2>
+            <StrengthChart exercises={STRENGTH} />
+          </div>
+        </Section>
         <Section title="/log">
           <WorkoutLogger
             allExercises={EX}
             initial={{
               title: "Full Body (Full Gym)",
+              date: "2026-09-03",
               exercises: [
                 { exercise: EX[0], sets: 3, reps: "6-8" },
                 { exercise: EX[1], sets: 3, reps: "6-8" },

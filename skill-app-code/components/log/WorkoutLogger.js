@@ -33,7 +33,7 @@ function makeExercise(exercise, targetSets = 3, targetReps = "") {
 
 export default function WorkoutLogger({ allExercises, initial }) {
   const [title, setTitle] = useState(initial.title);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(initial.date);
   const [duration, setDuration] = useState(45);
   const [notes, setNotes] = useState("");
   const [rows, setRows] = useState(() =>

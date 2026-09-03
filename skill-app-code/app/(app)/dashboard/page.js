@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getWorkoutSummary } from "@/lib/data/workouts";
+import { getProgressData } from "@/lib/data/progress";
+import BarChart from "@/components/progress/BarChart";
 import { signOut } from "@/app/actions";
 
 export const metadata = { title: "Dashboard" };
@@ -13,6 +15,10 @@ export default function DashboardPage() {
 
       <Suspense fallback={<StatsSkeleton />}>
         <Stats />
+      </Suspense>
+
+      <Suspense fallback={<div className="h-52 rounded-card bg-surface" />}>
+        <VolumeTrend />
       </Suspense>
 
       <section className="flex flex-col gap-3">
@@ -86,6 +92,25 @@ async function Stats() {
         sub="training time"
       />
     </div>
+  );
+}
+
+async function VolumeTrend() {
+  const { sessionVolumes } = await getProgressData();
+  if (sessionVolumes.length === 0) {
+    return (
+      <div className="rounded-card border border-border bg-surface p-6 text-center text-sm text-muted">
+        Log a workout to see your volume trend.
+      </div>
+    );
+  }
+  return (
+    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
+        Training volume, recent sessions
+      </h2>
+      <BarChart data={sessionVolumes} max={10} />
+    </section>
   );
 }
 

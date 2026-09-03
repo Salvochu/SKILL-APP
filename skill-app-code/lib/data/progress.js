@@ -1,0 +1,80 @@
+import "server-only";
+import { createClient } from "@/lib/supabase/server";
+
+const epley = (w, r) => (w > 0 && r > 0 ? w * (1 + r / 30) : 0);
+const dayKey = (iso) => new Date(iso).toISOString().slice(0, 10);
+
+// Everything the Progress page and the dashboard volume card need, computed
+// from the user's sessions and sets. RLS scopes both to auth.uid().
+export async function getProgressData() {
+  const supabase = await createClient();
+
+  const [sessionsRes, setsRes] = await Promise.all([
+    supabase
+      .from("workout_sessions")
+      .select("id, title, started_at, completed_at")
+      .order("started_at", { ascending: true }),
+    supabase
+      .from("workout_sets")
+      .select("session_id, exercise_id, reps, weight, completed, exercise:exercises(name)"),
+  ]);
+  for (const r of [sessionsRes, setsRes]) {
+    if (r.error) throw new Error(`Failed to load progress: ${r.error.message}`);
+  }
+
+  const sessions = sessionsRes.data ?? [];
+  const sets = (setsRes.data ?? []).filter((s) => s.completed);
+  const sessionById = new Map(sessions.map((s) => [s.id, s]));
+
+  // volume per session
+  const volBySession = new Map();
+  for (const s of sets) {
+    const v = (Number(s.weight) || 0) * (Number(s.reps) || 0);
+    volBySession.set(s.session_id, (volBySession.get(s.session_id) || 0) + v);
+  }
+  const sessionVolumes = sessions.map((s) => ({
+    id: s.id,
+    date: dayKey(s.started_at),
+    label: s.title,
+    volumeKg: Math.round(volBySession.get(s.id) || 0),
+  }));
+
+  // estimated 1RM per exercise per session (best set)
+  const perExercise = new Map(); // exId -> { name, bySession: Map(sessionId -> {best1rm, topWeight, topReps}) }
+  for (const s of sets) {
+    const w = Number(s.weight) || 0;
+    const r = Number(s.reps) || 0;
+    if (w <= 0 || r <= 0) continue;
+    const e1 = epley(w, r);
+    if (!perExercise.has(s.exercise_id)) {
+      perExercise.set(s.exercise_id, { name: s.exercise?.name ?? "Exercise", bySession: new Map() });
+    }
+    const ex = perExercise.get(s.exercise_id);
+    const cur = ex.bySession.get(s.session_id);
+    if (!cur || e1 > cur.best1rm) {
+      ex.bySession.set(s.session_id, { best1rm: e1, topWeight: w, topReps: r });
+    }
+  }
+
+  const exercises = [...perExercise.entries()]
+    .map(([id, ex]) => ({
+      id,
+      name: ex.name,
+      points: [...ex.bySession.entries()]
+        .map(([sid, p]) => ({
+          date: dayKey(sessionById.get(sid)?.started_at ?? new Date().toISOString()),
+          best1rm: Math.round(p.best1rm),
+          topWeight: p.topWeight,
+          topReps: p.topReps,
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    }))
+    .sort((a, b) => b.points.length - a.points.length || a.name.localeCompare(b.name));
+
+  return {
+    workouts: sessions.length,
+    totalVolumeKg: Math.round([...volBySession.values()].reduce((a, b) => a + b, 0)),
+    sessionVolumes,
+    exercises,
+  };
+}
