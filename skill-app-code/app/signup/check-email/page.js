@@ -4,7 +4,7 @@ import Wordmark from "@/components/Wordmark";
 export default function CheckEmailPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-3 px-6">
-      <Wordmark className="h-8" priority />
+      <Wordmark height="2rem" />
       <h1 className="text-xl font-bold text-fg">Check your inbox</h1>
       <p className="text-sm text-muted">
         We sent you a confirmation link. Open it to finish setting up your

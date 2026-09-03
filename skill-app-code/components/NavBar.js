@@ -25,7 +25,7 @@ export default function NavBar() {
       <header className="fixed inset-x-0 top-0 z-40 h-14 border-b border-border bg-bg/90 backdrop-blur md:h-16">
         <div className="mx-auto flex h-full w-full max-w-2xl items-center gap-6 px-4 md:max-w-5xl md:px-6">
           <Link href="/dashboard" aria-label="SKILL home" className="shrink-0">
-            <Wordmark className="h-[22px]" priority />
+            <Wordmark height="22px" />
           </Link>
 
           <nav className="hidden flex-1 items-center gap-1 md:flex">

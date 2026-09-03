@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import NavBar from "@/components/NavBar";
 import LibraryBrowser from "@/components/library/LibraryBrowser";
 import SplitsBrowser from "@/components/splits/SplitsBrowser";
+import WorkoutLogger from "@/components/log/WorkoutLogger";
 
 // Dev-only gallery for reviewing the theme and shared components without a
 // login. 404s in production; proxy.js lets it through unauthenticated.
@@ -58,6 +59,21 @@ export default function DesignPreviewPage() {
         </Section>
         <Section title="/splits">
           <SplitsBrowser splits={SPLITS} />
+        </Section>
+        <Section title="/log">
+          <WorkoutLogger
+            allExercises={EX}
+            initial={{
+              title: "Full Body (Full Gym)",
+              exercises: [
+                { exercise: EX[0], sets: 3, reps: "6-8" },
+                { exercise: EX[1], sets: 3, reps: "6-8" },
+              ],
+              splitId: "full-body",
+              dayTemplateId: "full-body",
+              variant: "Full Gym",
+            }}
+          />
         </Section>
       </main>
     </div>

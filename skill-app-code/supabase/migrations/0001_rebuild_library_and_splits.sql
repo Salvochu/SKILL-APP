@@ -181,6 +181,10 @@ alter table workout_sessions add column if not exists split_id text references s
 alter table workout_sessions add column if not exists day_template_id text references day_templates(id) on delete set null;
 alter table workout_sessions add column if not exists variant text;
 
+-- optional lightweight note against one exercise in a session (stored on
+-- its first set). The main per-session note stays on workout_sessions.notes.
+alter table workout_sets add column if not exists note text;
+
 -- 4. RLS: new reference tables readable by any signed-in user ----------
 alter table day_templates enable row level security;
 drop policy if exists "day_templates readable by authenticated users" on day_templates;
