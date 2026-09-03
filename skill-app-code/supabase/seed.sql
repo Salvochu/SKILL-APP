@@ -1,11 +1,14 @@
 -- Generated from pdf_build/data.js. Run after schema.sql.
 -- Safe to re-run: uses ON CONFLICT to upsert rather than duplicate.
 --
--- This is the original baseline seed. The exercise categories below are the
--- pre-migration muscle groups (Chest, Back, Legs, ...). Anything in
--- supabase/migrations/ runs after this file and supersedes it, so after
--- 0001_import_exercise_library.sql the live categories are movement patterns.
--- If you re-run this file, re-run the migrations afterwards too.
+-- This is the original v0 baseline: 26 exercises on a `category` column and
+-- 2 programs. Migration 0001_rebuild_library_and_splits.sql then reshapes
+-- `exercises` (dropping `category`, renaming `cue`), replaces this content
+-- with the full 63-exercise library, and moves the programs into the new
+-- splits model. Once that migration has run, this file no longer matches the
+-- schema and must not be re-run on its own. It is kept only as the record of
+-- what first built the database; migrations are the source of truth from
+-- here on.
 
 -- Exercise library --------------------------------------------------
 
