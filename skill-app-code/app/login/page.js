@@ -48,6 +48,12 @@ export default async function LoginPage({ searchParams }) {
             autoComplete="current-password"
             className="rounded-field border border-border bg-surface px-3 py-2 text-fg placeholder:text-dim focus:border-accent"
           />
+          <Link
+            href="/auth/forgot-password"
+            className="self-end text-xs font-normal text-muted hover:text-fg"
+          >
+            Forgot password?
+          </Link>
         </Field>
         <button
           type="submit"

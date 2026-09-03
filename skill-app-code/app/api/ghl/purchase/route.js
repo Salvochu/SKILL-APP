@@ -157,19 +157,26 @@ export async function POST(request) {
   const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
     type: "recovery",
     email,
-    options: { redirectTo: `${siteUrl}/auth/confirm?next=/auth/set-password` },
   });
-  if (linkError || !linkData?.properties?.action_link) {
+  const tokenHash = linkData?.properties?.hashed_token;
+  if (linkError || !tokenHash) {
     console.error("ghl/purchase generateLink failed:", linkError?.message);
     return json({ error: "could not generate login link" }, 502);
   }
+
+  // Build our own confirm URL from the token hash rather than using
+  // Supabase's action_link: this one keeps the /auth/set-password
+  // destination and verifies cross-device (no PKCE verifier needed).
+  const setPasswordUrl =
+    `${siteUrl}/auth/confirm?token_hash=${encodeURIComponent(tokenHash)}` +
+    `&type=recovery&next=${encodeURIComponent("/auth/set-password")}`;
 
   return json({
     ok: true,
     email,
     is_new_user: !alreadyExisted,
     // GHL maps this into the workflow's follow-up email.
-    set_password_url: linkData.properties.action_link,
+    set_password_url: setPasswordUrl,
   });
 }
 
