@@ -1,5 +1,6 @@
 import { Inter, Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { themeInitScript } from "@/components/ThemeToggle";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -22,7 +23,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
-  title: "SKILL",
+  title: {
+    default: "SKILL",
+    template: "%s | SKILL",
+  },
   description: "SK Fitness training tracker",
 };
 
@@ -34,8 +38,13 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${archivo.variable} ${jetbrainsMono.variable} h-full`}
     >
+      <head>
+        {/* Applies the saved theme before first paint (no flash). */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

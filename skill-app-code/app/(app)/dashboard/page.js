@@ -1,83 +1,180 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
+import { getWorkoutSummary } from "@/lib/data/workouts";
+import { signOut } from "@/app/actions";
 
-// The session read (getCurrentUser) happens at request time, so it can't
-// be part of the static shell. It streams in behind this boundary. See
-// the Cache Components authentication guide for why.
+export const metadata = { title: "Dashboard" };
+
 export default function DashboardPage() {
   return (
-    <div className="flex flex-col gap-8">
-      <Suspense fallback={<GreetingSkeleton />}>
-        <Greeting />
+    <div className="flex flex-col gap-8 py-2">
+      <Hero />
+
+      <Suspense fallback={<StatsSkeleton />}>
+        <Stats />
       </Suspense>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
-          Start training
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <ActionCard
-            href="/programs"
-            title="Programs"
-            body="Pick a split and load today's session."
-          />
-          <ActionCard
-            href="/library"
-            title="Exercise library"
-            body="Every movement with a form video."
-          />
-        </div>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Recent</h2>
+        <Suspense fallback={<div className="h-24 rounded-card bg-surface" />}>
+          <Recent />
+        </Suspense>
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
-          Track
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <ActionCard
-            href="/progress"
-            title="Progress"
-            body="History, lifts over time, and body weight."
-          />
-        </div>
+      <section className="grid gap-3 sm:grid-cols-3">
+        <QuickLink href="/log" title="Log Workout" body="Record sets, reps and weight" />
+        <QuickLink href="/library" title="Exercise Library" body="63 movements with videos" />
+        <QuickLink href="/splits" title="Training Splits" body="Full Gym, dumbbell and bodyweight" />
       </section>
+
+      <Suspense fallback={null}>
+        <AccountRow />
+      </Suspense>
     </div>
   );
 }
 
-async function Greeting() {
+function Hero() {
+  return (
+    <div className="relative overflow-hidden rounded-card border border-border bg-surface p-6">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-accent/20 blur-3xl" />
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-bg/60 px-3 py-1 text-xs font-semibold text-muted">
+        <IconFlame className="h-3.5 w-3.5 text-accent" />
+        Train. Track. Improve.
+      </span>
+      <h1 className="mt-4 max-w-sm text-3xl font-extrabold leading-tight text-fg">
+        Your training, <span className="text-accent">measured.</span>
+      </h1>
+      <p className="mt-2 max-w-sm text-sm text-muted">
+        Log every rep, browse the exercise library, and watch your strength climb on
+        the progress charts.
+      </p>
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+        <Link
+          href="/log"
+          className="flex items-center justify-center gap-1.5 rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2"
+        >
+          <IconPlus className="h-4 w-4" />
+          Log a Workout
+        </Link>
+        <Link
+          href="/library"
+          className="flex items-center justify-center rounded-field border border-border px-4 py-2.5 font-medium text-fg transition-colors hover:bg-surface-2"
+        >
+          Browse Library
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+async function Stats() {
+  const s = await getWorkoutSummary();
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <StatTile label="Workouts" value={s.workouts} sub="all time" accent />
+      <StatTile label="Total Sets" value={s.sets} sub="sets logged" />
+      <StatTile
+        label="Volume"
+        value={`${(s.volumeKg / 1000).toFixed(1)}k`}
+        sub="kg lifted"
+      />
+      <StatTile
+        label="Time"
+        value={`${Math.floor(s.minutes / 60)}h ${s.minutes % 60}m`}
+        sub="training time"
+      />
+    </div>
+  );
+}
+
+async function Recent() {
+  const s = await getWorkoutSummary();
+  if (s.recent.length === 0) {
+    return (
+      <div className="rounded-card border border-border bg-surface p-6 text-center text-sm text-muted">
+        No workouts yet. Log your first session.
+      </div>
+    );
+  }
+  return (
+    <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
+      {s.recent.map((w) => (
+        <li key={w.id} className="flex items-center justify-between gap-3 bg-surface px-4 py-3">
+          <span className="text-sm font-medium text-fg">{w.title}</span>
+          <span className="text-xs text-dim">
+            {new Date(w.started_at).toLocaleDateString()}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+async function AccountRow() {
   const user = await getCurrentUser();
   return (
-    <div className="flex flex-col gap-1">
-      <h1 className="text-2xl font-bold text-fg">Welcome back</h1>
-      <p className="text-sm text-muted">Signed in as {user.email}</p>
+    <div className="flex items-center justify-between border-t border-border pt-4 text-sm">
+      <span className="text-dim">{user.email}</span>
+      <form action={signOut}>
+        <button type="submit" className="font-medium text-muted transition-colors hover:text-fg">
+          Sign out
+        </button>
+      </form>
     </div>
   );
 }
 
-function GreetingSkeleton() {
+function StatTile({ label, value, sub, accent }) {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="h-7 w-40 rounded bg-surface-2" />
-      <div className="h-4 w-56 rounded bg-surface" />
+    <div
+      className={`flex flex-col gap-1 rounded-card border p-4 ${
+        accent ? "border-accent bg-accent text-black" : "border-border bg-surface"
+      }`}
+    >
+      <span className={`text-xs font-semibold uppercase tracking-wider ${accent ? "text-black/70" : "text-dim"}`}>
+        {label}
+      </span>
+      <span className="tabular text-2xl font-bold">{value}</span>
+      <span className={`text-xs ${accent ? "text-black/60" : "text-dim"}`}>{sub}</span>
     </div>
   );
 }
 
-function ActionCard({ href, title, body }) {
+function QuickLink({ href, title, body }) {
   return (
     <Link
       href={href}
-      className="group flex flex-col gap-1.5 rounded-card border border-border bg-surface p-4 transition-colors hover:border-border-strong hover:bg-surface-2"
+      className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4 transition-colors hover:border-border-strong hover:bg-surface-2"
     >
-      <span className="flex items-center justify-between font-display text-base font-semibold text-fg">
-        {title}
-        <span className="text-dim transition-colors group-hover:text-accent">
-          &rarr;
-        </span>
-      </span>
+      <span className="font-display text-base font-semibold text-fg">{title}</span>
       <span className="text-sm text-muted">{body}</span>
     </Link>
+  );
+}
+
+function StatsSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="h-24 rounded-card bg-surface" />
+      ))}
+    </div>
+  );
+}
+
+function IconFlame(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12 2c1 3-1 5-1 7a3 3 0 0 0 6 0c0-1 0-2-.5-3 2 2 3.5 4.5 3.5 7a8 8 0 0 1-16 0c0-4 3-6 4-9 .7-2 3-2 4 -2z" />
+    </svg>
+  );
+}
+function IconPlus(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
   );
 }

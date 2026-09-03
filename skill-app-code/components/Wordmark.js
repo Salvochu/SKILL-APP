@@ -1,10 +1,16 @@
-// The SKILL wordmark. One orange dot, no coloured letters.
-export default function Wordmark({ className = "" }) {
+import Image from "next/image";
+import logo from "@/public/skill-logo.png";
+
+// The SKILL wordmark. Pass a Tailwind height class (e.g. "h-6"); width
+// scales automatically to the logo's aspect ratio.
+export default function Wordmark({ className = "h-6", priority = false }) {
   return (
-    <span
-      className={`font-display font-extrabold tracking-tight text-fg ${className}`}
-    >
-      SKILL<span className="text-accent">.</span>
-    </span>
+    <Image
+      src={logo}
+      alt="SKILL"
+      priority={priority}
+      sizes="240px"
+      className={`w-auto ${className}`}
+    />
   );
 }

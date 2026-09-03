@@ -1,140 +1,108 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { loomEmbedUrl } from "@/lib/exercises";
+import { sortMuscles, sortEquipment } from "@/lib/exercises";
+import ExerciseSheet from "@/components/library/ExerciseSheet";
 
-export default function LibraryBrowser({ groups }) {
+export default function LibraryBrowser({ exercises }) {
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All");
+  const [muscle, setMuscle] = useState("All");
+  const [equipment, setEquipment] = useState("All");
   const [openId, setOpenId] = useState(null);
 
-  const categories = ["All", ...groups.map((g) => g.category)];
-  const total = useMemo(
-    () => groups.reduce((n, g) => n + g.exercises.length, 0),
-    [groups],
+  const muscles = useMemo(
+    () => sortMuscles([...new Set(exercises.map((e) => e.muscle))]),
+    [exercises],
+  );
+  const equipmentList = useMemo(
+    () => sortEquipment([...new Set(exercises.map((e) => e.equipment))]),
+    [exercises],
   );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return groups
-      .filter((g) => category === "All" || g.category === category)
-      .map((g) => ({
-        ...g,
-        exercises: q
-          ? g.exercises.filter((e) => e.name.toLowerCase().includes(q))
-          : g.exercises,
-      }))
-      .filter((g) => g.exercises.length > 0);
-  }, [groups, query, category]);
+    return exercises.filter((e) => {
+      if (muscle !== "All" && e.muscle !== muscle) return false;
+      if (equipment !== "All" && e.equipment !== equipment) return false;
+      if (q && !(`${e.name} ${e.instructions ?? ""}`.toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }, [exercises, query, muscle, equipment]);
 
-  const shown = filtered.reduce((n, g) => n + g.exercises.length, 0);
+  const open = exercises.find((e) => e.id === openId) ?? null;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={`Search ${total} exercises`}
-          className="w-full rounded-field border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
-        />
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
-          {categories.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setCategory(c)}
-              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                category === c
-                  ? "border-accent bg-accent-soft text-accent"
-                  : "border-border text-muted hover:text-fg"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      </div>
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search exercises or instructions"
+        className="w-full rounded-field border border-border bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-dim focus:border-accent"
+      />
 
-      {shown === 0 ? (
-        <p className="py-10 text-center text-sm text-muted">
-          No exercises match &ldquo;{query}&rdquo;.
-        </p>
+      <ChipRow value={muscle} onChange={setMuscle} options={muscles} allLabel="All muscles" />
+      <ChipRow value={equipment} onChange={setEquipment} options={equipmentList} allLabel="All equipment" />
+
+      <p className="text-xs text-dim">
+        {filtered.length} {filtered.length === 1 ? "exercise" : "exercises"}
+      </p>
+
+      {filtered.length === 0 ? (
+        <p className="py-10 text-center text-sm text-muted">No exercises match those filters.</p>
       ) : (
-        <div className="flex flex-col gap-6">
-          {filtered.map((group) => (
-            <section key={group.category} className="flex flex-col gap-2">
-              <h2 className="flex items-baseline gap-2 text-xs font-semibold uppercase tracking-wider text-dim">
-                {group.category}
-                <span className="text-dim/70">{group.exercises.length}</span>
-              </h2>
-              <ul className="overflow-hidden rounded-card border border-border">
-                {group.exercises.map((exercise, i) => (
-                  <ExerciseRow
-                    key={exercise.id}
-                    exercise={exercise}
-                    first={i === 0}
-                    open={openId === exercise.id}
-                    onToggle={() =>
-                      setOpenId(openId === exercise.id ? null : exercise.id)
-                    }
-                  />
-                ))}
-              </ul>
-            </section>
+        <ul className="flex flex-col gap-2.5">
+          {filtered.map((e) => (
+            <li key={e.id}>
+              <button
+                type="button"
+                onClick={() => setOpenId(e.id)}
+                className="flex w-full flex-col gap-1.5 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="font-display text-base font-semibold text-fg">{e.name}</span>
+                  {e.video_url ? <IconPlay className="mt-1 h-4 w-4 shrink-0 text-dim" /> : null}
+                </span>
+                <span className="flex flex-wrap gap-2">
+                  <span className="rounded-full bg-pill px-2 py-0.5 text-[11px] font-semibold text-pill-fg">
+                    {e.muscle}
+                  </span>
+                  <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted">
+                    {e.equipment}
+                  </span>
+                </span>
+                {e.instructions ? (
+                  <span className="line-clamp-2 text-sm text-muted">{e.instructions}</span>
+                ) : null}
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
+
+      {open ? <ExerciseSheet exercise={open} onClose={() => setOpenId(null)} /> : null}
     </div>
   );
 }
 
-function ExerciseRow({ exercise, first, open, onToggle }) {
-  const embedUrl = loomEmbedUrl(exercise.video_url);
-
+function ChipRow({ value, onChange, options, allLabel }) {
   return (
-    <li className={first ? "" : "border-t border-border"}>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        className="flex w-full items-center gap-3 bg-surface px-4 py-3 text-left transition-colors hover:bg-surface-2"
-      >
-        <span className="flex-1 text-sm font-medium text-fg">
-          {exercise.name}
-        </span>
-        {embedUrl ? (
-          <IconPlay className="h-4 w-4 shrink-0 text-dim" />
-        ) : (
-          <span className="shrink-0 text-[11px] text-dim">no video</span>
-        )}
-        <IconChevron
-          className={`h-4 w-4 shrink-0 text-dim transition-transform ${
-            open ? "rotate-180" : ""
+    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+      {["All", ...options].map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onChange(opt)}
+          className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            value === opt
+              ? "border-accent bg-accent-soft text-accent"
+              : "border-border text-muted hover:text-fg"
           }`}
-        />
-      </button>
-
-      {open ? (
-        <div className="flex flex-col gap-3 border-t border-border bg-surface px-4 py-3">
-          <p className="text-sm text-muted">
-            {exercise.cue || "No coaching cue yet."}
-          </p>
-          {embedUrl ? (
-            <div className="aspect-video w-full overflow-hidden rounded-field border border-border bg-black">
-              <iframe
-                src={embedUrl}
-                title={`${exercise.name} form video`}
-                allowFullScreen
-                loading="lazy"
-                className="h-full w-full"
-              />
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-    </li>
+        >
+          {opt === "All" ? allLabel : opt}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -142,14 +110,6 @@ function IconPlay(props) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
       <path d="M8 5.5v13l11-6.5z" />
-    </svg>
-  );
-}
-
-function IconChevron(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m6 9 6 6 6-6" />
     </svg>
   );
 }

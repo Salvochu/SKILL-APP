@@ -14,7 +14,7 @@ export default async function SignUpPage({ searchParams }) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-8 px-6">
       <div className="flex flex-col gap-2">
-        <Wordmark className="text-2xl" />
+        <Wordmark className="h-8" priority />
         <p className="text-sm text-muted">Create your account.</p>
       </div>
 
