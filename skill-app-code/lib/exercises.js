@@ -4,6 +4,12 @@
 // Muscle groups, in the order the library and pickers show them.
 export const MUSCLE_ORDER = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core"];
 
+// Maps a muscle name to its CSS custom-property suffix (--muscle-<key>).
+export function muscleKey(muscle) {
+  const k = String(muscle || "").toLowerCase();
+  return MUSCLE_ORDER.map((m) => m.toLowerCase()).includes(k) ? k : "core";
+}
+
 // Equipment, in filter order.
 export const EQUIPMENT_ORDER = ["Barbell", "Dumbbell", "Machine", "Cable", "Bodyweight"];
 

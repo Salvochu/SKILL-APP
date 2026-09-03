@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import MusclePill from "@/components/MusclePill";
 
 const VARIANT_ORDER = ["Full Gym", "Dumbbells", "Bodyweight", "Standard"];
 const SECTION_LABEL = { primary: "Choose your split", coached: "Coached programs" };
@@ -115,8 +116,9 @@ function DayCard({ day, split, index, single }) {
           <li key={`${item.variant}-${item.position}`} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">
             <span className="flex-1">
               <span className="block text-sm font-medium text-fg">{item.exercise.name}</span>
-              <span className="block text-xs text-dim">
-                {item.exercise.muscle} . {item.exercise.equipment}
+              <span className="mt-1 flex flex-wrap items-center gap-2">
+                <MusclePill muscle={item.exercise.muscle} />
+                <span className="text-xs text-dim">{item.exercise.equipment}</span>
               </span>
             </span>
             <span className="tabular shrink-0 text-xs text-muted">

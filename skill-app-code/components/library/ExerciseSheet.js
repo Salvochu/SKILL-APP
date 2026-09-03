@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { loomEmbedUrl } from "@/lib/exercises";
+import MusclePill from "@/components/MusclePill";
 
 // Bottom-sheet detail for one exercise: form video, how-to, quick log link.
 export default function ExerciseSheet({ exercise, onClose }) {
@@ -64,9 +65,7 @@ export default function ExerciseSheet({ exercise, onClose }) {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-pill px-2.5 py-0.5 text-xs font-semibold text-pill-fg">
-            {exercise.muscle}
-          </span>
+          <MusclePill muscle={exercise.muscle} />
           <span className="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-muted">
             {exercise.equipment}
           </span>

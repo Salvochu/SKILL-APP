@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { sortMuscles, sortEquipment } from "@/lib/exercises";
+import { sortMuscles, sortEquipment, muscleKey } from "@/lib/exercises";
 import ExerciseSheet from "@/components/library/ExerciseSheet";
+import MusclePill from "@/components/MusclePill";
 
 export default function LibraryBrowser({ exercises }) {
   const [query, setQuery] = useState("");
@@ -41,7 +42,7 @@ export default function LibraryBrowser({ exercises }) {
         className="w-full rounded-field border border-border bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-dim focus:border-accent"
       />
 
-      <ChipRow value={muscle} onChange={setMuscle} options={muscles} allLabel="All muscles" />
+      <ChipRow value={muscle} onChange={setMuscle} options={muscles} allLabel="All muscles" dots />
       <ChipRow value={equipment} onChange={setEquipment} options={equipmentList} allLabel="All equipment" />
 
       <p className="text-xs text-dim">
@@ -64,9 +65,7 @@ export default function LibraryBrowser({ exercises }) {
                   {e.video_url ? <IconPlay className="mt-1 h-4 w-4 shrink-0 text-dim" /> : null}
                 </span>
                 <span className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-pill px-2 py-0.5 text-[11px] font-semibold text-pill-fg">
-                    {e.muscle}
-                  </span>
+                  <MusclePill muscle={e.muscle} />
                   <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted">
                     {e.equipment}
                   </span>
@@ -85,7 +84,7 @@ export default function LibraryBrowser({ exercises }) {
   );
 }
 
-function ChipRow({ value, onChange, options, allLabel }) {
+function ChipRow({ value, onChange, options, allLabel, dots }) {
   return (
     <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
       {["All", ...options].map((opt) => (
@@ -93,12 +92,18 @@ function ChipRow({ value, onChange, options, allLabel }) {
           key={opt}
           type="button"
           onClick={() => onChange(opt)}
-          className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
             value === opt
               ? "border-accent bg-accent-soft text-accent"
               : "border-border text-muted hover:text-fg"
           }`}
         >
+          {dots && opt !== "All" ? (
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: `var(--muscle-${muscleKey(opt)})` }}
+            />
+          ) : null}
           {opt === "All" ? allLabel : opt}
         </button>
       ))}

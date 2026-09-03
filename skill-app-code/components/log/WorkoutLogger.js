@@ -5,6 +5,7 @@ import { saveWorkout } from "@/app/(app)/log/actions";
 import RestTimer from "@/components/log/RestTimer";
 import ExercisePicker from "@/components/log/ExercisePicker";
 import VideoModal from "@/components/log/VideoModal";
+import MusclePill from "@/components/MusclePill";
 
 let keySeq = 0;
 const nextKey = () => `x${++keySeq}`;
@@ -251,7 +252,7 @@ function ExerciseCard({ row, onPatch, onPatchSet, onToggleSet, onAddSet, onRemov
         <div className="flex-1">
           <span className="font-display text-base font-semibold text-fg">{exercise.name}</span>
           <span className="mt-1 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-pill px-2 py-0.5 text-[11px] font-semibold text-pill-fg">{exercise.muscle}</span>
+            <MusclePill muscle={exercise.muscle} />
             {row.targetReps ? <span className="text-xs text-dim">target {row.targetReps}</span> : null}
           </span>
         </div>

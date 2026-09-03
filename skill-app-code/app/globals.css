@@ -3,7 +3,7 @@
 /*
   SKILL theme. Dark by default, with an opt-in light mode (class "light" on
   <html>). Shares the SK Fitness visual language: near-black surfaces, warm
-  grey borders, one orange accent, a lime pill for muscle groups.
+  grey borders, one orange accent, one colour per muscle group.
 */
 @theme {
   /* dark is the default palette (see :root below); these @theme entries
@@ -21,8 +21,6 @@
   --color-accent-2: #ff9600;
   --color-accent-soft: rgba(252, 118, 5, 0.13);
 
-  --color-pill: #bef264;
-  --color-pill-fg: #1a2e05;
   --color-danger: #f0623a;
   --color-good: #4caf72;
 
@@ -47,6 +45,16 @@
   --color-muted: #9a938c;
   --color-dim: #6f6a65;
   --color-accent-soft: rgba(252, 118, 5, 0.13);
+
+  /* One hue per muscle group. Validated as a categorical set (CVD-safe,
+     >=3:1 on surface) for both themes. Used as text on a faint tint of
+     the same hue, so the chips stay quiet. */
+  --muscle-chest: #e66767;
+  --muscle-back: #3987e5;
+  --muscle-legs: #1faa77;
+  --muscle-shoulders: #9085e9;
+  --muscle-arms: #cf8a1f;
+  --muscle-core: #d55181;
 }
 
 :root.light {
@@ -60,6 +68,13 @@
   --color-muted: #6b6560;
   --color-dim: #98928a;
   --color-accent-soft: rgba(252, 118, 5, 0.12);
+
+  --muscle-chest: #d14a4a;
+  --muscle-back: #2a78d6;
+  --muscle-legs: #0e8a5f;
+  --muscle-shoulders: #6a5ae0;
+  --muscle-arms: #9a6600;
+  --muscle-core: #c93b74;
 }
 
 html {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import MusclePill from "@/components/MusclePill";
 
 export default function ExercisePicker({ exercises, onPick, onClose }) {
   const [query, setQuery] = useState("");
@@ -57,7 +58,7 @@ export default function ExercisePicker({ exercises, onPick, onClose }) {
                   <span className="block text-sm font-medium text-fg">{e.name}</span>
                   <span className="block text-xs text-dim">{e.equipment}</span>
                 </span>
-                <span className="rounded-full bg-pill px-2 py-0.5 text-[11px] font-semibold text-pill-fg">{e.muscle}</span>
+                <MusclePill muscle={e.muscle} />
               </button>
             </li>
           ))}
