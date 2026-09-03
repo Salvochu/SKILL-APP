@@ -27,6 +27,9 @@ do $$ begin
     alter table exercises rename column cue to instructions;
   end if;
 end $$;
+-- drop the old movement-pattern column now, before the inserts below
+-- (which do not provide it).
+alter table exercises drop column if exists category;
 
 -- 2a. rename and refresh the 26 exercises already present, matched by
 --     Loom video, so their id (and any workout history) is preserved.
@@ -133,9 +136,8 @@ insert into exercises (name, muscle, equipment, instructions, video_url) values 
 insert into exercises (name, muscle, equipment, instructions, video_url) values ('Plank', 'Core', 'Bodyweight', 'Forearms down, body straight line, brace abs and glutes, hold.', 'https://www.loom.com/share/68e15714ba7649ab8441e2085fbe8be3')
   on conflict (name) do update set muscle = excluded.muscle, equipment = excluded.equipment, instructions = excluded.instructions, video_url = excluded.video_url;
 
--- 2c. muscle is now required; drop the old movement-pattern column.
+-- 2c. every exercise now has a muscle group; make it required.
 alter table exercises alter column muscle set not null;
-alter table exercises drop column if exists category;
 
 -- 3. training day + split model ----------------------------------------
 create table if not exists day_templates (
