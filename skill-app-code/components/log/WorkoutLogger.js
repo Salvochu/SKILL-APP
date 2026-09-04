@@ -158,7 +158,7 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
             className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
           />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Date" className="min-w-0">
             <input
               type="date"
@@ -304,22 +304,31 @@ function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, o
         <span className="text-center">Log</span>
         <span />
       </div>
-      {sets.map((set, i) => (
-        <div key={i} className="grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5">
+      {sets.map((set, i) => {
+        const fieldCls = set.completed
+          ? "border-accent/50 bg-accent-soft"
+          : "border-border bg-bg";
+        return (
+        <div
+          key={i}
+          className={`grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 rounded-field -mx-1.5 px-1.5 py-1 transition-colors ${
+            set.completed ? "bg-accent-soft" : ""
+          }`}
+        >
           <span className="tabular text-sm text-dim">{i + 1}</span>
           <input
             type="number"
             inputMode="decimal"
             value={set.weight}
             onChange={(e) => onPatchSet(i, { weight: e.target.value })}
-            className="tabular w-full rounded-field border border-border bg-bg px-2 py-1.5 text-sm text-fg focus:border-accent"
+            className={`tabular w-full rounded-field border px-2 py-1.5 text-sm text-fg focus:border-accent ${fieldCls}`}
           />
           <input
             type="number"
             inputMode="numeric"
             value={set.reps}
             onChange={(e) => onPatchSet(i, { reps: e.target.value })}
-            className="tabular w-full rounded-field border border-border bg-bg px-2 py-1.5 text-sm text-fg focus:border-accent"
+            className={`tabular w-full rounded-field border px-2 py-1.5 text-sm text-fg focus:border-accent ${fieldCls}`}
           />
           <input
             type="number"
@@ -327,7 +336,7 @@ function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, o
             value={set.rir}
             onChange={(e) => onPatchSet(i, { rir: e.target.value })}
             aria-label={`Set ${i + 1} reps in reserve`}
-            className="tabular w-full rounded-field border border-border bg-bg px-1.5 py-1.5 text-center text-sm text-fg focus:border-accent"
+            className={`tabular w-full rounded-field border px-1.5 py-1.5 text-center text-sm text-fg focus:border-accent ${fieldCls}`}
           />
           <button
             type="button"
@@ -344,7 +353,8 @@ function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, o
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></svg>
           </button>
         </div>
-      ))}
+        );
+      })}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <button type="button" onClick={onAddSet} className="flex items-center gap-1 rounded-field border border-border px-3 py-1.5 text-sm font-medium text-fg hover:bg-surface-2">

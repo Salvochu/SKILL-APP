@@ -28,6 +28,11 @@ export const metadata = {
     template: "%s | SKILL",
   },
   description: "SK Fitness training tracker",
+  appleWebApp: {
+    capable: true,
+    title: "SKILL",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport = {
