@@ -6,7 +6,7 @@ import RestTimer from "@/components/log/RestTimer";
 import ExercisePicker from "@/components/log/ExercisePicker";
 import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
-import { parseRepRange, suggestTarget, formatSet } from "@/lib/training";
+import { formatSet } from "@/lib/training";
 
 let keySeq = 0;
 const nextKey = () => `x${++keySeq}`;
@@ -105,23 +105,6 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
       ),
     );
   }
-  function applyTarget(key, target) {
-    if (!target) return;
-    setRows((rs) =>
-      rs.map((r) =>
-        r.key === key
-          ? {
-              ...r,
-              sets: r.sets.map((s) =>
-                s.completed
-                  ? s
-                  : { ...s, weight: String(target.weight ?? s.weight), reps: String(target.reps ?? s.reps) },
-              ),
-            }
-          : r,
-      ),
-    );
-  }
   function removeSet(key, i) {
     setRows((rs) =>
       rs.map((r) => (r.key === key ? { ...r, sets: r.sets.filter((_, si) => si !== i) } : r)),
@@ -176,21 +159,21 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Date">
+          <Field label="Date" className="min-w-0">
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
+              className="w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
             />
           </Field>
-          <Field label="Duration (min)">
+          <Field label="Duration (min)" className="min-w-0">
             <input
               type="number"
               inputMode="numeric"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
-              className="tabular w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
+              className="tabular w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
             />
           </Field>
         </div>
@@ -228,7 +211,6 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
               onToggleSet={(i) => toggleSet(row.key, i)}
               onAddSet={() => addSet(row.key)}
               onRemoveSet={(i) => removeSet(row.key, i)}
-              onApplyTarget={(t) => applyTarget(row.key, t)}
               onRemove={() => removeExercise(row.key)}
               onVideo={() => setVideoFor(row.exercise)}
             />
@@ -273,15 +255,11 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
   );
 }
 
-function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onApplyTarget, onRemove, onVideo }) {
+function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
   const best1rm = Math.max(0, ...sets.map((s) => epley1rm(s.weight, s.reps)));
   const volume = sets.reduce((v, s) => v + (s.completed ? (Number(s.weight) || 0) * (Number(s.reps) || 0) : 0), 0);
 
-  const repRange = parseRepRange(row.targetReps);
-  const target = last
-    ? suggestTarget({ last: last.sets, repRange, equipment: exercise.equipment })
-    : null;
   const lastLine =
     last && last.sets.length
       ? last.sets
@@ -310,23 +288,11 @@ function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, o
         </button>
       </div>
 
-      {lastLine || target ? (
-        <div className="flex flex-col gap-1.5 rounded-field border border-border bg-bg/40 px-3 py-2">
-          {lastLine ? (
-            <span className="tabular text-xs text-muted">
-              <span className="text-dim">Last{last?.date ? ` (${last.date})` : ""}:</span> {lastLine}
-            </span>
-          ) : null}
-          {target ? (
-            <button
-              type="button"
-              onClick={() => onApplyTarget(target)}
-              className="tabular flex items-center gap-1.5 self-start rounded-full border border-accent bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
-            >
-              Aim {target.weight != null ? `${target.weight} kg x ` : ""}{target.reps}
-              <span className="font-medium opacity-70">{target.reason}</span>
-            </button>
-          ) : null}
+      {lastLine ? (
+        <div className="rounded-field border border-border bg-bg/40 px-3 py-2">
+          <span className="tabular text-xs text-muted">
+            <span className="text-dim">Last{last?.date ? ` (${last.date})` : ""}:</span> {lastLine}
+          </span>
         </div>
       ) : null}
 
@@ -411,9 +377,9 @@ function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, o
   );
 }
 
-function Field({ label, children }) {
+function Field({ label, className = "", children }) {
   return (
-    <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
+    <label className={`flex flex-col gap-1.5 text-sm font-medium text-muted ${className}`}>
       {label}
       {children}
     </label>
