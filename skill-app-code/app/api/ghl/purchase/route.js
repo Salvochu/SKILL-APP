@@ -8,8 +8,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 //
 // Setup:
 //   - SUPABASE_SERVICE_ROLE_KEY  (server-only, from Supabase > Settings > API)
-//   - GHL_WEBHOOK_PUBLIC_KEY     (optional; the Ed25519 PEM from GHL's
-//                                 webhook docs is the built-in default)
+//   - GHL_WEBHOOK_SECRET         (shared secret; GHL sends it back as the
+//                                 Authorization header or x-webhook-secret.
+//                                 Used because GHL's workflow Custom Webhook
+//                                 action does not sign its requests.)
+//   - GHL_WEBHOOK_PUBLIC_KEY     (optional; Ed25519 PEM, for the signed
+//                                 native webhook trigger instead of a secret)
 //   - GHL_EXPECTED_PRODUCT_ID    (optional; if set, only that product is
 //                                 accepted)
 //   - NEXT_PUBLIC_SITE_URL       (optional; where the set-password link
@@ -26,8 +30,34 @@ MCowBQYDK2VwAyEAi2HR1srL4o18O8BRa7gVJY7G7bupbN3H9AwJrHCDiOg=
 const json = (body, status = 200) =>
   Response.json(body, { status, headers: { "cache-control": "no-store" } });
 
+// Constant-time compare of two short ASCII strings.
+function secretMatches(provided, expected) {
+  if (!provided || !expected) return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
 function verifySignature(rawBody, req) {
   if (process.env.GHL_WEBHOOK_SKIP_VERIFY === "1") return true; // local testing only
+
+  // Preferred path: a shared secret we set on both ends. GHL's workflow
+  // Custom Webhook action sends it as "Authorization: Bearer <secret>" or
+  // as an "x-webhook-secret" header. It does not sign its requests, so
+  // this is what actually gates the endpoint in production.
+  const expectedSecret = process.env.GHL_WEBHOOK_SECRET;
+  if (expectedSecret) {
+    const auth = req.headers.get("authorization") || "";
+    const bearer = auth.replace(/^Bearer\s+/i, "");
+    const headerSecret = req.headers.get("x-webhook-secret");
+    if (secretMatches(bearer, expectedSecret) || secretMatches(headerSecret, expectedSecret)) {
+      return true;
+    }
+    // A secret is configured but the request did not carry it: reject,
+    // regardless of any signature header.
+    return false;
+  }
 
   const ed = req.headers.get("x-ghl-signature");
   if (ed && ed !== "N/A") {
