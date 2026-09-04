@@ -29,6 +29,8 @@ export async function saveWorkout(payload) {
     for (const s of sets) {
       const reps = s.reps === "" || s.reps == null ? null : Math.round(Number(s.reps));
       const weight = s.weight === "" || s.weight == null ? null : Number(s.weight);
+      const rirRaw = s.rir === "" || s.rir == null ? null : Math.round(Number(s.rir));
+      const rir = Number.isFinite(rirRaw) ? Math.max(0, Math.min(10, rirRaw)) : null;
       if (reps == null && weight == null && !s.completed) continue;
       n += 1;
       setRows.push({
@@ -36,6 +38,7 @@ export async function saveWorkout(payload) {
         set_number: n,
         reps: Number.isFinite(reps) ? reps : null,
         weight: Number.isFinite(weight) ? weight : null,
+        rir,
         completed: s.completed !== false,
         note: n === 1 && ex.note ? String(ex.note).trim() || null : null,
       });

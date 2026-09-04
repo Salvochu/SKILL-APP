@@ -6,6 +6,7 @@ import RestTimer from "@/components/log/RestTimer";
 import ExercisePicker from "@/components/log/ExercisePicker";
 import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
+import { parseRepRange, suggestTarget, formatSet } from "@/lib/training";
 
 let keySeq = 0;
 const nextKey = () => `x${++keySeq}`;
@@ -26,13 +27,14 @@ function makeExercise(exercise, targetSets = 3, targetReps = "") {
     sets: Array.from({ length: Math.max(1, targetSets) }, () => ({
       weight: "",
       reps: "",
+      rir: "",
       completed: false,
     })),
     targetReps,
   };
 }
 
-export default function WorkoutLogger({ allExercises, initial }) {
+export default function WorkoutLogger({ allExercises, history = {}, initial }) {
   const [title, setTitle] = useState(initial.title);
   const [date, setDate] = useState(initial.date);
   const [duration, setDuration] = useState(45);
@@ -87,7 +89,35 @@ export default function WorkoutLogger({ allExercises, initial }) {
     setRows((rs) =>
       rs.map((r) =>
         r.key === key
-          ? { ...r, sets: [...r.sets, { weight: r.sets.at(-1)?.weight ?? "", reps: "", completed: false }] }
+          ? {
+              ...r,
+              sets: [
+                ...r.sets,
+                {
+                  weight: r.sets.at(-1)?.weight ?? "",
+                  reps: "",
+                  rir: r.sets.at(-1)?.rir ?? "",
+                  completed: false,
+                },
+              ],
+            }
+          : r,
+      ),
+    );
+  }
+  function applyTarget(key, target) {
+    if (!target) return;
+    setRows((rs) =>
+      rs.map((r) =>
+        r.key === key
+          ? {
+              ...r,
+              sets: r.sets.map((s) =>
+                s.completed
+                  ? s
+                  : { ...s, weight: String(target.weight ?? s.weight), reps: String(target.reps ?? s.reps) },
+              ),
+            }
           : r,
       ),
     );
@@ -119,7 +149,7 @@ export default function WorkoutLogger({ allExercises, initial }) {
       exercises: rows.map((r) => ({
         exerciseId: r.exercise.id,
         note: r.note,
-        sets: r.sets.map((s) => ({ weight: s.weight, reps: s.reps, completed: s.completed })),
+        sets: r.sets.map((s) => ({ weight: s.weight, reps: s.reps, rir: s.rir, completed: s.completed })),
       })),
     };
     const result = await saveWorkout(payload);
@@ -192,11 +222,13 @@ export default function WorkoutLogger({ allExercises, initial }) {
             <ExerciseCard
               key={row.key}
               row={row}
+              last={history[row.exercise.id] ?? null}
               onPatch={(p) => patchRow(row.key, p)}
               onPatchSet={(i, p) => patchSet(row.key, i, p)}
               onToggleSet={(i) => toggleSet(row.key, i)}
               onAddSet={() => addSet(row.key)}
               onRemoveSet={(i) => removeSet(row.key, i)}
+              onApplyTarget={(t) => applyTarget(row.key, t)}
               onRemove={() => removeExercise(row.key)}
               onVideo={() => setVideoFor(row.exercise)}
             />
@@ -241,10 +273,22 @@ export default function WorkoutLogger({ allExercises, initial }) {
   );
 }
 
-function ExerciseCard({ row, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onApplyTarget, onRemove, onVideo }) {
   const { exercise, sets } = row;
   const best1rm = Math.max(0, ...sets.map((s) => epley1rm(s.weight, s.reps)));
   const volume = sets.reduce((v, s) => v + (s.completed ? (Number(s.weight) || 0) * (Number(s.reps) || 0) : 0), 0);
+
+  const repRange = parseRepRange(row.targetReps);
+  const target = last
+    ? suggestTarget({ last: last.sets, repRange, equipment: exercise.equipment })
+    : null;
+  const lastLine =
+    last && last.sets.length
+      ? last.sets
+          .filter((s) => s.weight != null || s.reps != null)
+          .map(formatSet)
+          .join("  .  ")
+      : null;
 
   return (
     <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
@@ -266,15 +310,36 @@ function ExerciseCard({ row, onPatch, onPatchSet, onToggleSet, onAddSet, onRemov
         </button>
       </div>
 
-      <div className="grid grid-cols-[2rem_1fr_1fr_2.5rem_2rem] items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-dim">
+      {lastLine || target ? (
+        <div className="flex flex-col gap-1.5 rounded-field border border-border bg-bg/40 px-3 py-2">
+          {lastLine ? (
+            <span className="tabular text-xs text-muted">
+              <span className="text-dim">Last{last?.date ? ` (${last.date})` : ""}:</span> {lastLine}
+            </span>
+          ) : null}
+          {target ? (
+            <button
+              type="button"
+              onClick={() => onApplyTarget(target)}
+              className="tabular flex items-center gap-1.5 self-start rounded-full border border-accent bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
+            >
+              Aim {target.weight != null ? `${target.weight} kg x ` : ""}{target.reps}
+              <span className="font-medium opacity-70">{target.reason}</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-dim">
         <span>Set</span>
-        <span>Weight (kg)</span>
+        <span>Weight</span>
         <span>Reps</span>
+        <span className="text-center">RIR</span>
         <span className="text-center">Log</span>
         <span />
       </div>
       {sets.map((set, i) => (
-        <div key={i} className="grid grid-cols-[2rem_1fr_1fr_2.5rem_2rem] items-center gap-2">
+        <div key={i} className="grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5">
           <span className="tabular text-sm text-dim">{i + 1}</span>
           <input
             type="number"
@@ -289,6 +354,14 @@ function ExerciseCard({ row, onPatch, onPatchSet, onToggleSet, onAddSet, onRemov
             value={set.reps}
             onChange={(e) => onPatchSet(i, { reps: e.target.value })}
             className="tabular w-full rounded-field border border-border bg-bg px-2 py-1.5 text-sm text-fg focus:border-accent"
+          />
+          <input
+            type="number"
+            inputMode="numeric"
+            value={set.rir}
+            onChange={(e) => onPatchSet(i, { rir: e.target.value })}
+            aria-label={`Set ${i + 1} reps in reserve`}
+            className="tabular w-full rounded-field border border-border bg-bg px-1.5 py-1.5 text-center text-sm text-fg focus:border-accent"
           />
           <button
             type="button"
