@@ -10,6 +10,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Extracted reference-app bundle, kept for data only (gitignored).
+    ".reference-data/**",
   ]),
 ]);
 

@@ -42,16 +42,27 @@ export async function proxy(request) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup");
 
-  if (!user && !isAuthRoute) {
+  // Routes that must be reachable without a session and must never be
+  // redirected to /login: the login/signup screens, the password recovery
+  // screen, inbound webhooks, and the dev-only component gallery.
+  const isPublicRoute =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/design-preview");
+  const isAuthScreen =
+    pathname.startsWith("/login") || pathname.startsWith("/signup");
+
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  if (user && isAuthScreen) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.search = "";
