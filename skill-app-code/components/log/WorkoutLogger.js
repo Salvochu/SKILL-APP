@@ -160,12 +160,18 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
         </Field>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Date" className="min-w-0">
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
-            />
+            {/* iOS Safari's native date control can paint wider than the
+               width it is given. overflow-hidden on this wrapper clips it
+               to the box regardless; the input itself is borderless so
+               the wrapper's border is the only one drawn. */}
+            <div className="w-full min-w-0 overflow-hidden rounded-field border border-border bg-bg focus-within:border-accent">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full min-w-0 bg-transparent px-3 py-2 text-sm text-fg outline-none"
+              />
+            </div>
           </Field>
           <Field label="Duration (min)" className="min-w-0">
             <input
