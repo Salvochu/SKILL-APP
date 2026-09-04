@@ -1,5 +1,6 @@
 import { getExercises } from "@/lib/data/exercises";
 import { getDayTemplateExercises, getDayTemplate } from "@/lib/data/dayTemplates";
+import { getRecentPerformance } from "@/lib/data/history";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
 
 export const metadata = { title: "Log Workout" };
@@ -15,7 +16,10 @@ export default async function LogPage({ searchParams }) {
   const variant = strOrNull(params?.variant);
   const exerciseId = strOrNull(params?.exercise);
 
-  const allExercises = await getExercises();
+  const [allExercises, history] = await Promise.all([
+    getExercises(),
+    getRecentPerformance(),
+  ]);
   const byId = new Map(allExercises.map((e) => [e.id, e]));
 
   let title = "Workout";
@@ -41,6 +45,7 @@ export default async function LogPage({ searchParams }) {
   return (
     <WorkoutLogger
       allExercises={allExercises}
+      history={history}
       initial={{ title, date: today, exercises: preload, splitId, dayTemplateId, variant }}
     />
   );
