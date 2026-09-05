@@ -29,3 +29,23 @@ export async function getProfile() {
     avatarUrl: data?.avatar_url ?? null,
   };
 }
+
+// Whether the onboarding quiz (components/onboarding) should show. No
+// profile row at all (a brand new account) counts as needing it, same
+// as an explicit false.
+export async function needsOnboarding() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("onboarding_completed")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw new Error(`Failed to check onboarding: ${error.message}`);
+
+  return !data?.onboarding_completed;
+}

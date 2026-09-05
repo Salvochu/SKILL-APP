@@ -484,6 +484,67 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   );
 }
 
+function ShareCard({ summary, timeLabel }) {
+  const [status, setStatus] = useState("idle"); // idle | shared | copied
+
+  const caption = `Just logged ${Math.round(summary.totalVolume)} kg in ${timeLabel} with SKILL. @salvador_skfitness`;
+
+  async function onShare() {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ text: caption });
+        setStatus("shared");
+        return;
+      } catch {
+        // Cancelled, or the browser claims support but the call itself
+        // fails: fall back to copying the caption instead.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(caption);
+      setStatus("copied");
+      setTimeout(() => setStatus("idle"), 3000);
+    } catch {
+      // Clipboard blocked too; nothing more to offer here.
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-black">
+          <IconShare className="h-5 w-5" />
+        </span>
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-sm font-semibold text-fg">Show it off</h2>
+          <p className="text-sm text-muted">
+            Screenshot this and share it. Tag <span className="text-fg">@salvador_skfitness</span> so he
+            can see.
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onShare}
+        className="rounded-field border border-accent/40 bg-surface px-4 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
+      >
+        {status === "copied" ? "Caption copied" : status === "shared" ? "Shared" : "Share"}
+      </button>
+    </section>
+  );
+}
+
+function IconShare(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.6 10.5 15.4 6.5M8.6 13.5l6.8 4" />
+    </svg>
+  );
+}
+
 function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort, onDone }) {
   const mins = summary.durationMin;
   const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
@@ -509,6 +570,8 @@ function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort,
           <span className="tabular text-2xl font-bold text-fg">{Math.round(summary.totalVolume)} kg</span>
         </div>
       </div>
+
+      <ShareCard summary={summary} timeLabel={timeLabel} />
 
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">How hard was this workout?</h2>

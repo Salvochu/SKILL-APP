@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
 import OfflineQueueSync from "@/components/OfflineQueueSync";
 import ActiveWorkoutBar from "@/components/log/ActiveWorkoutBar";
+import OnboardingGate from "@/components/onboarding/OnboardingGate";
 
 // Shared chrome for every signed-in screen. NavBar reads the current path
 // (usePathname), which suspends while the static shell is generated for
@@ -22,6 +23,12 @@ export default function AppLayout({ children }) {
          Suspense boundary as NavBar above. */}
       <Suspense fallback={null}>
         <ActiveWorkoutBar />
+      </Suspense>
+      {/* Checked once per layout mount (persists across client-side
+         navigation between sibling pages), so a new account sees this
+         at most once per fresh app load, not on every page. */}
+      <Suspense fallback={null}>
+        <OnboardingGate />
       </Suspense>
       <main className="mx-auto w-full max-w-2xl px-4 pt-14 pb-[calc(5rem+env(safe-area-inset-bottom))] md:max-w-5xl md:px-6 md:pt-16 md:pb-16">
         {children}
