@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getAllWorkoutSessions } from "@/lib/data/workouts";
 import WorkoutHistoryModal from "@/components/dashboard/WorkoutHistoryModal";
+import ReminderToggle from "@/components/ReminderToggle";
 
 export const metadata = { title: "Menu" };
 
@@ -28,6 +29,7 @@ export default function MenuPage() {
             icon={IconDownload}
           />
         </a>
+        <ReminderToggle />
       </div>
     </div>
   );
