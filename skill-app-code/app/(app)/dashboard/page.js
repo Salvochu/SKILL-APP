@@ -10,8 +10,6 @@ export const metadata = { title: "Dashboard" };
 export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8 py-2">
-      <Hero />
-
       <Suspense fallback={<div className="h-40 rounded-card bg-surface" />}>
         <MesocycleSection />
       </Suspense>
@@ -40,40 +38,6 @@ export default function DashboardPage() {
         <QuickLink href="/library" title="Exercise Library" body="63 movements with videos" />
         <QuickLink href="/splits" title="Training Splits" body="Full Gym, dumbbell and bodyweight" />
       </section>
-    </div>
-  );
-}
-
-function Hero() {
-  return (
-    <div className="relative overflow-hidden rounded-card border border-border bg-surface p-6">
-      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-accent/20 blur-3xl" />
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-bg/60 px-3 py-1 text-xs font-semibold text-muted">
-        <IconFlame className="h-3.5 w-3.5 text-accent" />
-        Train. Track. Improve.
-      </span>
-      <h1 className="mt-4 max-w-sm text-3xl font-extrabold leading-tight text-fg">
-        Your training, <span className="text-accent">measured.</span>
-      </h1>
-      <p className="mt-2 max-w-sm text-sm text-muted">
-        Log every rep, browse the exercise library, and watch your strength climb on
-        the progress charts.
-      </p>
-      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-        <Link
-          href="/log"
-          className="flex items-center justify-center gap-1.5 rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2"
-        >
-          <IconPlus className="h-4 w-4" />
-          Log a Workout
-        </Link>
-        <Link
-          href="/library"
-          className="flex items-center justify-center rounded-field border border-border px-4 py-2.5 font-medium text-fg transition-colors hover:bg-surface-2"
-        >
-          Browse Library
-        </Link>
-      </div>
     </div>
   );
 }
@@ -206,13 +170,6 @@ function IconFlame(props) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
       <path d="M12 2c1 3-1 5-1 7a3 3 0 0 0 6 0c0-1 0-2-.5-3 2 2 3.5 4.5 3.5 7a8 8 0 0 1-16 0c0-4 3-6 4-9 .7-2 3-2 4 -2z" />
-    </svg>
-  );
-}
-function IconPlus(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" {...props}>
-      <path d="M12 5v14M5 12h14" />
     </svg>
   );
 }

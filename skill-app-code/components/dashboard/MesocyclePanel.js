@@ -83,15 +83,10 @@ export default function MesocyclePanel({ active, templates }) {
 
     return (
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-accent">
-            Week {active.week} of {active.weeks}
-            {active.isDeload ? " . Deload" : ""}
-          </span>
-          <button type="button" onClick={() => setShowPicker(true)} className="text-xs font-medium text-dim hover:text-fg">
-            Switch program
-          </button>
-        </div>
+        <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+          Week {active.week} of {active.weeks}
+          {active.isDeload ? " . Deload" : ""}
+        </span>
         <h2 className="font-display text-lg font-semibold text-fg">{active.templateName}</h2>
         <p className="text-sm text-muted">
           {active.isDeload
@@ -109,6 +104,23 @@ export default function MesocyclePanel({ active, templates }) {
         ) : (
           <p className="text-sm text-muted">This program&apos;s split has no days set up yet.</p>
         )}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowPicker(true)}
+            className="flex-1 rounded-field border border-accent/40 bg-accent-soft px-3 py-2 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
+          >
+            Switch program
+          </button>
+          <button
+            type="button"
+            onClick={onAbandon}
+            disabled={busy}
+            className="flex-1 rounded-field border border-danger/40 bg-danger/10 px-3 py-2 text-xs font-semibold text-danger transition-colors hover:bg-danger hover:text-black disabled:opacity-60"
+          >
+            Stop program
+          </button>
+        </div>
       </section>
     );
   }
@@ -158,11 +170,6 @@ export default function MesocyclePanel({ active, templates }) {
           ))}
         </ul>
       )}
-      {active ? (
-        <button type="button" onClick={onAbandon} disabled={busy} className="self-start text-xs font-medium text-dim hover:text-danger">
-          Stop {active.templateName}
-        </button>
-      ) : null}
     </section>
   );
 }
