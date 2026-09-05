@@ -5,6 +5,7 @@ import SplitsBrowser from "@/components/splits/SplitsBrowser";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
+import ShareCardPreview from "@/components/dev/ShareCardPreview";
 
 // Dev-only gallery for reviewing the theme and shared components without a
 // login. 404s in production; proxy.js lets it through unauthenticated.
@@ -97,6 +98,9 @@ export default function DesignPreviewPage() {
             <h2 className="font-display text-base font-semibold text-fg">Strength over time</h2>
             <StrengthChart exercises={STRENGTH} />
           </div>
+        </Section>
+        <Section title="Share card">
+          <ShareCardPreview />
         </Section>
         <Section title="/log">
           <WorkoutLogger

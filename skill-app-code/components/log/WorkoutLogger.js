@@ -13,6 +13,7 @@ import BarChart from "@/components/progress/BarChart";
 import { formatSet, formatElapsed, EFFORT_LABELS } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
+import { buildShareImageBlob } from "@/lib/shareCard";
 
 // Time-seeded so a resumed draft's saved keys (from a previous page
 // load) can never collide with new ones generated after a reload.
@@ -484,29 +485,51 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   );
 }
 
-function ShareCard({ summary, timeLabel }) {
-  const [status, setStatus] = useState("idle"); // idle | shared | copied
+function ShareCard({ summary, timeLabel, effortLabel }) {
+  const [status, setStatus] = useState("idle"); // idle | preparing | shared | downloaded | copied
 
   const caption = `Just logged ${Math.round(summary.totalVolume)} kg in ${timeLabel} with SKILL. @salvador_skfitness`;
 
   async function onShare() {
-    if (typeof navigator !== "undefined" && navigator.share) {
+    setStatus("preparing");
+    let blob = null;
+    try {
+      blob = await buildShareImageBlob({
+        volumeLabel: `${Math.round(summary.totalVolume)} kg`,
+        timeLabel,
+        effortLabel,
+      });
+    } catch {
+      // Image generation failed (e.g. the logo did not load); fall back
+      // to a text-only share below rather than getting stuck.
+    }
+
+    const file = blob ? new File([blob], "skill-workout.png", { type: "image/png" }) : null;
+
+    if (file && typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({ text: caption });
+        await navigator.share({ files: [file], text: caption });
         setStatus("shared");
         return;
       } catch {
-        // Cancelled, or the browser claims support but the call itself
-        // fails: fall back to copying the caption instead.
+        // Cancelled from the share sheet: leave it at that, do not also
+        // fall through to a download the user did not ask for.
+        setStatus("idle");
+        return;
       }
     }
+
+    // No file-sharing support (most desktop browsers): offer the image
+    // as a download and the caption on the clipboard, so both pieces are
+    // still one tap away from being posted manually.
+    if (blob) downloadBlob(blob, "skill-workout.png");
     try {
       await navigator.clipboard.writeText(caption);
-      setStatus("copied");
-      setTimeout(() => setStatus("idle"), 3000);
+      setStatus(blob ? "downloaded" : "copied");
     } catch {
-      // Clipboard blocked too; nothing more to offer here.
+      setStatus(blob ? "downloaded" : "idle");
     }
+    setTimeout(() => setStatus("idle"), 4000);
   }
 
   return (
@@ -518,20 +541,40 @@ function ShareCard({ summary, timeLabel }) {
         <div className="flex flex-col gap-0.5">
           <h2 className="text-sm font-semibold text-fg">Show it off</h2>
           <p className="text-sm text-muted">
-            Screenshot this and share it. Tag <span className="text-fg">@salvador_skfitness</span> so he
-            can see.
+            Share your stats and tag <span className="text-fg">@salvador_skfitness</span> so he can
+            see.
           </p>
         </div>
       </div>
       <button
         type="button"
         onClick={onShare}
-        className="rounded-field border border-accent/40 bg-surface px-4 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
+        disabled={status === "preparing"}
+        className="rounded-field border border-accent/40 bg-surface px-4 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-black disabled:opacity-60"
       >
-        {status === "copied" ? "Caption copied" : status === "shared" ? "Shared" : "Share"}
+        {status === "preparing"
+          ? "Preparing..."
+          : status === "shared"
+            ? "Shared"
+            : status === "downloaded"
+              ? "Image saved, caption copied"
+              : status === "copied"
+                ? "Caption copied"
+                : "Share"}
       </button>
     </section>
   );
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function IconShare(props) {
@@ -570,8 +613,6 @@ function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort,
           <span className="tabular text-2xl font-bold text-fg">{Math.round(summary.totalVolume)} kg</span>
         </div>
       </div>
-
-      <ShareCard summary={summary} timeLabel={timeLabel} />
 
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">How hard was this workout?</h2>
@@ -621,6 +662,8 @@ function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort,
           ) : null}
         </section>
       ) : null}
+
+      <ShareCard summary={summary} timeLabel={timeLabel} effortLabel={effort ? EFFORT_LABELS[effort] : null} />
 
       <button
         type="button"
