@@ -5,10 +5,25 @@
 
 const dayKeyOf = (d) => new Date(d).toISOString().slice(0, 10);
 
+function shiftDate(dateKey, days) {
+  const d = new Date(`${dateKey}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 function daysSinceStart(startDate, today) {
   const start = new Date(`${dayKeyOf(startDate)}T00:00:00Z`);
   const now = new Date(`${dayKeyOf(today)}T00:00:00Z`);
   return Math.floor((now - start) / 86400000);
+}
+
+// [from, to) date range for a given 1-based week of a run, used to count
+// how many sessions were logged within that specific week (the "week
+// progress" bar) rather than across the whole run.
+export function weekDateRange(startDate, week) {
+  const from = shiftDate(dayKeyOf(startDate), (week - 1) * 7);
+  const to = shiftDate(from, 7);
+  return { from, to };
 }
 
 // 1-based week number for `today`, clamped to [1, weeks] so a run that

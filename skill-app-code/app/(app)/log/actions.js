@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getProgressData } from "@/lib/data/progress";
+import { getActiveMesocycle } from "@/lib/data/mesocycles";
 
 // Save a logged workout: one workout_sessions row plus its workout_sets.
 // The session is re-authorised here rather than trusting the client.
@@ -96,4 +98,43 @@ export async function saveWorkout(payload) {
   // Dashboard / Progress read workout data at request time, so the next
   // navigation already reflects this save.
   return { ok: true, sessionId: session.id };
+}
+
+// For the post-save "Workout Completed" screen: recent volume for the
+// mini trend chart, and fresh mesocycle progress if this session was
+// part of one (the just-saved session already counts, since save
+// happens before this is called).
+export async function getPostSaveSummary(userMesocycleId) {
+  const [progress, meso] = await Promise.all([
+    getProgressData(),
+    userMesocycleId ? getActiveMesocycle() : Promise.resolve(null),
+  ]);
+  return {
+    recentVolumes: progress.sessionVolumes.slice(-8),
+    meso: meso && meso.id === userMesocycleId ? meso : null,
+  };
+}
+
+// The coarse 1 to 5 "how hard was this" rating, set from the summary
+// screen after the session already exists.
+export async function rateWorkout(sessionId, perceivedEffort) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Please sign in again." };
+
+  const effort = Math.round(Number(perceivedEffort));
+  if (!Number.isFinite(effort) || effort < 1 || effort > 5) {
+    return { error: "Invalid rating." };
+  }
+
+  const { error } = await supabase
+    .from("workout_sessions")
+    .update({ perceived_effort: effort })
+    .eq("id", sessionId)
+    .eq("user_id", user.id);
+  if (error) return { error: error.message };
+
+  return { ok: true };
 }

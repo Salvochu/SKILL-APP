@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Wordmark from "@/components/Wordmark";
 import ThemeToggle from "@/components/ThemeToggle";
+import GuardedStartLink from "@/components/log/GuardedStartLink";
 
 const TABS = [
   { href: "/dashboard", label: "Dashboard", icon: IconHome },
@@ -47,13 +48,13 @@ export default function NavBar() {
           </nav>
 
           <div className="ml-auto flex items-center gap-1 md:ml-0">
-            <Link
+            <GuardedStartLink
               href="/log"
               className="hidden items-center gap-1.5 rounded-field bg-accent px-3 py-1.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2 md:inline-flex"
             >
               <IconPlus className="h-4 w-4" />
               Log
-            </Link>
+            </GuardedStartLink>
             <ThemeToggle />
             <Link
               href="/profile"
@@ -70,7 +71,7 @@ export default function NavBar() {
       </header>
 
       {/* Floating action button: mobile only, sits above the tab bar. */}
-      <Link
+      <GuardedStartLink
         href="/log"
         aria-label="Log a workout"
         className={`fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-black shadow-lg shadow-black/40 transition-transform hover:scale-105 active:scale-95 md:hidden ${
@@ -78,7 +79,7 @@ export default function NavBar() {
         }`}
       >
         <IconPlus className="h-6 w-6" />
-      </Link>
+      </GuardedStartLink>
 
       {/* Bottom tab bar, mobile only. Padding goes past the reported
           safe-area inset on purpose: right at that boundary, a tap can
