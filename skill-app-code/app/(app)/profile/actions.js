@@ -46,6 +46,12 @@ export async function saveProfile(formData) {
     avatarUrl = `${pub.publicUrl}?v=${Date.now()}`;
   }
 
+  // Set only when called from the onboarding quiz finishing (or being
+  // exited partway through, still counts as done: see
+  // components/onboarding/OnboardingQuiz.js). The plain Profile screen
+  // never sends this, so saving there does not implicitly mark it.
+  const completingOnboarding = formData.get("completeOnboarding") === "1";
+
   const { error } = await supabase.from("profiles").upsert({
     user_id: user.id,
     full_name: fullName || null,
@@ -55,6 +61,7 @@ export async function saveProfile(formData) {
     experience_level: experienceLevel || null,
     phone: phone || null,
     ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+    ...(completingOnboarding ? { onboarding_completed: true } : {}),
     updated_at: new Date().toISOString(),
   });
   if (error) return { error: error.message };
@@ -66,6 +73,23 @@ export async function saveProfile(formData) {
   );
 
   return { ok: true, avatarUrl };
+}
+
+// Marks onboarding done without saving any profile fields: the "Skip
+// for now" path out of the quiz, or exiting before answering anything.
+export async function completeOnboarding() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Please sign in again." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .upsert({ user_id: user.id, onboarding_completed: true }, { onConflict: "user_id" });
+  if (error) return { error: error.message };
+
+  return { ok: true };
 }
 
 // Permanently deletes the signed-in user's account: their login and,
