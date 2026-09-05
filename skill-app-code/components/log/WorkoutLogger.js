@@ -23,7 +23,7 @@ const nextKey = () => `x${Date.now().toString(36)}${++keySeq}`;
 function epley1rm(weight, reps) {
   const w = Number(weight);
   const r = Number(reps);
-  if (!w || !r) return 0;
+  if (!w || !r || r > 15) return 0;
   return w * (1 + r / 30);
 }
 
@@ -129,7 +129,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   useEffect(() => {
     if (!completedSummary) return;
     let cancelled = false;
-    getPostSaveSummary(initial.userMesocycleId).then((data) => {
+    getPostSaveSummary(completedSummary.sessionId, initial.userMesocycleId).then((data) => {
       if (!cancelled) setSummaryExtras(data);
     });
     return () => {
@@ -596,6 +596,7 @@ function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort,
   const mins = summary.durationMin;
   const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
   const meso = extras?.meso;
+  const prs = extras?.newPRs ?? [];
 
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -606,6 +607,25 @@ function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort,
         <h1 className="mt-2 text-2xl font-bold text-fg">Workout completed!</h1>
         <p className="text-sm text-muted">Nice work. Here is how it went.</p>
       </header>
+
+      {prs.length > 0 ? (
+        <section className="flex flex-col gap-2 rounded-card border border-accent bg-accent-soft p-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-accent">
+            <IconTrophy className="h-4 w-4" />
+            {prs.length === 1 ? "New personal record" : `${prs.length} new personal records`}
+          </h2>
+          <ul className="flex flex-col gap-1">
+            {prs.map((p) => (
+              <li key={p.name} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-fg">{p.name}</span>
+                <span className="tabular shrink-0 text-muted">
+                  {p.weight} kg x {p.reps} <span className="text-dim">~{p.e1rm} kg</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
@@ -684,6 +704,14 @@ function IconCheck(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+function IconTrophy(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0V4z" />
+      <path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3" />
     </svg>
   );
 }

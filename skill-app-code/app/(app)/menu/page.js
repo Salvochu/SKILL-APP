@@ -19,6 +19,13 @@ export default function MenuPage() {
         <Suspense fallback={<MenuRowSkeleton />}>
           <WorkoutHistoryRow />
         </Suspense>
+        <a href="/api/export" className="block transition-colors hover:bg-surface-2">
+          <MenuRow
+            label="Export training log"
+            body="Download every set you have logged as a CSV"
+            icon={IconDownload}
+          />
+        </a>
       </div>
     </div>
   );
@@ -92,6 +99,13 @@ function IconHistory(props) {
       <path d="M3 12a9 9 0 1 0 3-6.7" />
       <path d="M3 4v5h5" />
       <path d="M12 7v5l4 2" />
+    </svg>
+  );
+}
+function IconDownload(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
     </svg>
   );
 }

@@ -1,9 +1,13 @@
 import { Suspense } from "react";
 import { getProgressData } from "@/lib/data/progress";
+import { getWeeklyMuscleVolume } from "@/lib/data/volume";
+import { getPersonalRecords } from "@/lib/data/prs";
 import { compact, formatKg, shortDate } from "@/components/progress/chartkit";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
 import CompareExercises from "@/components/progress/CompareExercises";
+import MuscleVolume from "@/components/progress/MuscleVolume";
+import PersonalRecords from "@/components/progress/PersonalRecords";
 
 export const metadata = { title: "Progress" };
 
@@ -22,7 +26,11 @@ export default function ProgressPage() {
 }
 
 async function ProgressBody() {
-  const data = await getProgressData();
+  const [data, muscleVolume, records] = await Promise.all([
+    getProgressData(),
+    getWeeklyMuscleVolume(),
+    getPersonalRecords(),
+  ]);
 
   if (data.workouts === 0) {
     return (
@@ -44,6 +52,16 @@ async function ProgressBody() {
         <Stat label="Workouts" value={data.workouts} />
         {heaviest ? <Stat label="Top est. 1RM" value={`${compact(heaviest.best1rm)} kg`} sub={heaviest.name} /> : null}
       </div>
+
+      <Card title="Weekly sets by muscle" subtitle="Hard sets logged this week, per muscle group">
+        <MuscleVolume data={muscleVolume} />
+      </Card>
+
+      {records.length > 0 ? (
+        <Card title="Personal records" subtitle="Your best estimated 1RM on each lift">
+          <PersonalRecords records={records} />
+        </Card>
+      ) : null}
 
       <Card title="Training volume" subtitle="Total kg lifted per session">
         <BarChart data={data.sessionVolumes} />

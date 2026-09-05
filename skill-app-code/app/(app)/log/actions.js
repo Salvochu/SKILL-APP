@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProgressData } from "@/lib/data/progress";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
+import { getSessionPRs } from "@/lib/data/prs";
 
 // Save a logged workout: one workout_sessions row plus its workout_sets.
 // The session is re-authorised here rather than trusting the client.
@@ -112,14 +113,16 @@ export async function saveWorkout(payload) {
 // mini trend chart, and fresh mesocycle progress if this session was
 // part of one (the just-saved session already counts, since save
 // happens before this is called).
-export async function getPostSaveSummary(userMesocycleId) {
-  const [progress, meso] = await Promise.all([
+export async function getPostSaveSummary(sessionId, userMesocycleId) {
+  const [progress, meso, prs] = await Promise.all([
     getProgressData(),
     userMesocycleId ? getActiveMesocycle() : Promise.resolve(null),
+    sessionId ? getSessionPRs(sessionId) : Promise.resolve([]),
   ]);
   return {
     recentVolumes: progress.sessionVolumes.slice(-8),
     meso: meso && meso.id === userMesocycleId ? meso : null,
+    newPRs: prs,
   };
 }
 

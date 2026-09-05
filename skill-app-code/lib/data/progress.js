@@ -1,7 +1,9 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
-const epley = (w, r) => (w > 0 && r > 0 ? w * (1 + r / 30) : 0);
+// Epley 1RM estimate, ignored above ~15 reps where it stops tracking
+// strength and just balloons.
+const epley = (w, r) => (w > 0 && r > 0 && r <= 15 ? w * (1 + r / 30) : 0);
 const dayKey = (iso) => new Date(iso).toISOString().slice(0, 10);
 
 // Everything the Progress page and the dashboard volume card need, computed
@@ -49,6 +51,7 @@ export async function getProgressData() {
     const r = Number(s.reps) || 0;
     if (w <= 0 || r <= 0) continue;
     const e1 = epley(w, r);
+    if (e1 <= 0) continue;
     if (!perExercise.has(s.exercise_id)) {
       perExercise.set(s.exercise_id, { name: s.exercise?.name ?? "Exercise", byDay: new Map() });
     }
