@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/data/profile";
 import ProfileForm from "@/components/profile/ProfileForm";
+import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
+import SignOutCard from "@/components/profile/SignOutCard";
 import DangerZone from "@/components/profile/DangerZone";
 
 export const metadata = { title: "Profile" };
@@ -21,6 +23,8 @@ export default function ProfilePage() {
         <ProfileSection />
       </Suspense>
 
+      <ChangePasswordForm />
+      <SignOutCard />
       <DangerZone />
     </div>
   );
