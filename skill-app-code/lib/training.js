@@ -73,6 +73,19 @@ export function formatSet(s) {
   return `${w} x ${r}${rir}`;
 }
 
+// Seconds -> "12:34" or, past an hour, "1:02:05". Shared by the Log
+// screen's own timer and the floating ActiveWorkoutBar so a resumed
+// workout's clock reads identically in both places.
+export function formatElapsed(totalSeconds) {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
+  const ss = String(sec).padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
 const dayKeyOf = (d) => new Date(d).toISOString().slice(0, 10);
 function shiftDay(dateKey, delta) {
   const d = new Date(`${dateKey}T00:00:00Z`);

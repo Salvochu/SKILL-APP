@@ -10,30 +10,22 @@ import MusclePill from "@/components/MusclePill";
 import ConfirmModal from "@/components/ConfirmModal";
 import ProgressBar from "@/components/ProgressBar";
 import BarChart from "@/components/progress/BarChart";
-import { formatSet } from "@/lib/training";
+import { formatSet, formatElapsed } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
-import { markWorkoutActive, clearActiveWorkout } from "@/lib/activeWorkout";
+import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
 
 const EFFORT_LABELS = { 1: "Very easy", 2: "Easy", 3: "Moderate", 4: "Hard", 5: "Very hard" };
 
+// Time-seeded so a resumed draft's saved keys (from a previous page
+// load) can never collide with new ones generated after a reload.
 let keySeq = 0;
-const nextKey = () => `x${++keySeq}`;
+const nextKey = () => `x${Date.now().toString(36)}${++keySeq}`;
 
 function epley1rm(weight, reps) {
   const w = Number(weight);
   const r = Number(reps);
   if (!w || !r) return 0;
   return w * (1 + r / 30);
-}
-
-function formatElapsed(totalSeconds) {
-  const s = Math.max(0, Math.round(totalSeconds));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
-  const ss = String(sec).padStart(2, "0");
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
 function makeExercise(exercise, targetSets = 3, targetReps = "") {
@@ -62,7 +54,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   // pausedAt is the timestamp of the current pause (null while running);
   // pausedTotalMs is the sum of every earlier pause, so time spent
   // paused is excluded from the saved duration.
-  const [startedAt] = useState(() => Date.now());
+  const [startedAt, setStartedAt] = useState(() => Date.now());
   const [now, setNow] = useState(startedAt);
   const [pausedAt, setPausedAt] = useState(null);
   const [pausedTotalMs, setPausedTotalMs] = useState(0);
@@ -84,16 +76,42 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [summaryExtras, setSummaryExtras] = useState(null);
   const [effort, setEffort] = useState(null);
   const [savingEffort, setSavingEffort] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
 
-  // Marks this tab as having an unsaved workout in progress, so another
-  // "Start a workout" link elsewhere can warn before discarding it. Never
-  // clear this on unmount: navigating away (e.g. to check Library) should
-  // still count as "in progress" if they come back to start something
-  // else. Only a real save or an explicit cancel clears it.
+  // On mount, resume a matching in-progress draft (same URL: same day,
+  // same query), so navigating away and back via ActiveWorkoutBar
+  // actually restores what was typed instead of a blank form. A draft
+  // for a different URL is stale (GuardedStartLink already confirmed
+  // discarding it before this page was reached) and is cleared.
   useEffect(() => {
-    markWorkoutActive({ title: initial.title });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    function resumeIfMatching() {
+      const href = window.location.pathname + window.location.search;
+      const draft = getDraft();
+      if (draft && draft.href === href) {
+        setTitle(draft.title);
+        setDate(draft.date);
+        setNotes(draft.notes);
+        setRows(draft.rows);
+        setStartedAt(draft.startedAt);
+        setPausedAt(draft.pausedAt ?? null);
+        setPausedTotalMs(draft.pausedTotalMs ?? 0);
+      } else if (draft) {
+        clearDraft();
+      }
+      setDraftReady(true);
+    }
+    resumeIfMatching();
   }, []);
+
+  // Keeps the draft in sync as the form changes, so ActiveWorkoutBar and
+  // the resume-on-mount above always see the latest state. Waits for the
+  // resume check above to finish first, so it cannot overwrite a draft
+  // with this render's pre-resume values.
+  useEffect(() => {
+    if (!draftReady || finished) return;
+    const href = window.location.pathname + window.location.search;
+    saveDraft({ href, title, date, notes, rows, startedAt, pausedAt, pausedTotalMs });
+  }, [draftReady, title, date, notes, rows, startedAt, pausedAt, pausedTotalMs, finished]);
 
   useEffect(() => {
     if (pausedAt || finished) return;
@@ -241,7 +259,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         resumeAfterFailedSave();
         return;
       }
-      clearActiveWorkout();
+      clearDraft();
       setSaving(false);
       setCompletedSummary({ sessionId: result.sessionId, durationMin, totalVolume });
     } catch (err) {
@@ -252,7 +270,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         // connection is back. The workout is considered done at this
         // point, so the clock stays stopped.
         queueWorkout(payload);
-        clearActiveWorkout();
+        clearDraft();
         setSaving(false);
         setSavedOffline(true);
         return;
@@ -264,7 +282,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   }
 
   function onCancelWorkout() {
-    clearActiveWorkout();
+    clearDraft();
     router.push("/dashboard");
   }
 
