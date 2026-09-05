@@ -13,6 +13,10 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-8 py-2">
       <Hero />
 
+      <Suspense fallback={<div className="h-[4.5rem] rounded-card bg-surface" />}>
+        <Streak />
+      </Suspense>
+
       <Suspense fallback={<StatsSkeleton />}>
         <Stats />
       </Suspense>
@@ -91,6 +95,30 @@ async function Stats() {
         value={`${Math.floor(s.minutes / 60)}h ${s.minutes % 60}m`}
         sub="training time"
       />
+    </div>
+  );
+}
+
+async function Streak() {
+  const s = await getWorkoutSummary();
+  const has = s.streakDays > 0;
+  return (
+    <div className="flex items-center gap-4 rounded-card border border-border bg-surface p-4">
+      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${has ? "bg-accent-soft" : "bg-surface-2"}`}>
+        <IconFlame className={`h-6 w-6 ${has ? "text-accent" : "text-dim"}`} />
+      </span>
+      <div className="flex flex-col">
+        <span className="tabular text-2xl font-bold text-fg">
+          {s.streakDays} {s.streakDays === 1 ? "day" : "days"}
+        </span>
+        <span className="text-xs text-dim">
+          {has
+            ? s.longestStreak > s.streakDays
+              ? `current streak . best ${s.longestStreak}`
+              : "current streak"
+            : "log a workout today to start a streak"}
+        </span>
+      </div>
     </div>
   );
 }
