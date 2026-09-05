@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getWorkoutDetail } from "@/lib/data/workouts";
 import { formatSet, EFFORT_LABELS } from "@/lib/training";
 import MusclePill from "@/components/MusclePill";
+import LoggedAt from "@/components/LoggedAt";
+import DeleteWorkoutButton from "@/components/workouts/DeleteWorkoutButton";
 
 export const metadata = { title: "Workout" };
 
@@ -16,13 +18,6 @@ export default async function WorkoutDetailPage({ params }) {
   const workout = await getWorkoutDetail(id);
   if (!workout) notFound();
 
-  const dateLabel = new Date(workout.date).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-
   return (
     <div className="flex flex-col gap-6 py-2">
       <Link
@@ -35,7 +30,9 @@ export default async function WorkoutDetailPage({ params }) {
 
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-fg">{workout.title}</h1>
-        <p className="text-sm text-muted">{dateLabel}</p>
+        <p className="text-sm text-muted">
+          <LoggedAt iso={workout.date} withYear />
+        </p>
       </header>
 
       <div className="grid grid-cols-2 gap-3">
@@ -96,6 +93,8 @@ export default async function WorkoutDetailPage({ params }) {
           <p className="text-sm text-muted">{workout.notes}</p>
         </section>
       ) : null}
+
+      <DeleteWorkoutButton sessionId={workout.id} />
     </div>
   );
 }

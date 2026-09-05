@@ -1,0 +1,154 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { niceScale, compact, shortDate } from "@/components/progress/chartkit";
+
+const W = 640;
+const H = 240;
+const M = { top: 16, right: 16, bottom: 26, left: 44 };
+const SERIES = [
+  { key: "a", color: "var(--color-accent)" },
+  { key: "b", color: "var(--muscle-back)" },
+];
+
+// Two lifts on one estimated-1RM-over-time chart, so you can see at a
+// glance which is moving and which has stalled. Shared time axis; each
+// line only has points on the days that lift was trained.
+export default function CompareExercises({ exercises }) {
+  const usable = useMemo(() => exercises.filter((e) => e.points.length >= 2), [exercises]);
+  const [aId, setAId] = useState(usable[0]?.id);
+  const [bId, setBId] = useState(usable[1]?.id ?? usable[0]?.id);
+  const [hover, setHover] = useState(null);
+
+  const a = usable.find((e) => e.id === aId) ?? usable[0];
+  const b = usable.find((e) => e.id === bId) ?? usable[1] ?? usable[0];
+  if (!a || !b) return null;
+
+  const dates = [...new Set([...a.points, ...b.points].map((p) => p.date))].sort();
+  const xi = new Map(dates.map((d, i) => [d, i]));
+
+  const all = [...a.points, ...b.points].map((p) => p.best1rm);
+  const hi = Math.max(...all);
+  const lo = Math.min(...all);
+  const { max: yMax, ticks } = niceScale(hi * 1.1);
+  const yMin = Math.max(0, Math.floor((lo * 0.85) / 10) * 10);
+
+  const plotW = W - M.left - M.right;
+  const plotH = H - M.top - M.bottom;
+  const x = (i) => M.left + (dates.length === 1 ? plotW / 2 : (plotW * i) / (dates.length - 1));
+  const y = (v) => M.top + plotH * (1 - (v - yMin) / (yMax - yMin || 1));
+
+  const lines = { a, b };
+
+  return (
+    <figure className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-2">
+        <Picker value={a.id} onChange={setAId} options={usable} dot={SERIES[0].color} />
+        <Picker value={b.id} onChange={setBId} options={usable} dot={SERIES[1].color} />
+      </div>
+
+      <div className="relative">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Estimated 1RM over time for ${a.name} and ${b.name}`}>
+          {ticks.filter((t) => t >= yMin).map((t) => (
+            <g key={t}>
+              <line x1={M.left} x2={W - M.right} y1={y(t)} y2={y(t)} stroke="var(--color-border)" strokeWidth="1" />
+              <text x={M.left - 8} y={y(t)} textAnchor="end" dominantBaseline="middle" className="fill-dim text-[10px]" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {compact(t)}
+              </text>
+            </g>
+          ))}
+
+          {SERIES.map(({ key, color }) => {
+            const ex = lines[key];
+            const pts = [...ex.points].sort((p, q) => p.date.localeCompare(q.date));
+            const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(xi.get(p.date))},${y(p.best1rm)}`).join(" ");
+            const last = pts[pts.length - 1];
+            return (
+              <g key={key}>
+                <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                {pts.map((p) => (
+                  <circle key={p.date} cx={x(xi.get(p.date))} cy={y(p.best1rm)} r="3.5" fill={color} stroke="var(--color-bg)" strokeWidth="2" />
+                ))}
+                <text x={x(xi.get(last.date))} y={y(last.best1rm) - 9} textAnchor="end" className="text-[10px] font-semibold" fill={color} style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {compact(last.best1rm)}
+                </text>
+              </g>
+            );
+          })}
+
+          {dates.map((d, i) => (
+            <rect
+              key={d}
+              x={x(i) - plotW / dates.length / 2}
+              y={M.top}
+              width={plotW / dates.length}
+              height={plotH}
+              fill="transparent"
+              onMouseEnter={() => setHover(i)}
+              onMouseLeave={() => setHover(null)}
+            />
+          ))}
+          {hover != null ? (
+            <line x1={x(hover)} x2={x(hover)} y1={M.top} y2={H - M.bottom} stroke="var(--color-border-strong)" strokeWidth="1" />
+          ) : null}
+
+          {dates.map((d, i) =>
+            i % Math.ceil(dates.length / 6 || 1) === 0 || i === dates.length - 1 ? (
+              <text key={d} x={x(i)} y={H - 8} textAnchor="middle" className="fill-dim text-[10px]">
+                {shortDate(d)}
+              </text>
+            ) : null,
+          )}
+        </svg>
+
+        {hover != null ? (
+          <div
+            className="pointer-events-none absolute rounded-field border border-border bg-bg px-2 py-1.5 text-xs shadow-lg"
+            style={{
+              left: `${(x(hover) / W) * 100}%`,
+              top: "8%",
+              transform: `translateX(${hover > dates.length / 2 ? "-100%" : "0"})`,
+            }}
+          >
+            <div className="mb-1 text-dim">{shortDate(dates[hover])}</div>
+            {SERIES.map(({ key, color }) => {
+              const p = lines[key].points.find((q) => q.date === dates[hover]);
+              return (
+                <div key={key} className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="text-fg">{p ? `~${compact(p.best1rm)} kg` : "—"}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+        {SERIES.map(({ key, color }) => (
+          <span key={key} className="flex items-center gap-1.5 text-muted">
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+            {lines[key].name}
+          </span>
+        ))}
+      </div>
+    </figure>
+  );
+}
+
+function Picker({ value, onChange, options, dot }) {
+  return (
+    <label className="flex items-center gap-2 rounded-field border border-border bg-surface px-2.5 py-1.5">
+      <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: dot }} />
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="max-w-[9rem] bg-transparent text-sm text-fg focus:outline-none"
+      >
+        {options.map((e) => (
+          <option key={e.id} value={e.id}>{e.name}</option>
+        ))}
+      </select>
+    </label>
+  );
+}

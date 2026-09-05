@@ -23,8 +23,16 @@ export async function saveWorkout(payload) {
     ? payload.date
     : new Date().toISOString().slice(0, 10);
   const durationMin = Math.max(0, Math.min(600, Number(payload.durationMin) || 0));
-  const startedAt = new Date(`${date}T12:00:00`);
-  const completedAt = new Date(startedAt.getTime() + durationMin * 60000);
+  // Keep the day the user picked, but stamp a real time of day when the
+  // workout is for today (the normal case). Backdated sessions have no
+  // reliable clock time, so they stay at noon and the UI shows date only.
+  const today = new Date().toISOString().slice(0, 10);
+  const endedMs = Number(payload.endedAtMs);
+  const completedAt =
+    date === today && Number.isFinite(endedMs) && endedMs > 0
+      ? new Date(endedMs)
+      : new Date(`${date}T12:00:00`);
+  const startedAt = new Date(completedAt.getTime() - durationMin * 60000);
 
   const exercises = Array.isArray(payload.exercises) ? payload.exercises : [];
   const setRows = [];

@@ -247,6 +247,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       title,
       date,
       durationMin,
+      endedAtMs: freezeAt,
       notes,
       splitId: initial.splitId,
       dayTemplateId: initial.dayTemplateId,

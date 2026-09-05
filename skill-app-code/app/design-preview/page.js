@@ -5,6 +5,7 @@ import SplitsBrowser from "@/components/splits/SplitsBrowser";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
+import CompareExercises from "@/components/progress/CompareExercises";
 import ShareCardPreview from "@/components/dev/ShareCardPreview";
 import WorkoutHistoryModal from "@/components/dashboard/WorkoutHistoryModal";
 
@@ -98,6 +99,10 @@ export default function DesignPreviewPage() {
           <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
             <h2 className="font-display text-base font-semibold text-fg">Strength over time</h2>
             <StrengthChart exercises={STRENGTH} />
+          </div>
+          <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
+            <h2 className="font-display text-base font-semibold text-fg">Compare two lifts</h2>
+            <CompareExercises exercises={STRENGTH} />
           </div>
         </Section>
         <Section title="Share card">
