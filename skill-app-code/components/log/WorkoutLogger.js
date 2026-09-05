@@ -2,13 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { saveWorkout } from "@/app/(app)/log/actions";
+import { saveWorkout, getPostSaveSummary, rateWorkout } from "@/app/(app)/log/actions";
 import RestTimer from "@/components/log/RestTimer";
 import ExercisePicker from "@/components/log/ExercisePicker";
 import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
+import ConfirmModal from "@/components/ConfirmModal";
+import ProgressBar from "@/components/ProgressBar";
+import BarChart from "@/components/progress/BarChart";
 import { formatSet } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
+import { markWorkoutActive, clearActiveWorkout } from "@/lib/activeWorkout";
+
+const EFFORT_LABELS = { 1: "Very easy", 2: "Easy", 3: "Moderate", 4: "Hard", 5: "Very hard" };
 
 let keySeq = 0;
 const nextKey = () => `x${++keySeq}`;
@@ -73,12 +79,39 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
+  const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [completedSummary, setCompletedSummary] = useState(null);
+  const [summaryExtras, setSummaryExtras] = useState(null);
+  const [effort, setEffort] = useState(null);
+  const [savingEffort, setSavingEffort] = useState(false);
+
+  // Marks this tab as having an unsaved workout in progress, so another
+  // "Start a workout" link elsewhere can warn before discarding it. Never
+  // clear this on unmount: navigating away (e.g. to check Library) should
+  // still count as "in progress" if they come back to start something
+  // else. Only a real save or an explicit cancel clears it.
+  useEffect(() => {
+    markWorkoutActive({ title: initial.title });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (pausedAt || finished) return;
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, [pausedAt, finished]);
+
+  useEffect(() => {
+    if (!completedSummary) return;
+    let cancelled = false;
+    getPostSaveSummary(initial.userMesocycleId).then((data) => {
+      if (!cancelled) setSummaryExtras(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completedSummary]);
 
   // While paused (or finished), the "clock" is frozen at the moment the
   // pause started, so this stays constant instead of still ticking.
@@ -208,7 +241,9 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         resumeAfterFailedSave();
         return;
       }
-      router.push("/dashboard");
+      clearActiveWorkout();
+      setSaving(false);
+      setCompletedSummary({ sessionId: result.sessionId, durationMin, totalVolume });
     } catch (err) {
       if (isLikelyNetworkError(err)) {
         // No connection right now, most likely at the gym. Keep the
@@ -217,6 +252,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         // connection is back. The workout is considered done at this
         // point, so the clock stays stopped.
         queueWorkout(payload);
+        clearActiveWorkout();
         setSaving(false);
         setSavedOffline(true);
         return;
@@ -227,12 +263,59 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     }
   }
 
+  function onCancelWorkout() {
+    clearActiveWorkout();
+    router.push("/dashboard");
+  }
+
+  async function onSelectEffort(n) {
+    setEffort(n);
+    if (!completedSummary?.sessionId) return;
+    setSavingEffort(true);
+    await rateWorkout(completedSummary.sessionId, n);
+    setSavingEffort(false);
+  }
+
+  if (completedSummary) {
+    return (
+      <WorkoutSummary
+        summary={completedSummary}
+        extras={summaryExtras}
+        effort={effort}
+        savingEffort={savingEffort}
+        onSelectEffort={onSelectEffort}
+        onDone={() => router.push("/dashboard")}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 py-2">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-fg">Log Workout</h1>
-        <p className="text-sm text-muted">Add exercises, enter your sets, and save to your history.</p>
+      <header className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-fg">Log Workout</h1>
+          <p className="text-sm text-muted">Add exercises, enter your sets, and save to your history.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setCancelConfirm(true)}
+          className="shrink-0 text-xs font-medium text-dim hover:text-danger"
+        >
+          Cancel workout
+        </button>
       </header>
+
+      {cancelConfirm ? (
+        <ConfirmModal
+          title="Cancel this workout?"
+          message="Anything you have logged on this screen will not be saved."
+          confirmLabel="Discard it"
+          cancelLabel="Keep logging"
+          danger
+          onConfirm={onCancelWorkout}
+          onCancel={() => setCancelConfirm(false)}
+        />
+      ) : null}
 
       {mesoContext ? (
         <div className="flex items-center gap-3 rounded-card border border-accent/40 bg-accent-soft px-4 py-3">
@@ -374,6 +457,100 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         <RestTimer key={restKey} startSeconds={restSeconds} onDismiss={() => setShowRest(false)} />
       ) : null}
     </div>
+  );
+}
+
+function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort, onDone }) {
+  const mins = summary.durationMin;
+  const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+  const meso = extras?.meso;
+
+  return (
+    <div className="flex flex-col gap-6 py-2">
+      <header className="flex flex-col items-center gap-1 pt-2 text-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent">
+          <IconCheck className="h-7 w-7" />
+        </span>
+        <h1 className="mt-2 text-2xl font-bold text-fg">Workout completed!</h1>
+        <p className="text-sm text-muted">Nice work. Here is how it went.</p>
+      </header>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-dim">Session time</span>
+          <span className="tabular text-2xl font-bold text-fg">{timeLabel}</span>
+        </div>
+        <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-dim">Volume</span>
+          <span className="tabular text-2xl font-bold text-fg">{Math.round(summary.totalVolume)} kg</span>
+        </div>
+      </div>
+
+      <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">How hard was this workout?</h2>
+        <div className="flex gap-2">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => onSelectEffort(n)}
+              disabled={savingEffort}
+              className={`flex-1 rounded-field border py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${
+                effort === n ? "border-accent bg-accent-soft text-accent" : "border-border text-muted hover:text-fg"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        <div className="flex justify-between text-xs text-dim">
+          <span>{EFFORT_LABELS[1]}</span>
+          <span>{EFFORT_LABELS[5]}</span>
+        </div>
+        {effort ? <p className="text-center text-xs text-accent">{EFFORT_LABELS[effort]}</p> : null}
+      </section>
+
+      {extras?.recentVolumes?.length > 1 ? (
+        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Training volume, recent sessions</h2>
+          <BarChart data={extras.recentVolumes} max={8} />
+        </section>
+      ) : null}
+
+      {meso ? (
+        <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-accent">
+            {meso.templateName}, week {meso.week} of {meso.weeks}
+          </h2>
+          {meso.totalDays > 0 ? (
+            <>
+              <ProgressBar label="This week" value={Math.min(meso.sessionsThisWeek, meso.totalDays)} max={meso.totalDays} />
+              <ProgressBar
+                label="Whole program"
+                value={Math.min(meso.sessionsLogged, meso.weeks * meso.totalDays)}
+                max={meso.weeks * meso.totalDays}
+              />
+            </>
+          ) : null}
+        </section>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={onDone}
+        className="rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2"
+      >
+        Done
+      </button>
+    </div>
+  );
+}
+
+function IconCheck(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M5 13l4 4L19 7" />
+    </svg>
   );
 }
 

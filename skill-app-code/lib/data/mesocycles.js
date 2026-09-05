@@ -1,6 +1,13 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { currentWeek, isMesocycleComplete, isDeloadWeek, rirForWeek, nextDayIndex } from "@/lib/mesocycle";
+import {
+  currentWeek,
+  isMesocycleComplete,
+  isDeloadWeek,
+  rirForWeek,
+  nextDayIndex,
+  weekDateRange,
+} from "@/lib/mesocycle";
 import { sortVariants } from "@/lib/exercises";
 
 // The programs available to start. Reference data, readable by any
@@ -89,7 +96,13 @@ export async function getActiveMesocycle() {
   const rir = rirForWeek(week, weeks, startingRir);
   const complete = isMesocycleComplete(run.start_date, weeks);
 
-  const [{ data: days, error: daysError }, { count: sessionsLogged, error: countError }] = await Promise.all([
+  const { from: weekFrom, to: weekTo } = weekDateRange(run.start_date, week);
+
+  const [
+    { data: days, error: daysError },
+    { count: sessionsLogged, error: countError },
+    { count: sessionsThisWeek, error: weekCountError },
+  ] = await Promise.all([
     supabase
       .from("split_days")
       .select("position, day_template_id, label, day_template:day_templates(id, name, focus)")
@@ -99,9 +112,16 @@ export async function getActiveMesocycle() {
       .from("workout_sessions")
       .select("id", { count: "exact", head: true })
       .eq("user_mesocycle_id", run.id),
+    supabase
+      .from("workout_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_mesocycle_id", run.id)
+      .gte("started_at", weekFrom)
+      .lt("started_at", weekTo),
   ]);
   if (daysError) throw new Error(`Failed to load mesocycle days: ${daysError.message}`);
   if (countError) throw new Error(`Failed to load mesocycle progress: ${countError.message}`);
+  if (weekCountError) throw new Error(`Failed to load mesocycle week progress: ${weekCountError.message}`);
 
   const totalDays = days?.length ?? 0;
   const dayIdx = nextDayIndex(sessionsLogged ?? 0, totalDays);
@@ -121,6 +141,7 @@ export async function getActiveMesocycle() {
     rirTarget: rir,
     isComplete: complete,
     sessionsLogged: sessionsLogged ?? 0,
+    sessionsThisWeek: sessionsThisWeek ?? 0,
     totalDays,
     nextDay: nextDay
       ? {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import MusclePill from "@/components/MusclePill";
+import GuardedStartLink from "@/components/log/GuardedStartLink";
 import { sortVariants } from "@/lib/exercises";
 
 const SECTION_LABEL = { primary: "Choose your split", coached: "Coached programs" };
@@ -128,13 +128,13 @@ function DayCard({ day, split, index, single }) {
         ))}
       </ul>
 
-      <Link
+      <GuardedStartLink
         href={`/log?split=${split.id}&day=${day.template.id}&variant=${encodeURIComponent(variant)}`}
         className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2"
       >
         Start {day.template.name}
         {variants.length > 1 ? ` (${variant})` : ""}
-      </Link>
+      </GuardedStartLink>
     </section>
   );
 }

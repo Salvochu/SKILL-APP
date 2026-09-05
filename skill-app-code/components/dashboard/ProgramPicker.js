@@ -44,14 +44,19 @@ export default function ProgramPicker({ templates, canCancel, onCancel, onStarte
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+    <section className="flex flex-col gap-3 rounded-card border border-accent/50 bg-accent-soft p-4 shadow-lg shadow-accent/10">
       <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-1">
-          <h2 className="font-display text-lg font-semibold text-fg">Pick the right program</h2>
-          <p className="text-sm text-muted">
-            Each one runs for its full length: effort builds week by week from RIR 3 down to 0,
-            then a lighter deload week to recover before you start again.
-          </p>
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-black">
+            <IconFlag className="h-5 w-5" />
+          </span>
+          <div className="flex flex-col gap-1">
+            <h2 className="font-display text-lg font-semibold text-fg">Pick the right program</h2>
+            <p className="text-sm text-muted">
+              Each one runs for its full length: effort builds week by week from RIR 3 down to 0,
+              then a lighter deload week to recover before you start again.
+            </p>
+          </div>
         </div>
         {canCancel ? (
           <button type="button" onClick={onCancel} className="shrink-0 text-xs font-medium text-dim hover:text-fg">
@@ -126,5 +131,14 @@ export default function ProgramPicker({ templates, canCancel, onCancel, onStarte
         </div>
       ) : null}
     </section>
+  );
+}
+
+function IconFlag(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M5 21V4" />
+      <path d="M5 4h13l-3 4 3 4H5" />
+    </svg>
   );
 }
