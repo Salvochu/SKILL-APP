@@ -6,11 +6,20 @@ import Wordmark from "@/components/Wordmark";
 import ThemeToggle from "@/components/ThemeToggle";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 
-const TABS = [
+const DESKTOP_TABS = [
   { href: "/dashboard", label: "Dashboard", icon: IconHome },
   { href: "/library", label: "Library", icon: IconLibrary },
   { href: "/splits", label: "Splits", icon: IconSplits },
   { href: "/progress", label: "Progress", icon: IconProgress },
+];
+
+// The mobile bottom bar stays to 3 tabs so it does not get cramped.
+// Everything else (Profile, Progress, Library, Workout History) lives
+// behind Menu instead.
+const MOBILE_TABS = [
+  { href: "/dashboard", label: "Dashboard", icon: IconHome },
+  { href: "/splits", label: "Splits", icon: IconSplits },
+  { href: "/menu", label: "Menu", icon: IconMenu },
 ];
 
 function isActive(pathname, href) {
@@ -29,7 +38,7 @@ export default function NavBar() {
           </Link>
 
           <nav className="hidden flex-1 items-center gap-1 md:flex">
-            {TABS.map((tab) => {
+            {DESKTOP_TABS.map((tab) => {
               const active = isActive(pathname, tab.href);
               return (
                 <Link
@@ -74,8 +83,8 @@ export default function NavBar() {
           still land in iOS's own home-indicator gesture strip instead of
           the link under it. */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-2xl grid-cols-4">
-          {TABS.map((tab) => {
+        <div className="mx-auto grid max-w-2xl grid-cols-3">
+          {MOBILE_TABS.map((tab) => {
             const active = isActive(pathname, tab.href);
             const Icon = tab.icon;
             return (
@@ -133,6 +142,13 @@ function IconProgress(props) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M4 4v16h16" />
       <path d="m7 14 3.5-4 3 2.5L20 6" />
+    </svg>
+  );
+}
+function IconMenu(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" {...props}>
+      <path d="M4 6h16M4 12h16M4 18h16" />
     </svg>
   );
 }

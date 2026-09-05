@@ -35,10 +35,24 @@ export async function getWorkoutSummary() {
     sets: sets.length,
     volumeKg,
     minutes: Math.round(minutes),
-    recent: sessions.slice(0, 5),
+    recent: sessions.slice(0, 3),
+    history: sessions,
     streakWeeks: streak.current,
     longestStreakWeeks: streak.longest,
   };
+}
+
+// Just the session list (id, title, date), for the "show all" history
+// view: no sets query needed, so it is far cheaper than getWorkoutSummary
+// when the stats it also computes are not wanted.
+export async function getAllWorkoutSessions() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("workout_sessions")
+    .select("id, title, started_at")
+    .order("started_at", { ascending: false });
+  if (error) throw new Error(`Failed to load workouts: ${error.message}`);
+  return data ?? [];
 }
 
 // One past session in full: every exercise and set logged against it,

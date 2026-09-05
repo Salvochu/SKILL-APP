@@ -6,6 +6,7 @@ import WorkoutLogger from "@/components/log/WorkoutLogger";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
 import ShareCardPreview from "@/components/dev/ShareCardPreview";
+import WorkoutHistoryModal from "@/components/dashboard/WorkoutHistoryModal";
 
 // Dev-only gallery for reviewing the theme and shared components without a
 // login. 404s in production; proxy.js lets it through unauthenticated.
@@ -101,6 +102,13 @@ export default function DesignPreviewPage() {
         </Section>
         <Section title="Share card">
           <ShareCardPreview />
+        </Section>
+        <Section title="Workout history modal">
+          <WorkoutHistoryModal sessions={VOL.map((v) => ({ id: v.id, title: v.label, started_at: v.date }))}>
+            <button type="button" className="rounded-field border border-border px-4 py-2 text-sm">
+              Show all
+            </button>
+          </WorkoutHistoryModal>
         </Section>
         <Section title="/log">
           <WorkoutLogger

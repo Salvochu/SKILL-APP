@@ -2,14 +2,20 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getProgressData } from "@/lib/data/progress";
+import { getProfile } from "@/lib/data/profile";
 import BarChart from "@/components/progress/BarChart";
 import MesocycleSection from "@/components/dashboard/MesocycleSection";
+import WorkoutHistoryModal from "@/components/dashboard/WorkoutHistoryModal";
 
 export const metadata = { title: "Dashboard" };
 
 export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8 py-2">
+      <Suspense fallback={<div className="h-8 w-40 rounded bg-surface" />}>
+        <Greeting />
+      </Suspense>
+
       <Suspense fallback={<div className="h-40 rounded-card bg-surface" />}>
         <MesocycleSection />
       </Suspense>
@@ -39,6 +45,16 @@ export default function DashboardPage() {
         <QuickLink href="/splits" title="Training Splits" body="Full Gym, dumbbell and bodyweight" />
       </section>
     </div>
+  );
+}
+
+async function Greeting() {
+  const profile = await getProfile();
+  const firstName = profile?.fullName?.trim().split(/\s+/)[0] || "";
+  return (
+    <h1 className="text-2xl font-bold text-fg">
+      Welcome{firstName ? `, ${firstName}` : ""}
+    </h1>
   );
 }
 
@@ -115,22 +131,34 @@ async function Recent() {
     );
   }
   return (
-    <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
-      {s.recent.map((w) => (
-        <li key={w.id}>
-          <Link
-            href={`/workouts/${w.id}`}
-            className="flex items-center justify-between gap-3 bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
+        {s.recent.map((w) => (
+          <li key={w.id}>
+            <Link
+              href={`/workouts/${w.id}`}
+              className="flex items-center justify-between gap-3 bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
+            >
+              <span className="text-sm font-medium text-fg">{w.title}</span>
+              <span className="flex items-center gap-1.5 text-xs text-dim">
+                {new Date(w.started_at).toLocaleDateString()}
+                <IconChevron className="h-3.5 w-3.5" />
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {s.history.length > s.recent.length ? (
+        <WorkoutHistoryModal sessions={s.history}>
+          <button
+            type="button"
+            className="self-start rounded-field px-1 text-sm font-medium text-accent hover:text-accent-2"
           >
-            <span className="text-sm font-medium text-fg">{w.title}</span>
-            <span className="flex items-center gap-1.5 text-xs text-dim">
-              {new Date(w.started_at).toLocaleDateString()}
-              <IconChevron className="h-3.5 w-3.5" />
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+            Show all
+          </button>
+        </WorkoutHistoryModal>
+      ) : null}
+    </div>
   );
 }
 

@@ -542,7 +542,7 @@ function ShareCard({ summary, timeLabel, effortLabel }) {
           <h2 className="text-sm font-semibold text-fg">Show it off</h2>
           <p className="text-sm text-muted">
             Share your stats and tag <span className="text-fg">@salvador_skfitness</span> so he can
-            see.
+            hold you accountable.
           </p>
         </div>
       </div>
