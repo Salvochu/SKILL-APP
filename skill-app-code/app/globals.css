@@ -118,3 +118,16 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+
+/* iOS Safari zooms the page in whenever a focused form field renders
+   text smaller than 16px. Most of the app's fields use text-sm (14px),
+   which is why tapping into the Log screen kept forcing a zoom. Bumping
+   just the mobile font-size back to 16px stops that without touching
+   the viewport meta (which would also block a user's own pinch-zoom). */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
