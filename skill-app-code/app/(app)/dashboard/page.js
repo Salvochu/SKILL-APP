@@ -117,11 +117,17 @@ async function Recent() {
   return (
     <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
       {s.recent.map((w) => (
-        <li key={w.id} className="flex items-center justify-between gap-3 bg-surface px-4 py-3">
-          <span className="text-sm font-medium text-fg">{w.title}</span>
-          <span className="text-xs text-dim">
-            {new Date(w.started_at).toLocaleDateString()}
-          </span>
+        <li key={w.id}>
+          <Link
+            href={`/workouts/${w.id}`}
+            className="flex items-center justify-between gap-3 bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
+          >
+            <span className="text-sm font-medium text-fg">{w.title}</span>
+            <span className="flex items-center gap-1.5 text-xs text-dim">
+              {new Date(w.started_at).toLocaleDateString()}
+              <IconChevron className="h-3.5 w-3.5" />
+            </span>
+          </Link>
         </li>
       ))}
     </ul>
@@ -170,6 +176,13 @@ function IconFlame(props) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
       <path d="M12 2c1 3-1 5-1 7a3 3 0 0 0 6 0c0-1 0-2-.5-3 2 2 3.5 4.5 3.5 7a8 8 0 0 1-16 0c0-4 3-6 4-9 .7-2 3-2 4 -2z" />
+    </svg>
+  );
+}
+function IconChevron(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m9 6 6 6-6 6" />
     </svg>
   );
 }
