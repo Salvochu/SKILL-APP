@@ -1,16 +1,20 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 // Save a logged workout: one workout_sessions row plus its workout_sets.
 // The session is re-authorised here rather than trusting the client.
+//
+// Returns a plain result instead of redirecting, so both the normal save
+// path and the offline-queue replay (components/OfflineQueueSync.js) can
+// call this the same way. WorkoutLogger navigates to /dashboard itself
+// on success; a background replay does not navigate anywhere.
 export async function saveWorkout(payload) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) return { error: "Please sign in again to save this workout." };
 
   const title = String(payload.title || "").trim() || "Workout";
   const date = /^\d{4}-\d{2}-\d{2}$/.test(payload.date)
@@ -75,5 +79,5 @@ export async function saveWorkout(payload) {
 
   // Dashboard / Progress read workout data at request time, so the next
   // navigation already reflects this save.
-  redirect("/dashboard");
+  return { ok: true, sessionId: session.id };
 }

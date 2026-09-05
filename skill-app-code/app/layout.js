@@ -1,6 +1,7 @@
 import { Inter, Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { themeInitScript } from "@/components/ThemeToggle";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -50,7 +51,10 @@ export default function RootLayout({ children }) {
         {/* Applies the saved theme before first paint (no flash). */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <ServiceWorkerRegister />
+      </body>
     </html>
   );
 }

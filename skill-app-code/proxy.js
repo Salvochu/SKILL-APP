@@ -45,12 +45,15 @@ export async function proxy(request) {
 
   // Routes that must be reachable without a session and must never be
   // redirected to /login: the login/signup screens, the password recovery
-  // screen, inbound webhooks, and the dev-only component gallery.
+  // screen, inbound webhooks, the offline fallback (precached by the
+  // service worker, has to render with no auth check possible), and the
+  // dev-only component gallery.
   const isPublicRoute =
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/auth/") ||
     pathname.startsWith("/api/") ||
+    pathname.startsWith("/offline") ||
     pathname.startsWith("/design-preview");
   const isAuthScreen =
     pathname.startsWith("/login") || pathname.startsWith("/signup");
@@ -78,7 +81,12 @@ export const config = {
      * Match everything except:
      * - _next/static, _next/image (Next internals)
      * - favicon / common static assets
+     * - the web app manifest and the service worker script: both must be
+     *   fetchable by a signed-out browser (a first-time visitor, or one
+     *   who has just signed out), or Chrome's install check silently
+     *   fails and the service worker registration fetches the redirected
+     *   /login page's HTML instead of a script and never registers.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
