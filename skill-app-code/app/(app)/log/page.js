@@ -2,7 +2,9 @@ import { getExercises } from "@/lib/data/exercises";
 import { getDayTemplateExercises, getDayTemplate } from "@/lib/data/dayTemplates";
 import { getRecentPerformance } from "@/lib/data/history";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
+import { getUnitPreference } from "@/lib/data/profile";
 import { setsForWeek } from "@/lib/mesocycle";
+import { fromKg } from "@/lib/units";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
 
 export const metadata = { title: "Log Workout" };
@@ -19,14 +21,32 @@ export default async function LogPage({ searchParams }) {
   const exerciseId = strOrNull(params?.exercise);
   const mesoId = strOrNull(params?.meso);
 
-  const [allExercises, history, activeMeso] = await Promise.all([
+  const [allExercises, historyKg, activeMeso, unit] = await Promise.all([
     getExercises(),
     getRecentPerformance(),
     // Re-fetched fresh here rather than trusting the link's query params,
     // so a bookmarked or day-old link always reflects the real current
     // week, not whatever week it was when the link was made.
     mesoId ? getActiveMesocycle() : null,
+    getUnitPreference(),
   ]);
+  // The logger works entirely in the user's chosen unit: history comes
+  // in converted, and it converts back to kg on save.
+  const history =
+    unit === "kg"
+      ? historyKg
+      : Object.fromEntries(
+          Object.entries(historyKg).map(([id, entry]) => [
+            id,
+            {
+              ...entry,
+              sets: entry.sets.map((s) => ({
+                ...s,
+                weight: s.weight == null ? null : Math.round(fromKg(s.weight, unit) * 10) / 10,
+              })),
+            },
+          ]),
+        );
   const byId = new Map(allExercises.map((e) => [e.id, e]));
   const meso = mesoId && activeMeso?.id === mesoId ? activeMeso : null;
 
@@ -65,6 +85,7 @@ export default async function LogPage({ searchParams }) {
       key={`${splitId ?? ""}|${dayTemplateId ?? ""}|${variant ?? ""}|${exerciseId ?? ""}|${today}`}
       allExercises={allExercises}
       history={history}
+      unit={unit}
       mesoContext={
         meso ? { week: meso.week, weeks: meso.weeks, isDeload: meso.isDeload, rirTarget: meso.rirTarget } : null
       }

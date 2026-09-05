@@ -20,6 +20,7 @@ export async function saveProfile(formData) {
   const country = str(formData.get("country"));
   const fitnessGoal = str(formData.get("fitnessGoal"));
   const experienceLevel = str(formData.get("experienceLevel"));
+  const unitPreference = formData.get("unitPreference") === "lb" ? "lb" : "kg";
   const phone = str(formData.get("phone"));
 
   const ageRaw = str(formData.get("age"));
@@ -59,6 +60,7 @@ export async function saveProfile(formData) {
     country: country || null,
     fitness_goal: fitnessGoal || null,
     experience_level: experienceLevel || null,
+    unit_preference: unitPreference,
     phone: phone || null,
     ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
     ...(completingOnboarding ? { onboarding_completed: true } : {}),

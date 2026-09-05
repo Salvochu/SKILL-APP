@@ -22,7 +22,7 @@ function niceStep(range) {
 // Two lifts on one "best set over time" chart, so you can see at a glance
 // which is moving and which has stalled. Shared time axis; each line only
 // has points on the days that lift was trained.
-export default function CompareExercises({ exercises }) {
+export default function CompareExercises({ exercises, unit = "kg" }) {
   const usable = useMemo(() => exercises.filter((e) => e.points.length >= 2), [exercises]);
   const [aId, setAId] = useState(usable[0]?.id);
   const [bId, setBId] = useState(usable[1]?.id ?? usable[0]?.id);
@@ -89,7 +89,7 @@ export default function CompareExercises({ exercises }) {
                   fill={color}
                   style={{ fontVariantNumeric: "tabular-nums" }}
                 >
-                  {compact(last.best1rm)} kg
+                  {compact(last.best1rm)} {unit}
                 </text>
               </g>
             );
@@ -135,7 +135,7 @@ export default function CompareExercises({ exercises }) {
               return (
                 <div key={key} className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
-                  <span className="text-fg">{p ? `${compact(p.best1rm)} kg` : "not trained"}</span>
+                  <span className="text-fg">{p ? `${compact(p.best1rm)} ${unit}` : "not trained"}</span>
                 </div>
               );
             })}

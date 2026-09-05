@@ -12,6 +12,7 @@ export default function ProfileForm({ initial }) {
   const [country, setCountry] = useState(initial.country);
   const [fitnessGoal, setFitnessGoal] = useState(initial.fitnessGoal);
   const [experienceLevel, setExperienceLevel] = useState(initial.experienceLevel);
+  const [unit, setUnit] = useState(initial.unitPreference === "lb" ? "lb" : "kg");
   const initialPhone = splitPhone(initial.phone);
   const [dial, setDial] = useState(initialPhone.dial);
   const [localPhone, setLocalPhone] = useState(initialPhone.local);
@@ -43,6 +44,7 @@ export default function ProfileForm({ initial }) {
     fd.set("country", country);
     fd.set("fitnessGoal", fitnessGoal);
     fd.set("experienceLevel", experienceLevel);
+    fd.set("unitPreference", unit);
     fd.set("phone", phone);
     if (avatarFile) fd.set("avatar", avatarFile);
 
@@ -165,6 +167,23 @@ export default function ProfileForm({ initial }) {
             </option>
           ))}
         </select>
+      </Field>
+
+      <Field label="Weight units">
+        <div className="flex gap-2">
+          {["kg", "lb"].map((u) => (
+            <button
+              key={u}
+              type="button"
+              onClick={() => setUnit(u)}
+              className={`flex-1 rounded-field border px-4 py-2 text-sm font-semibold transition-colors ${
+                unit === u ? "border-accent bg-accent-soft text-accent" : "border-border text-muted hover:text-fg"
+              }`}
+            >
+              {u}
+            </button>
+          ))}
+        </div>
       </Field>
 
       <Field label="Phone">

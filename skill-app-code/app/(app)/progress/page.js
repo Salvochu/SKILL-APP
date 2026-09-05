@@ -1,9 +1,15 @@
 import { Suspense } from "react";
 import { getProgressData } from "@/lib/data/progress";
-import { compact, formatKg, shortDate } from "@/components/progress/chartkit";
+import { getWeeklyMuscleVolume } from "@/lib/data/volume";
+import { getPersonalRecords } from "@/lib/data/prs";
+import { getUnitPreference } from "@/lib/data/profile";
+import { fromKg, unitLabel } from "@/lib/units";
+import { compact, shortDate } from "@/components/progress/chartkit";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
 import CompareExercises from "@/components/progress/CompareExercises";
+import MuscleVolume from "@/components/progress/MuscleVolume";
+import PersonalRecords from "@/components/progress/PersonalRecords";
 
 export const metadata = { title: "Progress" };
 
@@ -22,15 +28,38 @@ export default function ProgressPage() {
 }
 
 async function ProgressBody() {
-  const data = await getProgressData();
+  const [rawData, muscleVolume, records, unit] = await Promise.all([
+    getProgressData(),
+    getWeeklyMuscleVolume(),
+    getPersonalRecords(),
+    getUnitPreference(),
+  ]);
 
-  if (data.workouts === 0) {
+  if (rawData.workouts === 0) {
     return (
       <div className="rounded-card border border-dashed border-border bg-surface p-10 text-center text-sm text-muted">
         No data yet. Log a workout to start tracking progress.
       </div>
     );
   }
+
+  // Convert kg -> the user's unit once, so every chart and table below
+  // just formats numbers. `compact()` handles the display rounding.
+  const conv = (kg) => (kg == null ? kg : Math.round(fromKg(kg, unit)));
+  const data = {
+    ...rawData,
+    totalVolumeKg: conv(rawData.totalVolumeKg),
+    sessionVolumes: rawData.sessionVolumes.map((s) => ({ ...s, volumeKg: conv(s.volumeKg) })),
+    exercises: rawData.exercises.map((e) => ({
+      ...e,
+      points: e.points.map((p) => ({
+        ...p,
+        best1rm: conv(p.best1rm),
+        topWeight: Math.round(fromKg(p.topWeight, unit) * 10) / 10,
+      })),
+    })),
+  };
+  const U = unitLabel(unit);
 
   const strongExercises = data.exercises.filter((e) => e.points.length >= 2);
   const heaviest = data.exercises
@@ -40,28 +69,38 @@ async function ProgressBody() {
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Stat label="Total volume" value={`${compact(data.totalVolumeKg)} kg`} />
+        <Stat label="Total volume" value={`${compact(data.totalVolumeKg)} ${U}`} />
         <Stat label="Workouts" value={data.workouts} />
-        {heaviest ? <Stat label="Top est. 1RM" value={`${compact(heaviest.best1rm)} kg`} sub={heaviest.name} /> : null}
+        {heaviest ? <Stat label="Top est. 1RM" value={`${compact(heaviest.best1rm)} ${U}`} sub={heaviest.name} /> : null}
       </div>
 
-      <Card title="Training volume" subtitle="Total kg lifted per session">
-        <BarChart data={data.sessionVolumes} />
+      <Card title="Weekly sets by muscle" subtitle="Hard sets logged this week, per muscle group">
+        <MuscleVolume data={muscleVolume} />
+      </Card>
+
+      {records.length > 0 ? (
+        <Card title="Personal records" subtitle="Your best estimated 1RM on each lift">
+          <PersonalRecords records={records} unit={unit} />
+        </Card>
+      ) : null}
+
+      <Card title="Training volume" subtitle={`Total ${U} lifted per session`}>
+        <BarChart data={data.sessionVolumes} unit={U} />
         <DataTable
           headers={["Session", "Date", "Volume"]}
-          rows={data.sessionVolumes.slice(-16).map((s) => [s.label, shortDate(s.date), formatKg(s.volumeKg)])}
+          rows={data.sessionVolumes.slice(-16).map((s) => [s.label, shortDate(s.date), `${compact(s.volumeKg)} ${U}`])}
         />
       </Card>
 
       {strongExercises.length > 0 ? (
         <Card title="Strength over time" subtitle="Estimated 1RM (Epley) from your best set">
-          <StrengthChart exercises={data.exercises} />
+          <StrengthChart exercises={data.exercises} unit={U} />
           <DataTable
             headers={["Exercise", "Sessions", "Latest est. 1RM"]}
             rows={strongExercises.map((e) => [
               e.name,
               String(e.points.length),
-              `${compact(e.points.at(-1).best1rm)} kg`,
+              `${compact(e.points.at(-1).best1rm)} ${U}`,
             ])}
           />
         </Card>
@@ -69,7 +108,7 @@ async function ProgressBody() {
 
       {strongExercises.length >= 2 ? (
         <Card title="Compare two lifts" subtitle="Pick any two lifts you have logged and see how each is going">
-          <CompareExercises exercises={data.exercises} />
+          <CompareExercises exercises={data.exercises} unit={U} />
         </Card>
       ) : null}
     </>

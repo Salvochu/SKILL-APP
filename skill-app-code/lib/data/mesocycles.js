@@ -153,3 +153,77 @@ export async function getActiveMesocycle() {
       : null,
   };
 }
+
+// End-of-block readout: what was done across a finished (or finishing)
+// mesocycle run, and where strength moved. Compares the best estimated
+// 1RM in the first half of the run against the second half, per lift.
+export async function getMesocycleSummary(userMesocycleId) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: run } = await supabase
+    .from("user_mesocycles")
+    .select("id, start_date, template:mesocycle_templates(name, weeks)")
+    .eq("id", userMesocycleId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!run) return null;
+
+  const { data: sessions } = await supabase
+    .from("workout_sessions")
+    .select("id, started_at")
+    .eq("user_mesocycle_id", userMesocycleId)
+    .order("started_at", { ascending: true });
+  const sessionIds = (sessions ?? []).map((s) => s.id);
+  if (sessionIds.length === 0) {
+    return { templateName: run.template.name, weeks: run.template.weeks, sessionCount: 0, totalVolume: 0, gains: [] };
+  }
+
+  const { data: sets } = await supabase
+    .from("workout_sets")
+    .select("session_id, reps, weight, completed, exercise:exercises(name)")
+    .in("session_id", sessionIds);
+
+  const startedAt = new Map((sessions ?? []).map((s) => [s.id, new Date(s.started_at).getTime()]));
+  const first = startedAt.get(sessionIds[0]);
+  const last = startedAt.get(sessionIds[sessionIds.length - 1]);
+  const mid = first + (last - first) / 2;
+
+  let totalVolume = 0;
+  const perLift = new Map(); // name -> { early: bestE1, late: bestE1 }
+  for (const s of sets ?? []) {
+    if (s.completed === false) continue;
+    const w = Number(s.weight) || 0;
+    const r = Number(s.reps) || 0;
+    if (w > 0 && r > 0) totalVolume += w * r;
+    if (!(w > 0 && r > 0 && r <= 15)) continue;
+    const e1 = w * (1 + r / 30);
+    const name = s.exercise?.name ?? "Exercise";
+    if (!perLift.has(name)) perLift.set(name, { early: 0, late: 0 });
+    const rec = perLift.get(name);
+    const half = (startedAt.get(s.session_id) ?? first) <= mid ? "early" : "late";
+    if (e1 > rec[half]) rec[half] = e1;
+  }
+
+  const gains = [...perLift.entries()]
+    .filter(([, r]) => r.early > 0 && r.late > 0)
+    .map(([name, r]) => ({
+      name,
+      from: Math.round(r.early),
+      to: Math.round(r.late),
+      deltaPct: Math.round(((r.late - r.early) / r.early) * 100),
+    }))
+    .sort((a, b) => b.deltaPct - a.deltaPct)
+    .slice(0, 5);
+
+  return {
+    templateName: run.template.name,
+    weeks: run.template.weeks,
+    sessionCount: sessionIds.length,
+    totalVolume: Math.round(totalVolume),
+    gains,
+  };
+}

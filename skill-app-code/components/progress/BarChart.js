@@ -12,7 +12,7 @@ const HOLD_MS = 450;
 // Volume-per-session bars. Single series, so no legend: the card title says
 // what this is. Tap or hover a bar for its exact value; press and hold to
 // get a button through to that workout. A table view sits below.
-export default function BarChart({ data, max = 16 }) {
+export default function BarChart({ data, max = 16, unit = "kg" }) {
   const router = useRouter();
   // { i, mode } where mode is "peek" (value only) or "menu" (value + a
   // button to open the workout). null when nothing is shown.
@@ -93,7 +93,7 @@ export default function BarChart({ data, max = 16 }) {
                   className={d.id ? "cursor-pointer" : undefined}
                   role={d.id ? "button" : undefined}
                   tabIndex={d.id ? 0 : undefined}
-                  aria-label={d.id ? `${compact(d.volumeKg)} kg on ${shortDate(d.date)}, open workout` : undefined}
+                  aria-label={d.id ? `${compact(d.volumeKg)} ${unit} on ${shortDate(d.date)}, open workout` : undefined}
                   onPointerDown={() => startHold(i)}
                   onPointerUp={cancelHold}
                   onPointerCancel={cancelHold}
@@ -140,7 +140,7 @@ export default function BarChart({ data, max = 16 }) {
             style={{ left: `${(x(active.i) / W) * 100}%`, top: `${(y(shown.volumeKg) / H) * 100}%` }}
           >
             <div>
-              <div className="font-medium text-fg">{compact(shown.volumeKg)} kg</div>
+              <div className="font-medium text-fg">{compact(shown.volumeKg)} {unit}</div>
               <div className="text-dim">{shortDate(shown.date)}</div>
             </div>
             {active.mode === "menu" && shown.id ? (
