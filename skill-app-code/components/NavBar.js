@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Wordmark from "@/components/Wordmark";
 import ThemeToggle from "@/components/ThemeToggle";
-import GuardedStartLink from "@/components/log/GuardedStartLink";
 
 // Same three primary tabs on both layouts. Progress, Library, Profile
 // and Workout History all live behind Menu, so the bottom bar on mobile
@@ -49,13 +48,6 @@ export default function NavBar() {
           </nav>
 
           <div className="ml-auto flex items-center gap-1 md:ml-0">
-            <GuardedStartLink
-              href="/log"
-              className="hidden items-center gap-1.5 rounded-field bg-accent px-3 py-1.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2 md:inline-flex"
-            >
-              <IconPlus className="h-4 w-4" />
-              Log
-            </GuardedStartLink>
             <ThemeToggle />
             <Link
               href="/profile"
@@ -126,13 +118,6 @@ function IconMenu(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" {...props}>
       <path d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  );
-}
-function IconPlus(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" {...props}>
-      <path d="M12 5v14M5 12h14" />
     </svg>
   );
 }
