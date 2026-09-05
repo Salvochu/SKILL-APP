@@ -72,3 +72,41 @@ export function formatSet(s) {
   const rir = s.rir == null ? "" : ` @${s.rir}`;
   return `${w} x ${r}${rir}`;
 }
+
+const dayKeyOf = (d) => new Date(d).toISOString().slice(0, 10);
+function shiftDay(dateKey, delta) {
+  const d = new Date(`${dateKey}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+
+// Current and longest streak of distinct calendar days with a logged
+// session. The current streak stays alive through "today" as long as
+// yesterday had a session, it does not zero out the instant midnight
+// passes with nothing logged yet today. Dates are bucketed by UTC day,
+// matching the rest of the app's date handling.
+export function computeStreak(sessionDates, today = new Date()) {
+  const days = new Set((sessionDates || []).filter(Boolean).map(dayKeyOf));
+  if (days.size === 0) return { current: 0, longest: 0 };
+
+  const todayKey = dayKeyOf(today);
+  const yesterdayKey = shiftDay(todayKey, -1);
+
+  let current = 0;
+  let cursor = days.has(todayKey) ? todayKey : days.has(yesterdayKey) ? yesterdayKey : null;
+  while (cursor && days.has(cursor)) {
+    current += 1;
+    cursor = shiftDay(cursor, -1);
+  }
+
+  let longest = 0;
+  let run = 0;
+  let prev = null;
+  for (const d of [...days].sort()) {
+    run = prev && shiftDay(prev, 1) === d ? run + 1 : 1;
+    longest = Math.max(longest, run);
+    prev = d;
+  }
+
+  return { current, longest };
+}
