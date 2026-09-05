@@ -46,15 +46,21 @@ function makeExercise(exercise, targetSets = 3, targetReps = "") {
   };
 }
 
-export default function WorkoutLogger({ allExercises, history = {}, initial }) {
+export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial }) {
   const router = useRouter();
   const [title, setTitle] = useState(initial.title);
   const [date, setDate] = useState(initial.date);
   // Real elapsed time, not a typed guess: starts the moment this screen
   // mounts (this is "starting the workout") and becomes the saved
   // duration. startedAt is captured once; `now` just ticks the display.
+  // pausedAt is the timestamp of the current pause (null while running);
+  // pausedTotalMs is the sum of every earlier pause, so time spent
+  // paused is excluded from the saved duration.
   const [startedAt] = useState(() => Date.now());
   const [now, setNow] = useState(startedAt);
+  const [pausedAt, setPausedAt] = useState(null);
+  const [pausedTotalMs, setPausedTotalMs] = useState(0);
+  const [finished, setFinished] = useState(false);
   const [notes, setNotes] = useState("");
   const [rows, setRows] = useState(() =>
     initial.exercises.map((e) => makeExercise(e.exercise, e.sets, e.reps)),
@@ -67,15 +73,27 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
-  const [timerRunning, setTimerRunning] = useState(true);
 
   useEffect(() => {
-    if (!timerRunning) return;
+    if (pausedAt || finished) return;
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [timerRunning]);
+  }, [pausedAt, finished]);
 
-  const elapsedSeconds = Math.round((now - startedAt) / 1000);
+  // While paused (or finished), the "clock" is frozen at the moment the
+  // pause started, so this stays constant instead of still ticking.
+  const clockAt = pausedAt ?? now;
+  const elapsedSeconds = Math.max(0, Math.round((clockAt - startedAt - pausedTotalMs) / 1000));
+
+  function togglePause() {
+    if (finished) return;
+    if (pausedAt) {
+      setPausedTotalMs((ms) => ms + (Date.now() - pausedAt));
+      setPausedAt(null);
+    } else {
+      setPausedAt(Date.now());
+    }
+  }
 
   const totalVolume = useMemo(
     () =>
@@ -149,10 +167,24 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
     setError(null);
     setSavedOffline(false);
     setSaving(true);
-    // Freeze the clock the instant Save is tapped, so the round trip to
-    // the server is not counted as part of the workout.
-    setTimerRunning(false);
-    const durationMin = Math.max(0, Math.round((Date.now() - startedAt) / 60000));
+    // Freeze the clock the instant Save is tapped (unless it was already
+    // paused), so the round trip to the server is not counted as part of
+    // the workout.
+    const wasAlreadyPaused = pausedAt != null;
+    const freezeAt = pausedAt ?? Date.now();
+    if (!wasAlreadyPaused) setPausedAt(freezeAt);
+    setFinished(true);
+    const durationMin = Math.max(0, Math.round((freezeAt - startedAt - pausedTotalMs) / 60000));
+    // If the save does not go through, undo the freeze: fold the time
+    // spent attempting to save into paused time and keep going, or leave
+    // it paused if it already was before Save was tapped.
+    function resumeAfterFailedSave() {
+      setFinished(false);
+      if (!wasAlreadyPaused) {
+        setPausedTotalMs((ms) => ms + (Date.now() - freezeAt));
+        setPausedAt(null);
+      }
+    }
     const payload = {
       title,
       date,
@@ -161,6 +193,7 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
       splitId: initial.splitId,
       dayTemplateId: initial.dayTemplateId,
       variant: initial.variant,
+      userMesocycleId: initial.userMesocycleId,
       exercises: rows.map((r) => ({
         exerciseId: r.exercise.id,
         note: r.note,
@@ -172,7 +205,7 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
       if (result?.error) {
         setError(result.error);
         setSaving(false);
-        setTimerRunning(true); // the save did not go through, keep timing
+        resumeAfterFailedSave();
         return;
       }
       router.push("/dashboard");
@@ -190,7 +223,7 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
       }
       setError("Something went wrong saving this workout. Try again.");
       setSaving(false);
-      setTimerRunning(true);
+      resumeAfterFailedSave();
     }
   }
 
@@ -200,6 +233,17 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
         <h1 className="text-2xl font-bold text-fg">Log Workout</h1>
         <p className="text-sm text-muted">Add exercises, enter your sets, and save to your history.</p>
       </header>
+
+      {mesoContext ? (
+        <div className="flex items-center gap-3 rounded-card border border-accent/40 bg-accent-soft px-4 py-3">
+          <span className="text-sm font-semibold text-accent">
+            Week {mesoContext.week} of {mesoContext.weeks}
+          </span>
+          <span className="text-sm text-accent">
+            {mesoContext.isDeload ? "Deload, take it easy" : `Target effort: RIR ${mesoContext.rirTarget}`}
+          </span>
+        </div>
+      ) : null}
 
       <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
         <Field label="Workout name">
@@ -225,15 +269,27 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
             </div>
           </Field>
           <Field label="Session time" className="min-w-0">
-            <div className="flex w-full min-w-0 items-center gap-2 rounded-field border border-border bg-bg px-3 py-2">
+            <div className="flex w-full min-w-0 items-center gap-2 rounded-field border border-border bg-bg py-1.5 pl-3 pr-1.5">
               <span
                 className={`h-2 w-2 shrink-0 rounded-full ${
-                  timerRunning ? "animate-pulse bg-accent" : "bg-dim"
+                  pausedAt || finished ? "bg-dim" : "animate-pulse bg-accent"
                 }`}
                 aria-hidden="true"
               />
               <span className="tabular text-sm text-fg">{formatElapsed(elapsedSeconds)}</span>
-              <span className="text-xs text-dim">{timerRunning ? "recording" : "stopped"}</span>
+              <span className="flex-1 text-xs text-dim">
+                {finished ? "stopped" : pausedAt ? "paused" : "recording"}
+              </span>
+              {!finished ? (
+                <button
+                  type="button"
+                  onClick={togglePause}
+                  aria-label={pausedAt ? "Resume timer" : "Pause timer"}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-field text-dim transition-colors hover:bg-surface-2 hover:text-fg"
+                >
+                  {pausedAt ? <IconPlay className="h-4 w-4" /> : <IconPause className="h-4 w-4" />}
+                </button>
+              ) : null}
             </div>
           </Field>
         </div>
@@ -463,4 +519,10 @@ function Field({ label, className = "", children }) {
 }
 function IconPlus() {
   return <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>;
+}
+function IconPause(props) {
+  return <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M7 5h3v14H7zM14 5h3v14h-3z" /></svg>;
+}
+function IconPlay(props) {
+  return <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M8 5.5v13l11-6.5z" /></svg>;
 }

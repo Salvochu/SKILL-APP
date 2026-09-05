@@ -1,0 +1,158 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { startMesocycle, finishMesocycle, abandonMesocycle } from "@/app/(app)/dashboard/actions";
+
+export default function MesocyclePanel({ active, templates }) {
+  const router = useRouter();
+  const [showPicker, setShowPicker] = useState(!active);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function onStart(templateId) {
+    setBusy(true);
+    setError(null);
+    const result = await startMesocycle(templateId);
+    setBusy(false);
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+    setShowPicker(false);
+    router.refresh();
+  }
+
+  async function onFinish() {
+    setBusy(true);
+    setError(null);
+    const result = await finishMesocycle(active.id);
+    setBusy(false);
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+    router.refresh();
+  }
+
+  async function onAbandon() {
+    setBusy(true);
+    setError(null);
+    const result = await abandonMesocycle(active.id);
+    setBusy(false);
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+    setShowPicker(true);
+    router.refresh();
+  }
+
+  if (active && !showPicker) {
+    if (active.isComplete) {
+      return (
+        <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-accent">Program complete</span>
+          <h2 className="font-display text-lg font-semibold text-fg">{active.templateName}</h2>
+          <p className="text-sm text-muted">
+            You finished all {active.weeks} weeks. Nice work. Start it again or pick something else below.
+          </p>
+          {error ? <p className="text-sm text-danger">{error}</p> : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onFinish}
+              disabled={busy}
+              className="rounded-field bg-accent px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+            >
+              Mark as done
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPicker(true)}
+              disabled={busy}
+              className="rounded-field border border-border px-4 py-2 text-sm font-medium text-fg hover:bg-surface-2 disabled:opacity-60"
+            >
+              Choose a program
+            </button>
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+            Week {active.week} of {active.weeks}
+            {active.isDeload ? " . Deload" : ""}
+          </span>
+          <button type="button" onClick={() => setShowPicker(true)} className="text-xs font-medium text-dim hover:text-fg">
+            Switch program
+          </button>
+        </div>
+        <h2 className="font-display text-lg font-semibold text-fg">{active.templateName}</h2>
+        <p className="text-sm text-muted">
+          {active.isDeload
+            ? "Deload week: lighter sets, easy effort. Recover before the next block."
+            : `Target effort this week: RIR ${active.rirTarget}.`}
+        </p>
+        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {active.nextDay ? (
+          <Link
+            href={`/log?meso=${active.id}&split=${active.splitId}&day=${active.nextDay.dayTemplateId}&variant=Standard`}
+            className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2"
+          >
+            Start {active.nextDay.name}
+          </Link>
+        ) : (
+          <p className="text-sm text-muted">This program&apos;s split has no days set up yet.</p>
+        )}
+      </section>
+    );
+  }
+
+  return (
+    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-dim">Guided programs</span>
+        {active ? (
+          <button type="button" onClick={() => setShowPicker(false)} className="text-xs font-medium text-dim hover:text-fg">
+            Cancel
+          </button>
+        ) : null}
+      </div>
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {templates.length === 0 ? (
+        <p className="text-sm text-muted">No programs are set up yet.</p>
+      ) : (
+        <ul className="flex flex-col gap-2.5">
+          {templates.map((t) => (
+            <li key={t.id} className="flex items-center justify-between gap-3 rounded-field border border-border bg-bg/40 px-3 py-2.5">
+              <span className="flex-1">
+                <span className="block text-sm font-medium text-fg">{t.name}</span>
+                <span className="block text-xs text-dim">
+                  {t.split?.name} . {t.weeks} weeks . RIR {t.starting_rir} to 0
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => onStart(t.id)}
+                disabled={busy}
+                className="shrink-0 rounded-field bg-accent px-3 py-1.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+              >
+                Start
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {active ? (
+        <button type="button" onClick={onAbandon} disabled={busy} className="self-start text-xs font-medium text-dim hover:text-danger">
+          Stop {active.templateName}
+        </button>
+      ) : null}
+    </section>
+  );
+}

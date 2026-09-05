@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getProgressData } from "@/lib/data/progress";
 import BarChart from "@/components/progress/BarChart";
+import MesocycleSection from "@/components/dashboard/MesocycleSection";
 
 export const metadata = { title: "Dashboard" };
 
@@ -10,6 +11,10 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8 py-2">
       <Hero />
+
+      <Suspense fallback={<div className="h-40 rounded-card bg-surface" />}>
+        <MesocycleSection />
+      </Suspense>
 
       <Suspense fallback={<div className="h-[4.5rem] rounded-card bg-surface" />}>
         <Streak />
