@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { currentWeek, isMesocycleComplete, isDeloadWeek, rirForWeek, nextDayIndex } from "@/lib/mesocycle";
+import { sortVariants } from "@/lib/exercises";
 
 // The programs available to start. Reference data, readable by any
 // signed-in user, same as splits/day_templates.
@@ -12,6 +13,51 @@ export async function getMesocycleTemplates() {
     .order("position");
   if (error) throw new Error(`Failed to load mesocycle templates: ${error.message}`);
   return data ?? [];
+}
+
+// Everything needed to show a template's overview before starting it:
+// its days, and which equipment variants its split actually has (the
+// coached programs have only "Standard"; the primary splits have Full
+// Gym / Dumbbells / Bodyweight).
+export async function getMesocycleOverview(templateId) {
+  const supabase = await createClient();
+  const { data: template, error } = await supabase
+    .from("mesocycle_templates")
+    .select("id, name, description, weeks, starting_rir, split:splits(id, name, cadence)")
+    .eq("id", templateId)
+    .maybeSingle();
+  if (error) throw new Error(`Failed to load program: ${error.message}`);
+  if (!template) return null;
+
+  const { data: days, error: daysError } = await supabase
+    .from("split_days")
+    .select("position, label, day_template:day_templates(id, name, focus)")
+    .eq("split_id", template.split.id)
+    .order("position");
+  if (daysError) throw new Error(`Failed to load program days: ${daysError.message}`);
+
+  const dayTemplateIds = [...new Set((days ?? []).map((d) => d.day_template?.id).filter(Boolean))];
+  const { data: variantRows, error: variantError } = dayTemplateIds.length
+    ? await supabase.from("day_template_exercises").select("variant").in("day_template_id", dayTemplateIds)
+    : { data: [], error: null };
+  if (variantError) throw new Error(`Failed to load program variants: ${variantError.message}`);
+
+  const variants = sortVariants([...new Set((variantRows ?? []).map((r) => r.variant))]);
+
+  return {
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    weeks: template.weeks,
+    startingRir: template.starting_rir,
+    splitName: template.split.name,
+    variants,
+    days: (days ?? []).map((d) => ({
+      position: d.position,
+      name: d.day_template?.name ?? d.label ?? "Day",
+      focus: d.day_template?.focus ?? null,
+    })),
+  };
 }
 
 // The signed-in user's current run, with everything computed: week, RIR
@@ -27,7 +73,7 @@ export async function getActiveMesocycle() {
   const { data: run, error } = await supabase
     .from("user_mesocycles")
     .select(
-      "id, start_date, status, template:mesocycle_templates(id, name, weeks, starting_rir, split:splits(id, name))",
+      "id, start_date, status, variant, template:mesocycle_templates(id, name, weeks, starting_rir, split:splits(id, name))",
     )
     .eq("user_id", user.id)
     .eq("status", "active")
@@ -64,6 +110,7 @@ export async function getActiveMesocycle() {
   return {
     id: run.id,
     startDate: run.start_date,
+    variant: run.variant || "Standard",
     templateId: run.template.id,
     templateName: run.template.name,
     splitId: run.template.split.id,
