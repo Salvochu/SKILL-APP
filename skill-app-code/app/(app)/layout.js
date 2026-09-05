@@ -10,7 +10,7 @@ export default function AppLayout({ children }) {
       <Suspense fallback={<div className="fixed inset-x-0 top-0 z-40 h-14 border-b border-border bg-bg md:h-16" />}>
         <NavBar />
       </Suspense>
-      <main className="mx-auto w-full max-w-2xl px-4 pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:max-w-5xl md:px-6 md:pt-16 md:pb-16">
+      <main className="mx-auto w-full max-w-2xl px-4 pt-14 pb-[calc(5rem+env(safe-area-inset-bottom))] md:max-w-5xl md:px-6 md:pt-16 md:pb-16">
         {children}
       </main>
     </div>

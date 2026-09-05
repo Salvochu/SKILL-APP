@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { computeStreak } from "@/lib/training";
+import { computeWeekStreak } from "@/lib/training";
 
 // The signed-in user's workout history. RLS scopes every row to auth.uid(),
 // so these queries never need an explicit user filter.
@@ -28,7 +28,7 @@ export async function getWorkoutSummary() {
     return sum + Math.max(0, (new Date(s.completed_at) - new Date(s.started_at)) / 60000);
   }, 0);
 
-  const streak = computeStreak(sessions.map((s) => s.started_at));
+  const streak = computeWeekStreak(sessions.map((s) => s.started_at));
 
   return {
     workouts: sessions.length,
@@ -36,7 +36,7 @@ export async function getWorkoutSummary() {
     volumeKg,
     minutes: Math.round(minutes),
     recent: sessions.slice(0, 5),
-    streakDays: streak.current,
-    longestStreak: streak.longest,
+    streakWeeks: streak.current,
+    longestStreakWeeks: streak.longest,
   };
 }

@@ -63,15 +63,18 @@ export default function NavBar() {
       <Link
         href="/log"
         aria-label="Log a workout"
-        className={`fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-black shadow-lg shadow-black/40 transition-transform hover:scale-105 active:scale-95 md:hidden ${
+        className={`fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-black shadow-lg shadow-black/40 transition-transform hover:scale-105 active:scale-95 md:hidden ${
           onLog ? "hidden" : ""
         }`}
       >
         <IconPlus className="h-6 w-6" />
       </Link>
 
-      {/* Bottom tab bar, mobile only. */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      {/* Bottom tab bar, mobile only. Padding goes past the reported
+          safe-area inset on purpose: right at that boundary, a tap can
+          still land in iOS's own home-indicator gesture strip instead of
+          the link under it. */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] backdrop-blur md:hidden">
         <div className="mx-auto grid max-w-2xl grid-cols-4">
           {TABS.map((tab) => {
             const active = isActive(pathname, tab.href);
