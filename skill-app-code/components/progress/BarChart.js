@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { niceScale, compact, shortDate } from "@/components/progress/chartkit";
 
 const W = 640;
@@ -10,8 +11,12 @@ const M = { top: 16, right: 14, bottom: 26, left: 44 };
 // Volume-per-session bars. Single series, so no legend: the card title says
 // what this is. Hover a bar for its exact value; a table view sits below.
 export default function BarChart({ data, max = 16 }) {
+  const router = useRouter();
   const [hover, setHover] = useState(null);
   const rows = data.slice(-max);
+  const openWorkout = (id) => {
+    if (id) router.push(`/workouts/${id}`);
+  };
 
   const peak = Math.max(1, ...rows.map((d) => d.volumeKg));
   const { max: yMax, ticks } = niceScale(peak);
@@ -61,8 +66,19 @@ export default function BarChart({ data, max = 16 }) {
                   width={band}
                   height={plotH}
                   fill="transparent"
+                  className={d.id ? "cursor-pointer" : undefined}
+                  role={d.id ? "button" : undefined}
+                  tabIndex={d.id ? 0 : undefined}
+                  aria-label={d.id ? `Open workout, ${compact(d.volumeKg)} kg on ${shortDate(d.date)}` : undefined}
                   onMouseEnter={() => setHover(i)}
                   onMouseLeave={() => setHover(null)}
+                  onClick={() => openWorkout(d.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openWorkout(d.id);
+                    }
+                  }}
                 />
               </g>
             );
