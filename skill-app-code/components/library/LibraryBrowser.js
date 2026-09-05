@@ -11,7 +11,7 @@ export default function LibraryBrowser({ exercises, noun = "exercise", canLog = 
   const [equipment, setEquipment] = useState("All");
   const [openId, setOpenId] = useState(null);
 
-  const plural = `${noun}s`;
+  const plural = /(s|sh|ch|x|z)$/.test(noun) ? `${noun}es` : `${noun}s`;
 
   const muscles = useMemo(
     () => sortMuscles([...new Set(exercises.map((e) => e.muscle))]),
