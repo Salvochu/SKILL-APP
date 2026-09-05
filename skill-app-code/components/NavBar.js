@@ -6,17 +6,10 @@ import Wordmark from "@/components/Wordmark";
 import ThemeToggle from "@/components/ThemeToggle";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 
-const DESKTOP_TABS = [
-  { href: "/dashboard", label: "Dashboard", icon: IconHome },
-  { href: "/library", label: "Library", icon: IconLibrary },
-  { href: "/splits", label: "Splits", icon: IconSplits },
-  { href: "/progress", label: "Progress", icon: IconProgress },
-];
-
-// The mobile bottom bar stays to 3 tabs so it does not get cramped.
-// Everything else (Profile, Progress, Library, Workout History) lives
-// behind Menu instead.
-const MOBILE_TABS = [
+// Same three primary tabs on both layouts. Progress, Library, Profile
+// and Workout History all live behind Menu, so the bottom bar on mobile
+// stays uncrowded and desktop matches it.
+const TABS = [
   { href: "/dashboard", label: "Dashboard", icon: IconHome },
   { href: "/splits", label: "Splits", icon: IconSplits },
   { href: "/menu", label: "Menu", icon: IconMenu },
@@ -38,7 +31,7 @@ export default function NavBar() {
           </Link>
 
           <nav className="hidden flex-1 items-center gap-1 md:flex">
-            {DESKTOP_TABS.map((tab) => {
+            {TABS.map((tab) => {
               const active = isActive(pathname, tab.href);
               return (
                 <Link
@@ -84,7 +77,7 @@ export default function NavBar() {
           the link under it. */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] backdrop-blur md:hidden">
         <div className="mx-auto grid max-w-2xl grid-cols-3">
-          {MOBILE_TABS.map((tab) => {
+          {TABS.map((tab) => {
             const active = isActive(pathname, tab.href);
             const Icon = tab.icon;
             return (
@@ -120,28 +113,12 @@ function IconHome(props) {
     </svg>
   );
 }
-function IconLibrary(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-    </svg>
-  );
-}
 function IconSplits(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="m12 3 9 5-9 5-9-5 9-5z" />
       <path d="m3 13 9 5 9-5" />
       <path d="m3 18 9 5 9-5" opacity="0.5" />
-    </svg>
-  );
-}
-function IconProgress(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M4 4v16h16" />
-      <path d="m7 14 3.5-4 3 2.5L20 6" />
     </svg>
   );
 }
