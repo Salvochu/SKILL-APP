@@ -45,12 +45,15 @@ export async function proxy(request) {
 
   // Routes that must be reachable without a session and must never be
   // redirected to /login: the login/signup screens, the password recovery
-  // screen, inbound webhooks, and the dev-only component gallery.
+  // screen, inbound webhooks, the offline fallback (precached by the
+  // service worker, has to render with no auth check possible), and the
+  // dev-only component gallery.
   const isPublicRoute =
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/auth/") ||
     pathname.startsWith("/api/") ||
+    pathname.startsWith("/offline") ||
     pathname.startsWith("/design-preview");
   const isAuthScreen =
     pathname.startsWith("/login") || pathname.startsWith("/signup");

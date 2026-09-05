@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { saveWorkout } from "@/app/(app)/log/actions";
 import RestTimer from "@/components/log/RestTimer";
 import ExercisePicker from "@/components/log/ExercisePicker";
 import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
 import { formatSet } from "@/lib/training";
+import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 
 let keySeq = 0;
 const nextKey = () => `x${++keySeq}`;
@@ -35,6 +37,7 @@ function makeExercise(exercise, targetSets = 3, targetReps = "") {
 }
 
 export default function WorkoutLogger({ allExercises, history = {}, initial }) {
+  const router = useRouter();
   const [title, setTitle] = useState(initial.title);
   const [date, setDate] = useState(initial.date);
   const [duration, setDuration] = useState(45);
@@ -49,6 +52,7 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
   const [showRest, setShowRest] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [savedOffline, setSavedOffline] = useState(false);
 
   const totalVolume = useMemo(
     () =>
@@ -120,6 +124,7 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
 
   async function onSave() {
     setError(null);
+    setSavedOffline(false);
     setSaving(true);
     const payload = {
       title,
@@ -135,12 +140,28 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
         sets: r.sets.map((s) => ({ weight: s.weight, reps: s.reps, rir: s.rir, completed: s.completed })),
       })),
     };
-    const result = await saveWorkout(payload);
-    if (result?.error) {
-      setError(result.error);
+    try {
+      const result = await saveWorkout(payload);
+      if (result?.error) {
+        setError(result.error);
+        setSaving(false);
+        return;
+      }
+      router.push("/dashboard");
+    } catch (err) {
+      if (isLikelyNetworkError(err)) {
+        // No connection right now, most likely at the gym. Keep the
+        // typed sets on this device instead of losing them; a background
+        // sync (components/OfflineQueueSync.js) replays it once the
+        // connection is back.
+        queueWorkout(payload);
+        setSaving(false);
+        setSavedOffline(true);
+        return;
+      }
+      setError("Something went wrong saving this workout. Try again.");
       setSaving(false);
     }
-    // success path redirects server-side
   }
 
   return (
@@ -234,6 +255,12 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
       {error ? (
         <p className="rounded-field border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
       ) : null}
+      {savedOffline ? (
+        <p className="rounded-field border border-accent/40 bg-accent-soft px-3 py-2 text-sm text-accent">
+          No connection right now. This workout is saved on this device and will sync automatically once
+          you are back online.
+        </p>
+      ) : null}
 
       <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex items-center gap-4 rounded-card border border-border bg-surface p-4 md:bottom-4">
         <span className="flex flex-col">
@@ -243,10 +270,10 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
         <button
           type="button"
           onClick={onSave}
-          disabled={saving}
+          disabled={saving || savedOffline}
           className="ml-auto rounded-field bg-accent px-5 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
         >
-          {saving ? "Saving..." : "Save Workout"}
+          {savedOffline ? "Saved on this device" : saving ? "Saving..." : "Save Workout"}
         </button>
       </div>
 
