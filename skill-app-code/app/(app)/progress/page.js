@@ -3,6 +3,7 @@ import { getProgressData } from "@/lib/data/progress";
 import { compact, formatKg, shortDate } from "@/components/progress/chartkit";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
+import CompareExercises from "@/components/progress/CompareExercises";
 
 export const metadata = { title: "Progress" };
 
@@ -63,6 +64,12 @@ async function ProgressBody() {
               `${compact(e.points.at(-1).best1rm)} kg`,
             ])}
           />
+        </Card>
+      ) : null}
+
+      {strongExercises.length >= 2 ? (
+        <Card title="Compare two lifts" subtitle="Estimated 1RM over time, side by side">
+          <CompareExercises exercises={data.exercises} />
         </Card>
       ) : null}
     </>
