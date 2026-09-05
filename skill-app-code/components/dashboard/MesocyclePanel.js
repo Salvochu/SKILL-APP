@@ -115,10 +115,20 @@ export default function MesocyclePanel({ active, templates }) {
 
   return (
     <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-dim">Guided programs</span>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-display text-lg font-semibold text-fg">Pick the right program</h2>
+          <p className="text-sm text-muted">
+            Each one runs for its full length: effort builds week by week from RIR 3 down to 0, then
+            a lighter deload week to recover before you start again.
+          </p>
+        </div>
         {active ? (
-          <button type="button" onClick={() => setShowPicker(false)} className="text-xs font-medium text-dim hover:text-fg">
+          <button
+            type="button"
+            onClick={() => setShowPicker(false)}
+            className="shrink-0 text-xs font-medium text-dim hover:text-fg"
+          >
             Cancel
           </button>
         ) : null}
@@ -131,9 +141,9 @@ export default function MesocyclePanel({ active, templates }) {
           {templates.map((t) => (
             <li key={t.id} className="flex items-center justify-between gap-3 rounded-field border border-border bg-bg/40 px-3 py-2.5">
               <span className="flex-1">
-                <span className="block text-sm font-medium text-fg">{t.name}</span>
+                <span className="block text-sm font-medium text-fg">{t.split?.name ?? t.name}</span>
                 <span className="block text-xs text-dim">
-                  {t.split?.name} . {t.weeks} weeks . RIR {t.starting_rir} to 0
+                  {t.weeks} weeks . {t.split?.cadence}
                 </span>
               </span>
               <button
