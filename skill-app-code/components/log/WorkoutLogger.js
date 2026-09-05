@@ -46,7 +46,7 @@ function makeExercise(exercise, targetSets = 3, targetReps = "") {
   };
 }
 
-export default function WorkoutLogger({ allExercises, history = {}, initial }) {
+export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial }) {
   const router = useRouter();
   const [title, setTitle] = useState(initial.title);
   const [date, setDate] = useState(initial.date);
@@ -193,6 +193,7 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
       splitId: initial.splitId,
       dayTemplateId: initial.dayTemplateId,
       variant: initial.variant,
+      userMesocycleId: initial.userMesocycleId,
       exercises: rows.map((r) => ({
         exerciseId: r.exercise.id,
         note: r.note,
@@ -232,6 +233,17 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
         <h1 className="text-2xl font-bold text-fg">Log Workout</h1>
         <p className="text-sm text-muted">Add exercises, enter your sets, and save to your history.</p>
       </header>
+
+      {mesoContext ? (
+        <div className="flex items-center gap-3 rounded-card border border-accent/40 bg-accent-soft px-4 py-3">
+          <span className="text-sm font-semibold text-accent">
+            Week {mesoContext.week} of {mesoContext.weeks}
+          </span>
+          <span className="text-sm text-accent">
+            {mesoContext.isDeload ? "Deload, take it easy" : `Target effort: RIR ${mesoContext.rirTarget}`}
+          </span>
+        </div>
+      ) : null}
 
       <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
         <Field label="Workout name">

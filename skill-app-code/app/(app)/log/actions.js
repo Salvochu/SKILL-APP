@@ -53,6 +53,21 @@ export async function saveWorkout(payload) {
     return { error: "Log at least one set before saving." };
   }
 
+  // A foreign key alone would not stop a tampered payload from pointing
+  // at someone else's mesocycle (RLS on workout_sessions does not know
+  // to check ownership of a referenced row in a different table), so
+  // confirm it is actually this user's before attaching it.
+  let userMesocycleId = null;
+  if (payload.userMesocycleId) {
+    const { data: owned } = await supabase
+      .from("user_mesocycles")
+      .select("id")
+      .eq("id", payload.userMesocycleId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (owned) userMesocycleId = owned.id;
+  }
+
   const { data: session, error: sessionError } = await supabase
     .from("workout_sessions")
     .insert({
@@ -64,6 +79,7 @@ export async function saveWorkout(payload) {
       split_id: payload.splitId || null,
       day_template_id: payload.dayTemplateId || null,
       variant: payload.variant || null,
+      user_mesocycle_id: userMesocycleId,
     })
     .select("id")
     .single();

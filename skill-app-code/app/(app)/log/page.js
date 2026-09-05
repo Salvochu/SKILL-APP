@@ -1,6 +1,8 @@
 import { getExercises } from "@/lib/data/exercises";
 import { getDayTemplateExercises, getDayTemplate } from "@/lib/data/dayTemplates";
 import { getRecentPerformance } from "@/lib/data/history";
+import { getActiveMesocycle } from "@/lib/data/mesocycles";
+import { setsForWeek } from "@/lib/mesocycle";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
 
 export const metadata = { title: "Log Workout" };
@@ -15,12 +17,18 @@ export default async function LogPage({ searchParams }) {
   const dayTemplateId = strOrNull(params?.day);
   const variant = strOrNull(params?.variant);
   const exerciseId = strOrNull(params?.exercise);
+  const mesoId = strOrNull(params?.meso);
 
-  const [allExercises, history] = await Promise.all([
+  const [allExercises, history, activeMeso] = await Promise.all([
     getExercises(),
     getRecentPerformance(),
+    // Re-fetched fresh here rather than trusting the link's query params,
+    // so a bookmarked or day-old link always reflects the real current
+    // week, not whatever week it was when the link was made.
+    mesoId ? getActiveMesocycle() : null,
   ]);
   const byId = new Map(allExercises.map((e) => [e.id, e]));
+  const meso = mesoId && activeMeso?.id === mesoId ? activeMeso : null;
 
   let title = "Workout";
   let preload = [];
@@ -31,9 +39,15 @@ export default async function LogPage({ searchParams }) {
       getDayTemplateExercises(dayTemplateId, variant),
     ]);
     if (day) title = variant === "Standard" ? day.name : `${day.name} (${variant})`;
+    if (meso) title = `${title} . Week ${meso.week} of ${meso.weeks}${meso.isDeload ? " (deload)" : ""}`;
+
     preload = items
       .filter((it) => it.exercise)
-      .map((it) => ({ exercise: it.exercise, sets: it.sets, reps: it.reps }));
+      .map((it) => ({
+        exercise: it.exercise,
+        sets: meso ? setsForWeek(it.sets, meso.week, meso.weeks) : it.sets,
+        reps: it.reps,
+      }));
   } else if (exerciseId && byId.has(exerciseId)) {
     const e = byId.get(exerciseId);
     title = e.name;
@@ -46,7 +60,18 @@ export default async function LogPage({ searchParams }) {
     <WorkoutLogger
       allExercises={allExercises}
       history={history}
-      initial={{ title, date: today, exercises: preload, splitId, dayTemplateId, variant }}
+      mesoContext={
+        meso ? { week: meso.week, weeks: meso.weeks, isDeload: meso.isDeload, rirTarget: meso.rirTarget } : null
+      }
+      initial={{
+        title,
+        date: today,
+        exercises: preload,
+        splitId,
+        dayTemplateId,
+        variant,
+        userMesocycleId: meso?.id ?? null,
+      }}
     />
   );
 }
