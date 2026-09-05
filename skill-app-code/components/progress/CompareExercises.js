@@ -1,19 +1,27 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { niceScale, compact, shortDate } from "@/components/progress/chartkit";
+import { compact, shortDate } from "@/components/progress/chartkit";
 
 const W = 640;
 const H = 240;
-const M = { top: 16, right: 16, bottom: 26, left: 44 };
+const M = { top: 18, right: 16, bottom: 26, left: 44 };
 const SERIES = [
   { key: "a", color: "var(--color-accent)" },
   { key: "b", color: "var(--muscle-back)" },
 ];
 
-// Two lifts on one estimated-1RM-over-time chart, so you can see at a
-// glance which is moving and which has stalled. Shared time axis; each
-// line only has points on the days that lift was trained.
+// A round-ish gridline step, about four to five across the range.
+function niceStep(range) {
+  const target = Math.max(1, range) / 4;
+  const mag = Math.pow(10, Math.floor(Math.log10(target)));
+  const n = target / mag;
+  return (n >= 5 ? 5 : n >= 2 ? 2 : 1) * mag;
+}
+
+// Two lifts on one "best set over time" chart, so you can see at a glance
+// which is moving and which has stalled. Shared time axis; each line only
+// has points on the days that lift was trained.
 export default function CompareExercises({ exercises }) {
   const usable = useMemo(() => exercises.filter((e) => e.points.length >= 2), [exercises]);
   const [aId, setAId] = useState(usable[0]?.id);
@@ -28,10 +36,15 @@ export default function CompareExercises({ exercises }) {
   const xi = new Map(dates.map((d, i) => [d, i]));
 
   const all = [...a.points, ...b.points].map((p) => p.best1rm);
-  const hi = Math.max(...all);
-  const lo = Math.min(...all);
-  const { max: yMax, ticks } = niceScale(hi * 1.1);
-  const yMin = Math.max(0, Math.floor((lo * 0.85) / 10) * 10);
+  const rawHi = Math.max(...all);
+  const rawLo = Math.min(...all);
+  // Anchor at 0 when the two lifts are far apart (the size of the gap is
+  // the point); otherwise zoom into the band they live in.
+  const yMin = rawLo < rawHi * 0.6 ? 0 : Math.max(0, Math.floor((rawLo * 0.9) / 5) * 5);
+  const step = niceStep(rawHi * 1.1 - yMin);
+  const yMax = Math.max(yMin + step, Math.ceil((rawHi * 1.06) / step) * step);
+  const ticks = [];
+  for (let t = yMin; t <= yMax + 1e-9; t += step) ticks.push(Math.round(t));
 
   const plotW = W - M.left - M.right;
   const plotH = H - M.top - M.bottom;
@@ -42,14 +55,14 @@ export default function CompareExercises({ exercises }) {
 
   return (
     <figure className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         <Picker value={a.id} onChange={setAId} options={usable} dot={SERIES[0].color} />
         <Picker value={b.id} onChange={setBId} options={usable} dot={SERIES[1].color} />
       </div>
 
       <div className="relative">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Estimated 1RM over time for ${a.name} and ${b.name}`}>
-          {ticks.filter((t) => t >= yMin).map((t) => (
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Best set over time for ${a.name} and ${b.name}`}>
+          {ticks.map((t) => (
             <g key={t}>
               <line x1={M.left} x2={W - M.right} y1={y(t)} y2={y(t)} stroke="var(--color-border)" strokeWidth="1" />
               <text x={M.left - 8} y={y(t)} textAnchor="end" dominantBaseline="middle" className="fill-dim text-[10px]" style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -58,9 +71,8 @@ export default function CompareExercises({ exercises }) {
             </g>
           ))}
 
-          {SERIES.map(({ key, color }) => {
-            const ex = lines[key];
-            const pts = [...ex.points].sort((p, q) => p.date.localeCompare(q.date));
+          {SERIES.map(({ key, color }, si) => {
+            const pts = [...lines[key].points].sort((p, q) => p.date.localeCompare(q.date));
             const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(xi.get(p.date))},${y(p.best1rm)}`).join(" ");
             const last = pts[pts.length - 1];
             return (
@@ -69,8 +81,15 @@ export default function CompareExercises({ exercises }) {
                 {pts.map((p) => (
                   <circle key={p.date} cx={x(xi.get(p.date))} cy={y(p.best1rm)} r="3.5" fill={color} stroke="var(--color-bg)" strokeWidth="2" />
                 ))}
-                <text x={x(xi.get(last.date))} y={y(last.best1rm) - 9} textAnchor="end" className="text-[10px] font-semibold" fill={color} style={{ fontVariantNumeric: "tabular-nums" }}>
-                  {compact(last.best1rm)}
+                <text
+                  x={x(xi.get(last.date))}
+                  y={y(last.best1rm) + (si === 0 ? -9 : 16)}
+                  textAnchor="end"
+                  className="text-[10px] font-semibold"
+                  fill={color}
+                  style={{ fontVariantNumeric: "tabular-nums" }}
+                >
+                  {compact(last.best1rm)} kg
                 </text>
               </g>
             );
@@ -106,7 +125,7 @@ export default function CompareExercises({ exercises }) {
             className="pointer-events-none absolute rounded-field border border-border bg-bg px-2 py-1.5 text-xs shadow-lg"
             style={{
               left: `${(x(hover) / W) * 100}%`,
-              top: "8%",
+              top: "6%",
               transform: `translateX(${hover > dates.length / 2 ? "-100%" : "0"})`,
             }}
           >
@@ -116,7 +135,7 @@ export default function CompareExercises({ exercises }) {
               return (
                 <div key={key} className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
-                  <span className="text-fg">{p ? `~${compact(p.best1rm)} kg` : "—"}</span>
+                  <span className="text-fg">{p ? `${compact(p.best1rm)} kg` : "not trained"}</span>
                 </div>
               );
             })}
@@ -138,12 +157,12 @@ export default function CompareExercises({ exercises }) {
 
 function Picker({ value, onChange, options, dot }) {
   return (
-    <label className="flex items-center gap-2 rounded-field border border-border bg-surface px-2.5 py-1.5">
+    <label className="flex items-center gap-2 rounded-field border border-border bg-surface px-2.5 py-2">
       <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: dot }} />
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="max-w-[9rem] bg-transparent text-sm text-fg focus:outline-none"
+        className="w-full min-w-0 bg-transparent text-sm text-fg focus:outline-none"
       >
         {options.map((e) => (
           <option key={e.id} value={e.id}>{e.name}</option>

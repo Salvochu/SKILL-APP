@@ -39,20 +39,24 @@ export async function getProgressData() {
     volumeKg: Math.round(volBySession.get(s.id) || 0),
   }));
 
-  // estimated 1RM per exercise per session (best set)
-  const perExercise = new Map(); // exId -> { name, bySession: Map(sessionId -> {best1rm, topWeight, topReps}) }
+  // estimated 1RM per exercise per day, from the best set of that day.
+  // Bucketed by calendar day, not session: training a lift twice in one
+  // day would otherwise plot two points on the same date and draw a
+  // vertical line between them.
+  const perExercise = new Map(); // exId -> { name, byDay: Map(dayKey -> {best1rm, topWeight, topReps}) }
   for (const s of sets) {
     const w = Number(s.weight) || 0;
     const r = Number(s.reps) || 0;
     if (w <= 0 || r <= 0) continue;
     const e1 = epley(w, r);
     if (!perExercise.has(s.exercise_id)) {
-      perExercise.set(s.exercise_id, { name: s.exercise?.name ?? "Exercise", bySession: new Map() });
+      perExercise.set(s.exercise_id, { name: s.exercise?.name ?? "Exercise", byDay: new Map() });
     }
     const ex = perExercise.get(s.exercise_id);
-    const cur = ex.bySession.get(s.session_id);
+    const day = dayKey(sessionById.get(s.session_id)?.started_at ?? new Date().toISOString());
+    const cur = ex.byDay.get(day);
     if (!cur || e1 > cur.best1rm) {
-      ex.bySession.set(s.session_id, { best1rm: e1, topWeight: w, topReps: r });
+      ex.byDay.set(day, { best1rm: e1, topWeight: w, topReps: r });
     }
   }
 
@@ -60,9 +64,9 @@ export async function getProgressData() {
     .map(([id, ex]) => ({
       id,
       name: ex.name,
-      points: [...ex.bySession.entries()]
-        .map(([sid, p]) => ({
-          date: dayKey(sessionById.get(sid)?.started_at ?? new Date().toISOString()),
+      points: [...ex.byDay.entries()]
+        .map(([date, p]) => ({
+          date,
           best1rm: Math.round(p.best1rm),
           topWeight: p.topWeight,
           topReps: p.topReps,

@@ -68,7 +68,7 @@ async function ProgressBody() {
       ) : null}
 
       {strongExercises.length >= 2 ? (
-        <Card title="Compare two lifts" subtitle="Estimated 1RM over time, side by side">
+        <Card title="Compare two lifts" subtitle="Pick any two lifts you have logged and see how each is going">
           <CompareExercises exercises={data.exercises} />
         </Card>
       ) : null}
