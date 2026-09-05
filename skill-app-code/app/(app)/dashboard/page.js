@@ -27,7 +27,7 @@ export default function DashboardPage() {
       </Suspense>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Recent</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Workout History</h2>
         <Suspense fallback={<div className="h-24 rounded-card bg-surface" />}>
           <Recent />
         </Suspense>

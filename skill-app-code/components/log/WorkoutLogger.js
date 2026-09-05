@@ -571,8 +571,6 @@ function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort,
         </div>
       </div>
 
-      <ShareCard summary={summary} timeLabel={timeLabel} />
-
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">How hard was this workout?</h2>
         <div className="flex gap-2">
@@ -621,6 +619,8 @@ function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort,
           ) : null}
         </section>
       ) : null}
+
+      <ShareCard summary={summary} timeLabel={timeLabel} />
 
       <button
         type="button"

@@ -19,7 +19,6 @@ function isActive(pathname, href) {
 
 export default function NavBar() {
   const pathname = usePathname() ?? "";
-  const onLog = isActive(pathname, "/log");
 
   return (
     <>
@@ -69,17 +68,6 @@ export default function NavBar() {
           </div>
         </div>
       </header>
-
-      {/* Floating action button: mobile only, sits above the tab bar. */}
-      <GuardedStartLink
-        href="/log"
-        aria-label="Log a workout"
-        className={`fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-black shadow-lg shadow-black/40 transition-transform hover:scale-105 active:scale-95 md:hidden ${
-          onLog ? "hidden" : ""
-        }`}
-      >
-        <IconPlus className="h-6 w-6" />
-      </GuardedStartLink>
 
       {/* Bottom tab bar, mobile only. Padding goes past the reported
           safe-area inset on purpose: right at that boundary, a tap can
