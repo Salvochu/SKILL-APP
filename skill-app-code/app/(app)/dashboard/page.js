@@ -101,7 +101,7 @@ async function Stats() {
 
 async function Streak() {
   const s = await getWorkoutSummary();
-  const has = s.streakDays > 0;
+  const has = s.streakWeeks > 0;
   return (
     <div className="flex items-center gap-4 rounded-card border border-border bg-surface p-4">
       <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${has ? "bg-accent-soft" : "bg-surface-2"}`}>
@@ -109,14 +109,14 @@ async function Streak() {
       </span>
       <div className="flex flex-col">
         <span className="tabular text-2xl font-bold text-fg">
-          {s.streakDays} {s.streakDays === 1 ? "day" : "days"}
+          {s.streakWeeks} {s.streakWeeks === 1 ? "week" : "weeks"}
         </span>
         <span className="text-xs text-dim">
           {has
-            ? s.longestStreak > s.streakDays
-              ? `current streak . best ${s.longestStreak}`
+            ? s.longestStreakWeeks > s.streakWeeks
+              ? `current streak . best ${s.longestStreakWeeks}`
               : "current streak"
-            : "log a workout today to start a streak"}
+            : "log a workout this week to start a streak"}
         </span>
       </div>
     </div>

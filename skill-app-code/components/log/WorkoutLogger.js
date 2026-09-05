@@ -235,7 +235,7 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
         <p className="rounded-field border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
       ) : null}
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] flex items-center gap-4 rounded-card border border-border bg-surface p-4 md:bottom-4">
+      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex items-center gap-4 rounded-card border border-border bg-surface p-4 md:bottom-4">
         <span className="flex flex-col">
           <span className="text-xs text-dim">Total volume</span>
           <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} kg</span>

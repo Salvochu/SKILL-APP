@@ -40,7 +40,7 @@ export default function RestTimer({ startSeconds, onDismiss }) {
   const pct = total > 0 ? (remaining / total) * 100 : 0;
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-lg px-4 md:bottom-6">
+    <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-lg px-4 md:bottom-6">
       <div className="overflow-hidden rounded-card border border-border bg-surface shadow-lg shadow-black/40">
         <div className="h-1 bg-border">
           <div className="h-full bg-accent transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} />

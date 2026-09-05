@@ -110,3 +110,43 @@ export function computeStreak(sessionDates, today = new Date()) {
 
   return { current, longest };
 }
+
+// Monday of the ISO week containing d, as a date-key.
+function weekKeyOf(d) {
+  const date = new Date(`${dayKeyOf(d)}T00:00:00Z`);
+  const sinceMonday = (date.getUTCDay() + 6) % 7; // Mon 0, Tue 1 ... Sun 6
+  date.setUTCDate(date.getUTCDate() - sinceMonday);
+  return date.toISOString().slice(0, 10);
+}
+
+// Current and longest streak of consecutive Monday-to-Sunday weeks with
+// at least one logged session. Buckets by week rather than day: a normal
+// training split has planned rest days, so a day-by-day streak would
+// reset by design. Same "stays alive through today" rule as
+// computeStreak, applied to whether last week (not necessarily this
+// week yet) had a session.
+export function computeWeekStreak(sessionDates, today = new Date()) {
+  const weeks = new Set((sessionDates || []).filter(Boolean).map(weekKeyOf));
+  if (weeks.size === 0) return { current: 0, longest: 0 };
+
+  const thisWeek = weekKeyOf(today);
+  const lastWeek = shiftDay(thisWeek, -7);
+
+  let current = 0;
+  let cursor = weeks.has(thisWeek) ? thisWeek : weeks.has(lastWeek) ? lastWeek : null;
+  while (cursor && weeks.has(cursor)) {
+    current += 1;
+    cursor = shiftDay(cursor, -7);
+  }
+
+  let longest = 0;
+  let run = 0;
+  let prev = null;
+  for (const w of [...weeks].sort()) {
+    run = prev && shiftDay(prev, 7) === w ? run + 1 : 1;
+    longest = Math.max(longest, run);
+    prev = w;
+  }
+
+  return { current, longest };
+}
