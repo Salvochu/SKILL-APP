@@ -1,20 +1,13 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getBodyLog } from "@/lib/data/body";
+import { getUnitPreference } from "@/lib/data/profile";
+import { fromKg, unitLabel } from "@/lib/units";
 import BodyLogForm from "@/components/body/BodyLogForm";
 import MetricChart from "@/components/body/MetricChart";
 import { shortDate } from "@/components/progress/chartkit";
 
 export const metadata = { title: "Body" };
-
-const METRICS = [
-  { key: "weight", label: "Weight", unit: " kg" },
-  { key: "waist", label: "Waist", unit: " cm" },
-  { key: "chest", label: "Chest", unit: " cm" },
-  { key: "arm", label: "Arm", unit: " cm" },
-  { key: "thigh", label: "Thigh", unit: " cm" },
-  { key: "hip", label: "Hip", unit: " cm" },
-];
 
 export default function BodyPage() {
   return (
@@ -33,11 +26,25 @@ export default function BodyPage() {
 }
 
 async function BodyBody() {
-  const { entries, latest, weightChange, hasAny } = await getBodyLog();
+  const [{ entries, latest, weightChange, hasAny }, unit] = await Promise.all([
+    getBodyLog(),
+    getUnitPreference(),
+  ]);
+  const wu = unitLabel(unit);
+  // Weight is stored in kg; measurements are always cm.
+  const conv = (key, v) => (v == null ? null : key === "weight" ? Math.round(fromKg(v, unit) * 10) / 10 : v);
+  const METRICS = [
+    { key: "weight", label: "Weight", unit: ` ${wu}` },
+    { key: "waist", label: "Waist", unit: " cm" },
+    { key: "chest", label: "Chest", unit: " cm" },
+    { key: "arm", label: "Arm", unit: " cm" },
+    { key: "thigh", label: "Thigh", unit: " cm" },
+    { key: "hip", label: "Hip", unit: " cm" },
+  ];
 
   return (
     <>
-      <BodyLogForm latest={latest} />
+      <BodyLogForm latest={latest} unit={unit} />
 
       {!hasAny ? (
         <div className="rounded-card border border-dashed border-border bg-surface p-8 text-center text-sm text-muted">
@@ -47,7 +54,7 @@ async function BodyBody() {
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {METRICS.map((m) => {
-              const v = latest?.[m.key];
+              const v = conv(m.key, latest?.[m.key]);
               if (v == null) return null;
               return (
                 <div key={m.key} className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
@@ -59,7 +66,7 @@ async function BodyBody() {
                   {m.key === "weight" && weightChange != null ? (
                     <span className={`text-xs ${weightChange === 0 ? "text-dim" : weightChange > 0 ? "text-good" : "text-accent"}`}>
                       {weightChange > 0 ? "+" : ""}
-                      {weightChange} kg recently
+                      {Math.round(fromKg(weightChange, unit) * 10) / 10} {wu} recently
                     </span>
                   ) : null}
                 </div>
@@ -68,12 +75,12 @@ async function BodyBody() {
           </div>
 
           {METRICS.map((m) => {
-            const points = entries.map((e) => ({ date: e.date, value: e[m.key] }));
+            const points = entries.map((e) => ({ date: e.date, value: conv(m.key, e[m.key]) }));
             if (points.filter((p) => p.value != null).length < 2) return null;
             return (
               <section key={m.key} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">{m.label}</h2>
-                <MetricChart points={points} unit={m.unit.trim() ? m.unit : ""} />
+                <MetricChart points={points} unit={m.unit} />
               </section>
             );
           })}
@@ -95,7 +102,7 @@ async function BodyBody() {
                     <tr key={e.date} className="border-t border-border">
                       <td className="whitespace-nowrap py-1.5 pr-4 text-fg">{shortDate(e.date)}</td>
                       {METRICS.map((m) => (
-                        <td key={m.key} className="py-1.5 pr-4">{e[m.key] ?? "–"}</td>
+                        <td key={m.key} className="py-1.5 pr-4">{conv(m.key, e[m.key]) ?? "–"}</td>
                       ))}
                     </tr>
                   ))}

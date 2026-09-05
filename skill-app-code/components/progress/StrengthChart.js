@@ -9,7 +9,7 @@ const M = { top: 16, right: 16, bottom: 26, left: 44 };
 
 // Estimated 1RM (Epley) over time for one lift. Single series, so the
 // selector names it and no legend is needed. Crosshair + tooltip on hover.
-export default function StrengthChart({ exercises }) {
+export default function StrengthChart({ exercises, unit = "kg" }) {
   const usable = exercises.filter((e) => e.points.length >= 2);
   const [id, setId] = useState(usable[0]?.id);
   const [hover, setHover] = useState(null);
@@ -73,7 +73,7 @@ export default function StrengthChart({ exercises }) {
           ))}
 
           <text x={x(last)} y={y(pts[last].best1rm) - 10} textAnchor="end" className="fill-muted text-[10px] font-semibold" style={{ fontVariantNumeric: "tabular-nums" }}>
-            {compact(pts[last].best1rm)} kg
+            {compact(pts[last].best1rm)} {unit}
           </text>
 
           {pts.map((p, i) => (
@@ -106,9 +106,9 @@ export default function StrengthChart({ exercises }) {
             className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-field border border-border bg-bg px-2 py-1 text-xs shadow-lg"
             style={{ left: `${(x(hover) / W) * 100}%`, top: `${(y(pts[hover].best1rm) / H) * 100}%` }}
           >
-            <div className="font-medium text-fg">~{compact(pts[hover].best1rm)} kg 1RM</div>
+            <div className="font-medium text-fg">~{compact(pts[hover].best1rm)} {unit} 1RM</div>
             <div className="text-dim">
-              {pts[hover].topWeight} kg x {pts[hover].topReps} . {shortDate(pts[hover].date)}
+              {pts[hover].topWeight} {unit} x {pts[hover].topReps} . {shortDate(pts[hover].date)}
             </div>
           </div>
         ) : null}

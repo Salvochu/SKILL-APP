@@ -14,6 +14,7 @@ import { formatSet, formatElapsed, EFFORT_LABELS } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
 import { buildShareImageBlob } from "@/lib/shareCard";
+import { toKg, formatWeight } from "@/lib/units";
 
 // Time-seeded so a resumed draft's saved keys (from a previous page
 // load) can never collide with new ones generated after a reload.
@@ -51,7 +52,8 @@ function makeExercise(exercise, targetSets = 3, targetReps = "", last = null) {
   };
 }
 
-export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial }) {
+export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial, unit = "kg" }) {
+  const U = unit === "lb" ? "lb" : "kg";
   const router = useRouter();
   const [title, setTitle] = useState(initial.title);
   const [date, setDate] = useState(initial.date);
@@ -256,7 +258,12 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       exercises: rows.map((r) => ({
         exerciseId: r.exercise.id,
         note: r.note,
-        sets: r.sets.map((s) => ({ weight: s.weight, reps: s.reps, rir: s.rir, completed: s.completed })),
+        sets: r.sets.map((s) => ({
+          weight: s.weight === "" || s.weight == null ? s.weight : toKg(s.weight, U),
+          reps: s.reps,
+          rir: s.rir,
+          completed: s.completed,
+        })),
       })),
     };
     try {
@@ -311,6 +318,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         summary={completedSummary}
         extras={summaryExtras}
         effort={effort}
+        unit={U}
         savingEffort={savingEffort}
         onSelectEffort={onSelectEffort}
         onDone={() => router.push("/dashboard")}
@@ -433,6 +441,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
             <ExerciseCard
               key={row.key}
               row={row}
+              unit={U}
               last={history[row.exercise.id] ?? null}
               onPatch={(p) => patchRow(row.key, p)}
               onPatchSet={(i, p) => patchSet(row.key, i, p)}
@@ -466,7 +475,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex items-center gap-4 rounded-card border border-border bg-surface p-4 md:bottom-4">
         <span className="flex flex-col">
           <span className="text-xs text-dim">Total volume</span>
-          <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} kg</span>
+          <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} {U}</span>
         </span>
         <button
           type="button"
@@ -489,17 +498,17 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   );
 }
 
-function ShareCard({ summary, timeLabel, effortLabel }) {
+function ShareCard({ summary, timeLabel, effortLabel, unit = "kg" }) {
   const [status, setStatus] = useState("idle"); // idle | preparing | shared | downloaded | copied
 
-  const caption = `Just logged ${Math.round(summary.totalVolume)} kg in ${timeLabel} with SKILL. @salvador_skfitness`;
+  const caption = `Just logged ${Math.round(summary.totalVolume)} ${unit} in ${timeLabel} with SKILL. @salvador_skfitness`;
 
   async function onShare() {
     setStatus("preparing");
     let blob = null;
     try {
       blob = await buildShareImageBlob({
-        volumeLabel: `${Math.round(summary.totalVolume)} kg`,
+        volumeLabel: `${Math.round(summary.totalVolume)} ${unit}`,
         timeLabel,
         effortLabel,
       });
@@ -592,7 +601,7 @@ function IconShare(props) {
   );
 }
 
-function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort, onDone }) {
+function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, onSelectEffort, onDone }) {
   const mins = summary.durationMin;
   const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
   const meso = extras?.meso;
@@ -619,7 +628,8 @@ function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort,
               <li key={p.name} className="flex items-center justify-between gap-3 text-sm">
                 <span className="text-fg">{p.name}</span>
                 <span className="tabular shrink-0 text-muted">
-                  {p.weight} kg x {p.reps} <span className="text-dim">~{p.e1rm} kg</span>
+                  {formatWeight(p.weight, unit, { decimals: 0 })} x {p.reps}{" "}
+                  <span className="text-dim">~{formatWeight(p.e1rm, unit, { decimals: 0 })}</span>
                 </span>
               </li>
             ))}
@@ -634,7 +644,7 @@ function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort,
         </div>
         <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-dim">Volume</span>
-          <span className="tabular text-2xl font-bold text-fg">{Math.round(summary.totalVolume)} kg</span>
+          <span className="tabular text-2xl font-bold text-fg">{Math.round(summary.totalVolume)} {unit}</span>
         </div>
       </div>
 
@@ -687,7 +697,7 @@ function WorkoutSummary({ summary, extras, effort, savingEffort, onSelectEffort,
         </section>
       ) : null}
 
-      <ShareCard summary={summary} timeLabel={timeLabel} effortLabel={effort ? EFFORT_LABELS[effort] : null} />
+      <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} />
 
       <button
         type="button"
@@ -716,7 +726,7 @@ function IconTrophy(props) {
   );
 }
 
-function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
   const best1rm = Math.max(0, ...sets.map((s) => epley1rm(s.weight, s.reps)));
   const volume = sets.reduce((v, s) => v + (s.completed ? (Number(s.weight) || 0) * (Number(s.reps) || 0) : 0), 0);
@@ -759,7 +769,7 @@ function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, o
 
       <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-dim">
         <span>Set</span>
-        <span>Weight</span>
+        <span>Weight ({unit})</span>
         <span>Reps</span>
         <span className="text-center">RIR</span>
         <span className="text-center">Log</span>
@@ -823,7 +833,7 @@ function ExerciseCard({ row, last, onPatch, onPatchSet, onToggleSet, onAddSet, o
         </button>
         {volume > 0 ? (
           <span className="tabular text-xs text-dim">
-            Vol {Math.round(volume)} kg{best1rm ? ` . 1RM ~${Math.round(best1rm)} kg` : ""}
+            Vol {Math.round(volume)} {unit}{best1rm ? ` . 1RM ~${Math.round(best1rm)} ${unit}` : ""}
           </span>
         ) : null}
       </div>

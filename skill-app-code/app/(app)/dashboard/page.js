@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getProgressData } from "@/lib/data/progress";
-import { getProfile } from "@/lib/data/profile";
+import { getProfile, getUnitPreference } from "@/lib/data/profile";
+import { fromKg, unitLabel } from "@/lib/units";
 import BarChart from "@/components/progress/BarChart";
 import MesocycleSection from "@/components/dashboard/MesocycleSection";
 import WorkoutHistoryModal from "@/components/dashboard/WorkoutHistoryModal";
@@ -59,15 +60,15 @@ async function Greeting() {
 }
 
 async function Stats() {
-  const s = await getWorkoutSummary();
+  const [s, unit] = await Promise.all([getWorkoutSummary(), getUnitPreference()]);
   return (
     <div className="grid grid-cols-2 gap-3">
       <StatTile label="Workouts" value={s.workouts} sub="all time" accent />
       <StatTile label="Total Sets" value={s.sets} sub="sets logged" />
       <StatTile
         label="Volume"
-        value={`${(s.volumeKg / 1000).toFixed(1)}k`}
-        sub="kg lifted"
+        value={`${(fromKg(s.volumeKg, unit) / 1000).toFixed(1)}k`}
+        sub={`${unitLabel(unit)} lifted`}
       />
       <StatTile
         label="Time"
@@ -103,7 +104,7 @@ async function Streak() {
 }
 
 async function VolumeTrend() {
-  const { sessionVolumes } = await getProgressData();
+  const [{ sessionVolumes }, unit] = await Promise.all([getProgressData(), getUnitPreference()]);
   if (sessionVolumes.length === 0) {
     return (
       <div className="rounded-card border border-border bg-surface p-6 text-center text-sm text-muted">
@@ -116,7 +117,11 @@ async function VolumeTrend() {
       <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
         Training volume, recent sessions
       </h2>
-      <BarChart data={sessionVolumes} max={10} />
+      <BarChart
+        data={sessionVolumes.map((v) => ({ ...v, volumeKg: Math.round(fromKg(v.volumeKg, unit)) }))}
+        max={10}
+        unit={unitLabel(unit)}
+      />
     </section>
   );
 }

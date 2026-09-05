@@ -1,8 +1,9 @@
 import MusclePill from "@/components/MusclePill";
 import { shortDate } from "@/components/progress/chartkit";
+import { formatWeight, unitLabel } from "@/lib/units";
 
 // Best-ever estimated 1RM per lift, most recent PR first.
-export default function PersonalRecords({ records }) {
+export default function PersonalRecords({ records, unit = "kg" }) {
   return (
     <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
       {records.map((r) => (
@@ -12,13 +13,15 @@ export default function PersonalRecords({ records }) {
             <span className="flex items-center gap-2 text-xs text-dim">
               {r.muscle ? <MusclePill muscle={r.muscle} /> : null}
               <span className="tabular">
-                {r.topWeight} kg x {r.topWeightReps}
+                {formatWeight(r.topWeight, unit, { decimals: 0 })} x {r.topWeightReps}
                 {r.best1rmDate ? ` . ${shortDate(r.best1rmDate)}` : ""}
               </span>
             </span>
           </span>
           <span className="shrink-0 text-right">
-            <span className="tabular block text-sm font-semibold text-fg">{r.best1rm} kg</span>
+            <span className="tabular block text-sm font-semibold text-fg">
+              {formatWeight(r.best1rm, unit, { decimals: 0, withUnit: false })} {unitLabel(unit)}
+            </span>
             <span className="block text-[10px] uppercase tracking-wider text-dim">est. 1RM</span>
           </span>
         </li>

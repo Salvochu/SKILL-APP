@@ -1,5 +1,23 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+
+// The user's kg / lb display choice. Cached per request so the several
+// components that format weights on one page share a single read.
+// Weights are always stored in kg; this only changes display and input.
+export const getUnitPreference = cache(async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return "kg";
+  const { data } = await supabase
+    .from("profiles")
+    .select("unit_preference")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  return data?.unit_preference === "lb" ? "lb" : "kg";
+});
 
 // The signed-in user's profile row. Most fields are optional and the row
 // itself may not exist yet (a fresh account has none), so this always
@@ -13,7 +31,7 @@ export async function getProfile() {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("full_name, age, country, fitness_goal, experience_level, phone, avatar_url")
+    .select("full_name, age, country, fitness_goal, experience_level, phone, avatar_url, unit_preference")
     .eq("user_id", user.id)
     .maybeSingle();
   if (error) throw new Error(`Failed to load profile: ${error.message}`);
@@ -27,6 +45,7 @@ export async function getProfile() {
     experienceLevel: data?.experience_level ?? "",
     phone: data?.phone ?? "",
     avatarUrl: data?.avatar_url ?? null,
+    unitPreference: data?.unit_preference === "lb" ? "lb" : "kg",
   };
 }
 

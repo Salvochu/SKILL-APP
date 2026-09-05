@@ -64,10 +64,14 @@ export function suggestTarget({ last, repRange, targetRir = 2, equipment } = {})
   return { weight: top.weight, reps: top.reps + 1, reason: "beat last time" };
 }
 
-// "100 x 10 @2" style summary of a set.
-export function formatSet(s) {
+// "100 x 10 @2" style summary of a set. Pass a unit ("lb") to convert a
+// stored kg weight for display; omit it when the weight is already in
+// the unit being shown.
+export function formatSet(s, unit) {
   if (s == null) return "";
-  const w = s.weight == null ? "BW" : String(Number(s.weight));
+  let weight = s.weight;
+  if (weight != null && unit === "lb") weight = Math.round(Number(weight) * 2.2046226218 * 10) / 10;
+  const w = weight == null ? "BW" : String(Number(weight));
   const r = s.reps == null ? "?" : s.reps;
   const rir = s.rir == null ? "" : ` @${s.rir}`;
   return `${w} x ${r}${rir}`;

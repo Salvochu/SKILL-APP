@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { logBodyEntry } from "@/app/(app)/body/actions";
+import { toKg, fromKg, unitLabel } from "@/lib/units";
 
 const MEASURES = [
   { name: "waist", label: "Waist" },
@@ -12,7 +13,7 @@ const MEASURES = [
   { name: "hip", label: "Hip" },
 ];
 
-export default function BodyLogForm({ latest }) {
+export default function BodyLogForm({ latest, unit = "kg" }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [showMeasures, setShowMeasures] = useState(false);
@@ -24,7 +25,13 @@ export default function BodyLogForm({ latest }) {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const result = await logBodyEntry(new FormData(e.currentTarget));
+    const fd = new FormData(e.currentTarget);
+    // Weight is entered in the user's unit; store kg.
+    const typed = fd.get("weight");
+    if (typed !== null && String(typed).trim() !== "") {
+      fd.set("weight", String(Math.round(toKg(typed, unit) * 100) / 100));
+    }
+    const result = await logBodyEntry(fd);
     if (result?.error) {
       setError(result.error);
       setSaving(false);
@@ -61,13 +68,17 @@ export default function BodyLogForm({ latest }) {
         <Field label="Date">
           <input type="date" name="date" defaultValue={today} max={today} className={inputClass} />
         </Field>
-        <Field label="Weight (kg)">
+        <Field label={`Weight (${unitLabel(unit)})`}>
           <input
             type="number"
             name="weight"
             inputMode="decimal"
             step="0.1"
-            placeholder={latest?.weight != null ? String(latest.weight) : "0.0"}
+            placeholder={
+              latest?.weight != null
+                ? String(Math.round(fromKg(latest.weight, unit) * 10) / 10)
+                : "0.0"
+            }
             className={inputClass}
           />
         </Field>

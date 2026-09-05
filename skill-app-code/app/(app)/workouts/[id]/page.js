@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getWorkoutDetail } from "@/lib/data/workouts";
+import { getUnitPreference } from "@/lib/data/profile";
 import { formatSet, EFFORT_LABELS } from "@/lib/training";
+import { formatWeight } from "@/lib/units";
 import MusclePill from "@/components/MusclePill";
 import LoggedAt from "@/components/LoggedAt";
 import DeleteWorkoutButton from "@/components/workouts/DeleteWorkoutButton";
@@ -15,7 +17,7 @@ export const instant = false;
 
 export default async function WorkoutDetailPage({ params }) {
   const { id } = await params;
-  const workout = await getWorkoutDetail(id);
+  const [workout, unit] = await Promise.all([getWorkoutDetail(id), getUnitPreference()]);
   if (!workout) notFound();
 
   return (
@@ -38,7 +40,7 @@ export default async function WorkoutDetailPage({ params }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-dim">Volume</span>
-          <span className="tabular text-2xl font-bold text-fg">{workout.volumeKg} kg</span>
+          <span className="tabular text-2xl font-bold text-fg">{formatWeight(workout.volumeKg, unit, { decimals: 0 })}</span>
         </div>
         <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-dim">Duration</span>
@@ -76,7 +78,7 @@ export default async function WorkoutDetailPage({ params }) {
                     }`}
                   >
                     <span className="text-dim">Set {s.setNumber}</span>
-                    <span className="tabular">{formatSet(s)}</span>
+                    <span className="tabular">{formatSet(s, unit)}</span>
                     {!s.completed ? <span className="text-xs">not completed</span> : null}
                   </li>
                 ))}
