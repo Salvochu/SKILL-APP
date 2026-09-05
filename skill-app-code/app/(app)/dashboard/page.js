@@ -1,10 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getProgressData } from "@/lib/data/progress";
 import BarChart from "@/components/progress/BarChart";
-import { signOut } from "@/app/actions";
 
 export const metadata = { title: "Dashboard" };
 
@@ -37,10 +35,6 @@ export default function DashboardPage() {
         <QuickLink href="/library" title="Exercise Library" body="63 movements with videos" />
         <QuickLink href="/splits" title="Training Splits" body="Full Gym, dumbbell and bodyweight" />
       </section>
-
-      <Suspense fallback={null}>
-        <AccountRow />
-      </Suspense>
     </div>
   );
 }
@@ -162,20 +156,6 @@ async function Recent() {
         </li>
       ))}
     </ul>
-  );
-}
-
-async function AccountRow() {
-  const user = await getCurrentUser();
-  return (
-    <div className="flex items-center justify-between border-t border-border pt-4 text-sm">
-      <span className="text-dim">{user.email}</span>
-      <form action={signOut}>
-        <button type="submit" className="font-medium text-muted transition-colors hover:text-fg">
-          Sign out
-        </button>
-      </form>
-    </div>
   );
 }
 
