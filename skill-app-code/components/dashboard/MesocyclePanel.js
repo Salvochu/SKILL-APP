@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { startMesocycle, finishMesocycle, abandonMesocycle } from "@/app/(app)/dashboard/actions";
+import { finishMesocycle, abandonMesocycle } from "@/app/(app)/dashboard/actions";
+import ProgramPicker from "@/components/dashboard/ProgramPicker";
 
 export default function MesocyclePanel({ active, templates }) {
   const router = useRouter();
@@ -11,15 +12,7 @@ export default function MesocyclePanel({ active, templates }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
-  async function onStart(templateId) {
-    setBusy(true);
-    setError(null);
-    const result = await startMesocycle(templateId);
-    setBusy(false);
-    if (result?.error) {
-      setError(result.error);
-      return;
-    }
+  function onStarted() {
     setShowPicker(false);
     router.refresh();
   }
@@ -96,7 +89,7 @@ export default function MesocyclePanel({ active, templates }) {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         {active.nextDay ? (
           <Link
-            href={`/log?meso=${active.id}&split=${active.splitId}&day=${active.nextDay.dayTemplateId}&variant=Standard`}
+            href={`/log?meso=${active.id}&split=${active.splitId}&day=${active.nextDay.dayTemplateId}&variant=${encodeURIComponent(active.variant)}`}
             className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2"
           >
             Start {active.nextDay.name}
@@ -126,50 +119,11 @@ export default function MesocyclePanel({ active, templates }) {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-1">
-          <h2 className="font-display text-lg font-semibold text-fg">Pick the right program</h2>
-          <p className="text-sm text-muted">
-            Each one runs for its full length: effort builds week by week from RIR 3 down to 0, then
-            a lighter deload week to recover before you start again.
-          </p>
-        </div>
-        {active ? (
-          <button
-            type="button"
-            onClick={() => setShowPicker(false)}
-            className="shrink-0 text-xs font-medium text-dim hover:text-fg"
-          >
-            Cancel
-          </button>
-        ) : null}
-      </div>
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
-      {templates.length === 0 ? (
-        <p className="text-sm text-muted">No programs are set up yet.</p>
-      ) : (
-        <ul className="flex flex-col gap-2.5">
-          {templates.map((t) => (
-            <li key={t.id} className="flex items-center justify-between gap-3 rounded-field border border-border bg-bg/40 px-3 py-2.5">
-              <span className="flex-1">
-                <span className="block text-sm font-medium text-fg">{t.split?.name ?? t.name}</span>
-                <span className="block text-xs text-dim">
-                  {t.weeks} weeks . {t.split?.cadence}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => onStart(t.id)}
-                disabled={busy}
-                className="shrink-0 rounded-field bg-accent px-3 py-1.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
-              >
-                Start
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <ProgramPicker
+      templates={templates}
+      canCancel={Boolean(active)}
+      onCancel={() => setShowPicker(false)}
+      onStarted={onStarted}
+    />
   );
 }

@@ -13,6 +13,11 @@ export function muscleKey(muscle) {
 // Equipment, in filter order.
 export const EQUIPMENT_ORDER = ["Barbell", "Dumbbell", "Machine", "Cable", "Bodyweight"];
 
+// Day template variants (the equipment choice for a split's days), in
+// display order. "Standard" covers single-variant days like the coached
+// programs, which have no real equipment choice to make.
+export const VARIANT_ORDER = ["Full Gym", "Dumbbells", "Bodyweight", "Standard"];
+
 function orderedBy(order, values) {
   const known = order.filter((v) => values.includes(v));
   const extra = values.filter((v) => !order.includes(v)).sort((a, b) => a.localeCompare(b));
@@ -20,6 +25,7 @@ function orderedBy(order, values) {
 }
 export const sortMuscles = (v) => orderedBy(MUSCLE_ORDER, v);
 export const sortEquipment = (v) => orderedBy(EQUIPMENT_ORDER, v);
+export const sortVariants = (v) => orderedBy(VARIANT_ORDER, v);
 
 // Turn a Loom share URL into its embed URL. Returns null for anything that
 // is not a recognised Loom share link (or a missing video).

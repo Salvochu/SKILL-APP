@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import MusclePill from "@/components/MusclePill";
+import { sortVariants } from "@/lib/exercises";
 
-const VARIANT_ORDER = ["Full Gym", "Dumbbells", "Bodyweight", "Standard"];
 const SECTION_LABEL = { primary: "Choose your split", coached: "Coached programs" };
 
 export default function SplitsBrowser({ splits }) {
@@ -76,7 +76,7 @@ function SplitDetail({ split, onBack }) {
 }
 
 function DayCard({ day, split, index, single }) {
-  const variants = orderVariants(Object.keys(day.variants));
+  const variants = sortVariants(Object.keys(day.variants));
   const [variant, setVariant] = useState(variants[0]);
   const list = day.variants[variant] ?? [];
 
@@ -151,11 +151,6 @@ function groupBySection(splits) {
     .map((section) => ({ section, items: map.get(section) }));
 }
 
-function orderVariants(keys) {
-  const known = VARIANT_ORDER.filter((v) => keys.includes(v));
-  const extra = keys.filter((v) => !VARIANT_ORDER.includes(v));
-  return [...known, ...extra];
-}
 
 function SplitGlyph() {
   return (

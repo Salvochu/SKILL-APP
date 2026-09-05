@@ -1,16 +1,26 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getMesocycleOverview } from "@/lib/data/mesocycles";
+import { VARIANT_ORDER } from "@/lib/exercises";
+
+// Thin read wrapper: MesocyclePanel is a Client Component and cannot
+// import a server-only data module directly, so it calls this instead.
+export async function loadMesocycleOverview(templateId) {
+  return getMesocycleOverview(templateId);
+}
 
 // Starts a new run of a mesocycle template. Only one active run at a
 // time: abandons any other active one first, rather than blocking with
 // an error, since switching programs is a normal thing to want to do.
-export async function startMesocycle(templateId) {
+export async function startMesocycle(templateId, variant) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Please sign in again." };
+
+  const safeVariant = VARIANT_ORDER.includes(variant) ? variant : "Standard";
 
   const { error: abandonError } = await supabase
     .from("user_mesocycles")
@@ -24,6 +34,7 @@ export async function startMesocycle(templateId) {
     template_id: templateId,
     start_date: new Date().toISOString().slice(0, 10),
     status: "active",
+    variant: safeVariant,
   });
   if (error) return { error: error.message };
 
