@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { finishMesocycle, abandonMesocycle } from "@/app/(app)/dashboard/actions";
+import { abandonMesocycle } from "@/app/(app)/dashboard/actions";
 import ProgramPicker from "@/components/dashboard/ProgramPicker";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 import ProgressBar from "@/components/ProgressBar";
+import MesocycleComplete from "@/components/dashboard/MesocycleComplete";
 
-export default function MesocyclePanel({ active, templates }) {
+export default function MesocyclePanel({ active, templates, summary }) {
   const router = useRouter();
   const [showPicker, setShowPicker] = useState(!active);
   const [busy, setBusy] = useState(false);
@@ -15,18 +16,6 @@ export default function MesocyclePanel({ active, templates }) {
 
   function onStarted() {
     setShowPicker(false);
-    router.refresh();
-  }
-
-  async function onFinish() {
-    setBusy(true);
-    setError(null);
-    const result = await finishMesocycle(active.id);
-    setBusy(false);
-    if (result?.error) {
-      setError(result.error);
-      return;
-    }
     router.refresh();
   }
 
@@ -46,32 +35,11 @@ export default function MesocyclePanel({ active, templates }) {
   if (active && !showPicker) {
     if (active.isComplete) {
       return (
-        <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-accent">Program complete</span>
-          <h2 className="font-display text-lg font-semibold text-fg">{active.templateName}</h2>
-          <p className="text-sm text-muted">
-            You finished all {active.weeks} weeks. Nice work. Start it again or pick something else below.
-          </p>
-          {error ? <p className="text-sm text-danger">{error}</p> : null}
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={onFinish}
-              disabled={busy}
-              className="rounded-field bg-accent px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
-            >
-              Mark as done
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPicker(true)}
-              disabled={busy}
-              className="rounded-field border border-border px-4 py-2 text-sm font-medium text-fg hover:bg-surface-2 disabled:opacity-60"
-            >
-              Choose a program
-            </button>
-          </div>
-        </section>
+        <MesocycleComplete
+          active={active}
+          summary={summary}
+          onPickProgram={() => setShowPicker(true)}
+        />
       );
     }
 
