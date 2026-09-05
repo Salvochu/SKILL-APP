@@ -10,11 +10,9 @@ import MusclePill from "@/components/MusclePill";
 import ConfirmModal from "@/components/ConfirmModal";
 import ProgressBar from "@/components/ProgressBar";
 import BarChart from "@/components/progress/BarChart";
-import { formatSet, formatElapsed } from "@/lib/training";
+import { formatSet, formatElapsed, EFFORT_LABELS } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
-
-const EFFORT_LABELS = { 1: "Very easy", 2: "Easy", 3: "Moderate", 4: "Hard", 5: "Very hard" };
 
 // Time-seeded so a resumed draft's saved keys (from a previous page
 // load) can never collide with new ones generated after a reload.
@@ -28,18 +26,26 @@ function epley1rm(weight, reps) {
   return w * (1 + r / 30);
 }
 
-function makeExercise(exercise, targetSets = 3, targetReps = "") {
+// Pre-fills each set's weight/reps/RIR from the same set number last
+// time this exercise was logged (history[exercise.id]), so returning to
+// an exercise is a tick-to-confirm instead of retyping everything. Still
+// starts unticked either way; nothing counts until it is actually done.
+function makeExercise(exercise, targetSets = 3, targetReps = "", last = null) {
+  const lastSets = last?.sets ?? [];
   return {
     key: nextKey(),
     exercise,
     note: "",
     showNote: false,
-    sets: Array.from({ length: Math.max(1, targetSets) }, () => ({
-      weight: "",
-      reps: "",
-      rir: "",
-      completed: false,
-    })),
+    sets: Array.from({ length: Math.max(1, targetSets) }, (_, i) => {
+      const prev = lastSets[i];
+      return {
+        weight: prev?.weight != null ? String(prev.weight) : "",
+        reps: prev?.reps != null ? String(prev.reps) : "",
+        rir: prev?.rir != null ? String(prev.rir) : "",
+        completed: false,
+      };
+    }),
     targetReps,
   };
 }
@@ -61,7 +67,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [finished, setFinished] = useState(false);
   const [notes, setNotes] = useState("");
   const [rows, setRows] = useState(() =>
-    initial.exercises.map((e) => makeExercise(e.exercise, e.sets, e.reps)),
+    initial.exercises.map((e) => makeExercise(e.exercise, e.sets, e.reps, history[e.exercise.id])),
   );
   const [pickerOpen, setPickerOpen] = useState(false);
   const [videoFor, setVideoFor] = useState(null);
@@ -207,7 +213,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     );
   }
   function addExercise(exercise) {
-    setRows((rs) => [...rs, makeExercise(exercise)]);
+    setRows((rs) => [...rs, makeExercise(exercise, 3, "", history[exercise.id])]);
     setPickerOpen(false);
   }
   function removeExercise(key) {
@@ -317,7 +323,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         <button
           type="button"
           onClick={() => setCancelConfirm(true)}
-          className="shrink-0 text-xs font-medium text-dim hover:text-danger"
+          className="shrink-0 rounded-field border border-danger/40 bg-danger/10 px-3 py-1.5 text-xs font-semibold text-danger transition-colors hover:bg-danger hover:text-black"
         >
           Cancel workout
         </button>

@@ -17,8 +17,12 @@ export default function AppLayout({ children }) {
          another tab. */}
       <OfflineQueueSync />
       {/* Same idea: visible on every screen except /log itself, so
-         leaving an in-progress workout is never a dead end. */}
-      <ActiveWorkoutBar />
+         leaving an in-progress workout is never a dead end. It also
+         reads usePathname (to hide on /log), so it needs the same
+         Suspense boundary as NavBar above. */}
+      <Suspense fallback={null}>
+        <ActiveWorkoutBar />
+      </Suspense>
       <main className="mx-auto w-full max-w-2xl px-4 pt-14 pb-[calc(5rem+env(safe-area-inset-bottom))] md:max-w-5xl md:px-6 md:pt-16 md:pb-16">
         {children}
       </main>

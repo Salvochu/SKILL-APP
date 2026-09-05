@@ -73,6 +73,9 @@ export function formatSet(s) {
   return `${w} x ${r}${rir}`;
 }
 
+// The 1 to 5 post-workout effort rating (workout_sessions.perceived_effort).
+export const EFFORT_LABELS = { 1: "Very easy", 2: "Easy", 3: "Moderate", 4: "Hard", 5: "Very hard" };
+
 // Seconds -> "12:34" or, past an hour, "1:02:05". Shared by the Log
 // screen's own timer and the floating ActiveWorkoutBar so a resumed
 // workout's clock reads identically in both places.
