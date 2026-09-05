@@ -6,7 +6,7 @@ import { loomEmbedUrl } from "@/lib/exercises";
 import MusclePill from "@/components/MusclePill";
 
 // Bottom-sheet detail for one exercise: form video, how-to, quick log link.
-export default function ExerciseSheet({ exercise, onClose }) {
+export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
   useEffect(() => {
     function onKey(e) {
       if (e.key === "Escape") onClose();
@@ -66,9 +66,11 @@ export default function ExerciseSheet({ exercise, onClose }) {
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <MusclePill muscle={exercise.muscle} />
-          <span className="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-muted">
-            {exercise.equipment}
-          </span>
+          {exercise.equipment ? (
+            <span className="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-muted">
+              {exercise.equipment}
+            </span>
+          ) : null}
           {exercise.video_url ? (
             <a
               href={exercise.video_url}
@@ -90,12 +92,14 @@ export default function ExerciseSheet({ exercise, onClose }) {
           </div>
         ) : null}
 
-        <Link
-          href={`/log?exercise=${exercise.id}`}
-          className="mt-4 flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 font-semibold text-black transition-colors hover:bg-accent-2"
-        >
-          Log this exercise
-        </Link>
+        {canLog ? (
+          <Link
+            href={`/log?exercise=${exercise.id}`}
+            className="mt-4 flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 font-semibold text-black transition-colors hover:bg-accent-2"
+          >
+            Log this exercise
+          </Link>
+        ) : null}
       </div>
     </div>
   );

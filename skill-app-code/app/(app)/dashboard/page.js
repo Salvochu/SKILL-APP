@@ -41,7 +41,7 @@ export default function DashboardPage() {
 
       <section className="grid gap-3 sm:grid-cols-3">
         <QuickLink href="/log" title="Log Workout" body="Record sets, reps and weight" />
-        <QuickLink href="/library" title="Exercise Library" body="63 movements with videos" />
+        <QuickLink href="/library" title="Library" body="Exercises, stretching and lessons" />
         <QuickLink href="/splits" title="Training Splits" body="Full Gym, dumbbell and bodyweight" />
       </section>
     </div>

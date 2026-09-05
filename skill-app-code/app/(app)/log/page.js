@@ -58,6 +58,11 @@ export default async function LogPage({ searchParams }) {
 
   return (
     <WorkoutLogger
+      // Navigating from one /log?... to another (e.g. cancel a workout,
+      // start a different one) keeps this route segment mounted, so
+      // without a key the old form state, timer and draft would carry
+      // over. Keying on the workout's identity forces a clean remount.
+      key={`${splitId ?? ""}|${dayTemplateId ?? ""}|${variant ?? ""}|${exerciseId ?? ""}|${today}`}
       allExercises={allExercises}
       history={history}
       mesoContext={

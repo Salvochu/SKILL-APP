@@ -15,7 +15,7 @@ export default function MenuPage() {
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
         <MenuLink href="/profile" label="Profile" body="Your details and account" icon={IconUser} />
         <MenuLink href="/progress" label="Progress" body="Strength and volume over time" icon={IconProgress} />
-        <MenuLink href="/library" label="Library" body="63 movements with videos" icon={IconLibrary} />
+        <MenuLink href="/library" label="Library" body="Exercises, stretching and lessons" icon={IconLibrary} />
         <Suspense fallback={<MenuRowSkeleton />}>
           <WorkoutHistoryRow />
         </Suspense>

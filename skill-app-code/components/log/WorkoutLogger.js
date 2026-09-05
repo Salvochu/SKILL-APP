@@ -289,6 +289,9 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   }
 
   function onCancelWorkout() {
+    // Mark finished first so the draft-sync effect cannot rewrite the
+    // draft we are about to clear while the route transition settles.
+    setFinished(true);
     clearDraft();
     router.push("/dashboard");
   }

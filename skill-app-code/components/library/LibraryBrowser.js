@@ -5,18 +5,20 @@ import { sortMuscles, sortEquipment, muscleKey } from "@/lib/exercises";
 import ExerciseSheet from "@/components/library/ExerciseSheet";
 import MusclePill from "@/components/MusclePill";
 
-export default function LibraryBrowser({ exercises }) {
+export default function LibraryBrowser({ exercises, noun = "exercise", canLog = true }) {
   const [query, setQuery] = useState("");
   const [muscle, setMuscle] = useState("All");
   const [equipment, setEquipment] = useState("All");
   const [openId, setOpenId] = useState(null);
+
+  const plural = `${noun}s`;
 
   const muscles = useMemo(
     () => sortMuscles([...new Set(exercises.map((e) => e.muscle))]),
     [exercises],
   );
   const equipmentList = useMemo(
-    () => sortEquipment([...new Set(exercises.map((e) => e.equipment))]),
+    () => sortEquipment([...new Set(exercises.map((e) => e.equipment).filter(Boolean))]),
     [exercises],
   );
 
@@ -38,19 +40,21 @@ export default function LibraryBrowser({ exercises }) {
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search exercises or instructions"
+        placeholder={`Search ${plural} or instructions`}
         className="w-full rounded-field border border-border bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-dim focus:border-accent"
       />
 
       <ChipRow value={muscle} onChange={setMuscle} options={muscles} allLabel="All muscles" dots />
-      <ChipRow value={equipment} onChange={setEquipment} options={equipmentList} allLabel="All equipment" />
+      {equipmentList.length > 0 ? (
+        <ChipRow value={equipment} onChange={setEquipment} options={equipmentList} allLabel="All equipment" />
+      ) : null}
 
       <p className="text-xs text-dim">
-        {filtered.length} {filtered.length === 1 ? "exercise" : "exercises"}
+        {filtered.length} {filtered.length === 1 ? noun : plural}
       </p>
 
       {filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted">No exercises match those filters.</p>
+        <p className="py-10 text-center text-sm text-muted">No {plural} match those filters.</p>
       ) : (
         <ul className="flex flex-col gap-2.5">
           {filtered.map((e) => (
@@ -66,9 +70,11 @@ export default function LibraryBrowser({ exercises }) {
                 </span>
                 <span className="flex flex-wrap gap-2">
                   <MusclePill muscle={e.muscle} />
-                  <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted">
-                    {e.equipment}
-                  </span>
+                  {e.equipment ? (
+                    <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted">
+                      {e.equipment}
+                    </span>
+                  ) : null}
                 </span>
                 {e.instructions ? (
                   <span className="line-clamp-2 text-sm text-muted">{e.instructions}</span>
@@ -79,7 +85,7 @@ export default function LibraryBrowser({ exercises }) {
         </ul>
       )}
 
-      {open ? <ExerciseSheet exercise={open} onClose={() => setOpenId(null)} /> : null}
+      {open ? <ExerciseSheet exercise={open} onClose={() => setOpenId(null)} canLog={canLog} /> : null}
     </div>
   );
 }
