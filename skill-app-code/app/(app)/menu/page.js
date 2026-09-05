@@ -15,6 +15,7 @@ export default function MenuPage() {
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
         <MenuLink href="/profile" label="Profile" body="Your details and account" icon={IconUser} />
         <MenuLink href="/progress" label="Progress" body="Strength and volume over time" icon={IconProgress} />
+        <MenuLink href="/body" label="Body" body="Weight and measurements" icon={IconBody} />
         <MenuLink href="/library" label="Library" body="Exercises, stretching and lessons" icon={IconLibrary} />
         <Suspense fallback={<MenuRowSkeleton />}>
           <WorkoutHistoryRow />
@@ -82,6 +83,13 @@ function IconProgress(props) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M4 4v16h16" />
       <path d="m7 14 3.5-4 3 2.5L20 6" />
+    </svg>
+  );
+}
+function IconBody(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 7h16M4 7v3M20 7v3M4 17h16M4 17v-3M20 17v-3M9 12h6" />
     </svg>
   );
 }
