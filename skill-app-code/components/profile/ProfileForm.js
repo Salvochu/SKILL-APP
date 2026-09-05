@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { saveProfile } from "@/app/(app)/profile/actions";
 import { FITNESS_GOALS, EXPERIENCE_LEVELS } from "@/lib/profileOptions";
+import { COUNTRIES, splitPhone } from "@/lib/countries";
 
 export default function ProfileForm({ initial }) {
   const [fullName, setFullName] = useState(initial.fullName);
@@ -10,7 +11,9 @@ export default function ProfileForm({ initial }) {
   const [country, setCountry] = useState(initial.country);
   const [fitnessGoal, setFitnessGoal] = useState(initial.fitnessGoal);
   const [experienceLevel, setExperienceLevel] = useState(initial.experienceLevel);
-  const [phone, setPhone] = useState(initial.phone);
+  const initialPhone = splitPhone(initial.phone);
+  const [dial, setDial] = useState(initialPhone.dial);
+  const [localPhone, setLocalPhone] = useState(initialPhone.local);
   const [avatarUrl, setAvatarUrl] = useState(initial.avatarUrl);
   const [avatarFile, setAvatarFile] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -30,6 +33,8 @@ export default function ProfileForm({ initial }) {
     setSaving(true);
     setError(null);
     setSaved(false);
+
+    const phone = localPhone.trim() ? `${dial} ${localPhone.trim()}`.trim() : "";
 
     const fd = new FormData();
     fd.set("fullName", fullName);
@@ -88,6 +93,12 @@ export default function ProfileForm({ initial }) {
         </div>
       </div>
 
+      <Field label="Email">
+        <span className="rounded-field border border-border bg-surface-2 px-3 py-2 text-sm text-muted">
+          {initial.email}
+        </span>
+      </Field>
+
       <Field label="Name">
         <input
           value={fullName}
@@ -110,12 +121,18 @@ export default function ProfileForm({ initial }) {
           />
         </Field>
         <Field label="Country" className="min-w-0">
-          <input
+          <select
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            placeholder="Country"
-            className="w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
-          />
+            className="w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
+          >
+            <option value="">Prefer not to say</option>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.name}>
+                {c.flag} {c.name}
+              </option>
+            ))}
+          </select>
         </Field>
       </div>
 
@@ -150,13 +167,28 @@ export default function ProfileForm({ initial }) {
       </Field>
 
       <Field label="Phone">
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="For coaching follow-up, optional"
-          className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
-        />
+        <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2">
+          <select
+            value={dial}
+            onChange={(e) => setDial(e.target.value)}
+            aria-label="Country code"
+            className="w-full min-w-0 rounded-field border border-border bg-bg px-2 py-2 text-sm text-fg focus:border-accent"
+          >
+            <option value="">Code</option>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.dial}>
+                {c.flag} {c.dial}
+              </option>
+            ))}
+          </select>
+          <input
+            type="tel"
+            value={localPhone}
+            onChange={(e) => setLocalPhone(e.target.value)}
+            placeholder="For coaching follow-up, optional"
+            className="w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
+          />
+        </div>
       </Field>
 
       {error ? (
