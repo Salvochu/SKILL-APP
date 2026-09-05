@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveWorkout } from "@/app/(app)/log/actions";
 import RestTimer from "@/components/log/RestTimer";
@@ -18,6 +18,16 @@ function epley1rm(weight, reps) {
   const r = Number(reps);
   if (!w || !r) return 0;
   return w * (1 + r / 30);
+}
+
+function formatElapsed(totalSeconds) {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
+  const ss = String(sec).padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
 function makeExercise(exercise, targetSets = 3, targetReps = "") {
@@ -40,7 +50,11 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
   const router = useRouter();
   const [title, setTitle] = useState(initial.title);
   const [date, setDate] = useState(initial.date);
-  const [duration, setDuration] = useState(45);
+  // Real elapsed time, not a typed guess: starts the moment this screen
+  // mounts (this is "starting the workout") and becomes the saved
+  // duration. startedAt is captured once; `now` just ticks the display.
+  const [startedAt] = useState(() => Date.now());
+  const [now, setNow] = useState(startedAt);
   const [notes, setNotes] = useState("");
   const [rows, setRows] = useState(() =>
     initial.exercises.map((e) => makeExercise(e.exercise, e.sets, e.reps)),
@@ -53,6 +67,15 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
+  const [timerRunning, setTimerRunning] = useState(true);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [timerRunning]);
+
+  const elapsedSeconds = Math.round((now - startedAt) / 1000);
 
   const totalVolume = useMemo(
     () =>
@@ -126,10 +149,14 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
     setError(null);
     setSavedOffline(false);
     setSaving(true);
+    // Freeze the clock the instant Save is tapped, so the round trip to
+    // the server is not counted as part of the workout.
+    setTimerRunning(false);
+    const durationMin = Math.max(0, Math.round((Date.now() - startedAt) / 60000));
     const payload = {
       title,
       date,
-      durationMin: duration,
+      durationMin,
       notes,
       splitId: initial.splitId,
       dayTemplateId: initial.dayTemplateId,
@@ -145,6 +172,7 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
       if (result?.error) {
         setError(result.error);
         setSaving(false);
+        setTimerRunning(true); // the save did not go through, keep timing
         return;
       }
       router.push("/dashboard");
@@ -153,7 +181,8 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
         // No connection right now, most likely at the gym. Keep the
         // typed sets on this device instead of losing them; a background
         // sync (components/OfflineQueueSync.js) replays it once the
-        // connection is back.
+        // connection is back. The workout is considered done at this
+        // point, so the clock stays stopped.
         queueWorkout(payload);
         setSaving(false);
         setSavedOffline(true);
@@ -161,6 +190,7 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
       }
       setError("Something went wrong saving this workout. Try again.");
       setSaving(false);
+      setTimerRunning(true);
     }
   }
 
@@ -194,14 +224,17 @@ export default function WorkoutLogger({ allExercises, history = {}, initial }) {
               />
             </div>
           </Field>
-          <Field label="Duration (min)" className="min-w-0">
-            <input
-              type="number"
-              inputMode="numeric"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              className="tabular w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
-            />
+          <Field label="Session time" className="min-w-0">
+            <div className="flex w-full min-w-0 items-center gap-2 rounded-field border border-border bg-bg px-3 py-2">
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  timerRunning ? "animate-pulse bg-accent" : "bg-dim"
+                }`}
+                aria-hidden="true"
+              />
+              <span className="tabular text-sm text-fg">{formatElapsed(elapsedSeconds)}</span>
+              <span className="text-xs text-dim">{timerRunning ? "recording" : "stopped"}</span>
+            </div>
           </Field>
         </div>
         <Field label="Session notes">

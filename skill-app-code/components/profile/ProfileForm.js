@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { saveProfile } from "@/app/(app)/profile/actions";
 import { FITNESS_GOALS, EXPERIENCE_LEVELS } from "@/lib/profileOptions";
 import { COUNTRIES, splitPhone } from "@/lib/countries";
+import DialCodeField from "@/components/profile/DialCodeField";
 
 export default function ProfileForm({ initial }) {
   const [fullName, setFullName] = useState(initial.fullName);
@@ -167,20 +168,8 @@ export default function ProfileForm({ initial }) {
       </Field>
 
       <Field label="Phone">
-        <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2">
-          <select
-            value={dial}
-            onChange={(e) => setDial(e.target.value)}
-            aria-label="Country code"
-            className="w-full min-w-0 rounded-field border border-border bg-bg px-2 py-2 text-sm text-fg focus:border-accent"
-          >
-            <option value="">Code</option>
-            {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.dial}>
-                {c.flag} {c.dial}
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-[9.5rem_minmax(0,1fr)] gap-2">
+          <DialCodeField value={dial} onChange={setDial} />
           <input
             type="tel"
             value={localPhone}
