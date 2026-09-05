@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getSplits } from "@/lib/data/splits";
+import { getMesocycleTemplates } from "@/lib/data/mesocycles";
 import SplitsBrowser from "@/components/splits/SplitsBrowser";
 
 export const metadata = { title: "Splits" };
@@ -22,8 +23,8 @@ export default function SplitsPage() {
 }
 
 async function SplitsList() {
-  const splits = await getSplits();
-  return <SplitsBrowser splits={splits} />;
+  const [splits, mesocycleTemplates] = await Promise.all([getSplits(), getMesocycleTemplates()]);
+  return <SplitsBrowser splits={splits} mesocycleTemplates={mesocycleTemplates} />;
 }
 
 function SplitsSkeleton() {

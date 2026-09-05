@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getActiveWorkout } from "@/lib/activeWorkout";
+import { getDraft } from "@/lib/activeWorkout";
 import ConfirmModal from "@/components/ConfirmModal";
 
 // A normal Link to /log, except: if there is already an unsaved workout
@@ -16,7 +16,9 @@ export default function GuardedStartLink({ href, className, children, ...rest })
   const [confirming, setConfirming] = useState(false);
 
   function onClick(e) {
-    if (getActiveWorkout()) {
+    const draft = getDraft();
+    // Already the same in-progress workout: no need to warn, just go.
+    if (draft && draft.href !== href) {
       e.preventDefault();
       setConfirming(true);
     }

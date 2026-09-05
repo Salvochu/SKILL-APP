@@ -3,16 +3,18 @@
 import { useState } from "react";
 import MusclePill from "@/components/MusclePill";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
+import StartProgramCard from "@/components/splits/StartProgramCard";
 import { sortVariants } from "@/lib/exercises";
 
 const SECTION_LABEL = { primary: "Choose your split", coached: "Coached programs" };
 
-export default function SplitsBrowser({ splits }) {
+export default function SplitsBrowser({ splits, mesocycleTemplates = [] }) {
   const [selectedId, setSelectedId] = useState(null);
   const selected = splits.find((s) => s.id === selectedId) ?? null;
 
   if (selected) {
-    return <SplitDetail split={selected} onBack={() => setSelectedId(null)} />;
+    const template = mesocycleTemplates.find((t) => t.split?.id === selected.id) ?? null;
+    return <SplitDetail split={selected} template={template} onBack={() => setSelectedId(null)} />;
   }
 
   const sections = groupBySection(splits);
@@ -49,7 +51,7 @@ export default function SplitsBrowser({ splits }) {
   );
 }
 
-function SplitDetail({ split, onBack }) {
+function SplitDetail({ split, template, onBack }) {
   return (
     <div className="flex flex-col gap-5">
       <button
@@ -65,6 +67,8 @@ function SplitDetail({ split, onBack }) {
         <h1 className="text-2xl font-bold text-fg">{split.name}</h1>
         <p className="text-sm text-muted">{split.description}</p>
       </header>
+
+      {template ? <StartProgramCard template={template} /> : null}
 
       <div className="flex flex-col gap-4">
         {split.days.map((day, i) => (
