@@ -21,11 +21,8 @@ export default function ProgressPage({ searchParams }) {
     <div className="flex flex-col gap-6 py-2">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-fg">Progress</h1>
-        <p className="text-sm text-muted">Track strength gains and training volume over time.</p>
+        <p className="text-sm text-muted">Strength and volume over time.</p>
       </header>
-      <Suspense fallback={<div className="h-8" />}>
-        <RangeFilter />
-      </Suspense>
       <Suspense fallback={<div className="h-64 rounded-card bg-surface" />}>
         <ProgressBody searchParams={searchParams} />
       </Suspense>
@@ -39,7 +36,7 @@ async function ProgressBody({ searchParams }) {
 
   const [rawData, muscleVolume, records, unit] = await Promise.all([
     getProgressData(range),
-    getWeeklyMuscleVolume(range),
+    getWeeklyMuscleVolume(),
     getPersonalRecords(),
     getUnitPreference(),
   ]);
@@ -47,9 +44,7 @@ async function ProgressBody({ searchParams }) {
   if (rawData.workouts === 0) {
     return (
       <div className="rounded-card border border-dashed border-border bg-surface p-10 text-center text-sm text-muted">
-        {range.sinceISO
-          ? "No workouts logged in this range. Try a wider one."
-          : "No data yet. Log a workout to start tracking progress."}
+        No data yet. Log a workout to start tracking progress.
       </div>
     );
   }
@@ -73,18 +68,16 @@ async function ProgressBody({ searchParams }) {
   const U = unitLabel(unit);
 
   const strongExercises = data.exercises.filter((e) => e.points.length >= 2);
-  const heaviest = data.exercises
-    .flatMap((e) => e.points.map((p) => ({ name: e.name, ...p })))
-    .sort((a, b) => b.best1rm - a.best1rm)[0];
 
-  const inRange = range.sinceISO;
-  const volumeLabel = inRange ? "Volume" : "Total volume";
+  // Headline "top 1RM" is all-time, from the PR list (not the trimmed range).
+  const topPR = records.reduce((a, b) => (b.best1rm > (a?.best1rm ?? 0) ? b : a), null);
+  const topPRValue = topPR ? conv(topPR.best1rm) : null;
 
   const shareStats = [
-    [inRange ? "Volume" : "Total volume", `${compact(data.totalVolumeKg)} ${U}`],
+    ["Total volume", `${compact(data.totalVolumeKg)} ${U}`],
     ["Workouts", String(data.workouts)],
   ];
-  if (heaviest) shareStats.push(["Top est. 1RM", `${compact(heaviest.best1rm)} ${U}`]);
+  if (topPRValue) shareStats.push(["Top est. 1RM", `${compact(topPRValue)} ${U}`]);
   const shareMuscles = [...muscleVolume.groups]
     .flatMap((g) => g.muscles)
     .filter((m) => m.thisWeek > 0)
@@ -92,27 +85,21 @@ async function ProgressBody({ searchParams }) {
     .slice(0, 6)
     .map((m) => ({ name: m.muscle.replace(/\s*\(.*\)$/, ""), value: m.thisWeek }));
 
+  const hasTrends = strongExercises.length > 0 || data.sessionVolumes.length > 0;
+
   return (
     <>
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-dim">Showing {inRange ? range.label : "all time"}</p>
-        <ShareProgress rangeLabel={range.label} stats={shareStats} muscles={shareMuscles} />
+      <div className="flex justify-end">
+        <ShareProgress stats={shareStats} muscles={shareMuscles} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Stat label={volumeLabel} value={`${compact(data.totalVolumeKg)} ${U}`} />
+        <Stat label="Total volume" value={`${compact(data.totalVolumeKg)} ${U}`} />
         <Stat label="Workouts" value={data.workouts} />
-        {heaviest ? <Stat label="Top est. 1RM" value={`${compact(heaviest.best1rm)} ${U}`} sub={heaviest.name} /> : null}
+        {topPRValue ? <Stat label="Top est. 1RM" value={`${compact(topPRValue)} ${U}`} sub={topPR.name} /> : null}
       </div>
 
-      <Card
-        title="Weekly sets by muscle"
-        subtitle={
-          muscleVolume.perWeek
-            ? "Average hard sets per week. Tap a group for the breakdown"
-            : "Hard sets this week. Tap a group for the muscle breakdown"
-        }
-      >
+      <Card title="Weekly sets by muscle" subtitle="Hard sets this week. Tap a group to see each muscle">
         <MuscleVolume data={muscleVolume} />
       </Card>
 
@@ -122,32 +109,52 @@ async function ProgressBody({ searchParams }) {
         </Card>
       ) : null}
 
-      <Card title="Training volume" subtitle={`Total ${U} lifted per session`}>
-        <BarChart data={data.sessionVolumes} unit={U} />
-        <DataTable
-          headers={["Session", "Date", "Volume"]}
-          rows={data.sessionVolumes.slice(-16).map((s) => [s.label, shortDate(s.date), `${compact(s.volumeKg)} ${U}`])}
-        />
-      </Card>
+      {hasTrends ? (
+        <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
+          <div className="flex flex-col gap-2">
+            <h2 className="font-display text-base font-semibold text-fg">Trends</h2>
+            <Suspense fallback={<div className="h-8" />}>
+              <RangeFilter />
+            </Suspense>
+            <p className="text-xs text-dim">
+              Showing {range.sinceISO ? range.label : "all time"}
+            </p>
+          </div>
 
-      {strongExercises.length > 0 ? (
-        <Card title="Strength over time" subtitle="Estimated 1RM (Epley) from your best set">
-          <StrengthChart exercises={data.exercises} unit={U} />
-          <DataTable
-            headers={["Exercise", "Sessions", "Latest est. 1RM"]}
-            rows={strongExercises.map((e) => [
-              e.name,
-              String(e.points.length),
-              `${compact(e.points.at(-1).best1rm)} ${U}`,
-            ])}
-          />
-        </Card>
-      ) : null}
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-fg">Training volume</h3>
+            <p className="text-xs text-dim">Total {U} lifted per session</p>
+            <BarChart data={data.sessionVolumes} unit={U} />
+            <DataTable
+              headers={["Session", "Date", "Volume"]}
+              rows={data.sessionVolumes.slice(-16).map((s) => [s.label, shortDate(s.date), `${compact(s.volumeKg)} ${U}`])}
+            />
+          </div>
 
-      {strongExercises.length >= 2 ? (
-        <Card title="Compare two lifts" subtitle="Pick any two lifts you have logged and see how each is going">
-          <CompareExercises exercises={data.exercises} unit={U} />
-        </Card>
+          {strongExercises.length > 0 ? (
+            <div className="flex flex-col gap-2 border-t border-border pt-4">
+              <h3 className="text-sm font-semibold text-fg">Strength over time</h3>
+              <p className="text-xs text-dim">Estimated 1RM (Epley) from your best set</p>
+              <StrengthChart exercises={data.exercises} unit={U} />
+              <DataTable
+                headers={["Exercise", "Sessions", "Latest est. 1RM"]}
+                rows={strongExercises.map((e) => [
+                  e.name,
+                  String(e.points.length),
+                  `${compact(e.points.at(-1).best1rm)} ${U}`,
+                ])}
+              />
+            </div>
+          ) : null}
+
+          {strongExercises.length >= 2 ? (
+            <div className="flex flex-col gap-2 border-t border-border pt-4">
+              <h3 className="text-sm font-semibold text-fg">Compare two lifts</h3>
+              <p className="text-xs text-dim">Pick any two lifts you have logged and see how each is going</p>
+              <CompareExercises exercises={data.exercises} unit={U} />
+            </div>
+          ) : null}
+        </section>
       ) : null}
     </>
   );

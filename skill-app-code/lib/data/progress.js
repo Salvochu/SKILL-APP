@@ -8,36 +8,45 @@ const dayKey = (iso) => new Date(iso).toISOString().slice(0, 10);
 
 // Everything the Progress page and the dashboard volume card need, computed
 // from the user's sessions and sets. RLS scopes both to auth.uid().
-// `range` is a resolved range from lib/dateRange (parseRange); when its
-// sinceISO/untilISO are set, only sessions started in that window count.
+//
+// The headline totals (workouts, totalVolumeKg) are always all-time. Only
+// the time-series arrays (sessionVolumes, exercises) are trimmed to
+// `range` (a resolved range from lib/dateRange), since those feed the
+// trend charts where a window makes sense.
 export async function getProgressData(range = {}) {
   const supabase = await createClient();
 
-  let sessionQuery = supabase
-    .from("workout_sessions")
-    .select("id, title, started_at, completed_at")
-    .order("started_at", { ascending: true });
-  if (range.sinceISO) sessionQuery = sessionQuery.gte("started_at", range.sinceISO);
-  if (range.untilISO) sessionQuery = sessionQuery.lte("started_at", range.untilISO);
-
-  const [sessionsRes, setsRes, earliestRes] = await Promise.all([
-    sessionQuery,
+  const [sessionsRes, setsRes] = await Promise.all([
+    supabase
+      .from("workout_sessions")
+      .select("id, title, started_at, completed_at")
+      .order("started_at", { ascending: true }),
     supabase
       .from("workout_sets")
       .select("session_id, exercise_id, reps, weight, completed, exercise:exercises(name)"),
-    supabase
-      .from("workout_sessions")
-      .select("started_at")
-      .order("started_at", { ascending: true })
-      .limit(1),
   ]);
-  for (const r of [sessionsRes, setsRes, earliestRes]) {
+  for (const r of [sessionsRes, setsRes]) {
     if (r.error) throw new Error(`Failed to load progress: ${r.error.message}`);
   }
 
   const sessions = sessionsRes.data ?? [];
   const sessionById = new Map(sessions.map((s) => [s.id, s]));
-  const sets = (setsRes.data ?? []).filter((s) => s.completed && sessionById.has(s.session_id));
+  const allSets = (setsRes.data ?? []).filter((s) => s.completed && sessionById.has(s.session_id));
+
+  // all-time headline totals
+  const totalVolumeKg = Math.round(
+    allSets.reduce((a, s) => a + (Number(s.weight) || 0) * (Number(s.reps) || 0), 0),
+  );
+
+  // range-trimmed slice for the trend charts
+  const inWindow = (s) => {
+    if (range.sinceISO && s.started_at < range.sinceISO) return false;
+    if (range.untilISO && s.started_at > range.untilISO) return false;
+    return true;
+  };
+  const rangeSessions = sessions.filter(inWindow);
+  const rangeSessionIds = new Set(rangeSessions.map((s) => s.id));
+  const sets = allSets.filter((s) => rangeSessionIds.has(s.session_id));
 
   // volume per session
   const volBySession = new Map();
@@ -45,7 +54,7 @@ export async function getProgressData(range = {}) {
     const v = (Number(s.weight) || 0) * (Number(s.reps) || 0);
     volBySession.set(s.session_id, (volBySession.get(s.session_id) || 0) + v);
   }
-  const sessionVolumes = sessions.map((s) => ({
+  const sessionVolumes = rangeSessions.map((s) => ({
     id: s.id,
     date: dayKey(s.started_at),
     label: s.title,
@@ -91,9 +100,10 @@ export async function getProgressData(range = {}) {
 
   return {
     workouts: sessions.length,
-    totalVolumeKg: Math.round([...volBySession.values()].reduce((a, b) => a + b, 0)),
+    totalVolumeKg,
+    rangeWorkouts: rangeSessions.length,
     sessionVolumes,
     exercises,
-    earliestISO: earliestRes.data?.[0]?.started_at ?? null,
+    earliestISO: sessions[0]?.started_at ?? null,
   };
 }

@@ -64,7 +64,7 @@ export default function BodyLogForm({ latest, unit = "kg" }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Date">
           <input type="date" name="date" defaultValue={today} max={today} className={inputClass} />
         </Field>
@@ -127,11 +127,11 @@ export default function BodyLogForm({ latest, unit = "kg" }) {
 }
 
 const inputClass =
-  "w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent";
+  "w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent";
 
 function Field({ label, children }) {
   return (
-    <label className="flex flex-col gap-1">
+    <label className="flex min-w-0 flex-col gap-1">
       <span className="text-xs font-medium text-dim">{label}</span>
       {children}
     </label>
