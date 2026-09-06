@@ -45,7 +45,7 @@ export default function MuscleVolume({ data }) {
       </ul>
 
       <p className="text-xs text-dim">
-        Shaded band: {target.low}–{target.high} hard sets, a typical range for growth.
+        Shaded band: {target.low} to {target.high} hard sets, a typical range for growth.
       </p>
     </div>
   );

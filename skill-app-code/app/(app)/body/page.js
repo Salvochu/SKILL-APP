@@ -112,7 +112,7 @@ async function BodyBody() {
                     <tr key={e.date} className="border-t border-border">
                       <td className="whitespace-nowrap py-1.5 pr-4 text-fg">{shortDate(e.date)}</td>
                       {METRICS.map((m) => (
-                        <td key={m.key} className="py-1.5 pr-4">{conv(m.key, e[m.key]) ?? "–"}</td>
+                        <td key={m.key} className="py-1.5 pr-4">{conv(m.key, e[m.key]) ?? "—"}</td>
                       ))}
                     </tr>
                   ))}
