@@ -70,7 +70,6 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [pausedAt, setPausedAt] = useState(null);
   const [pausedTotalMs, setPausedTotalMs] = useState(0);
   const [finished, setFinished] = useState(false);
-  const [notes, setNotes] = useState("");
   const [rows, setRows] = useState(() =>
     initial.exercises.map((e) => makeExercise(e.exercise, e.sets, e.reps, history[e.exercise.id])),
   );
@@ -80,6 +79,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [restSeconds, setRestSeconds] = useState(90);
   const [showRest, setShowRest] = useState(false);
   const [restTimerOn, setRestTimerOn] = useState(restTimer);
+  const [barMinimised, setBarMinimised] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
@@ -102,7 +102,6 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       if (draft && draft.href === href) {
         setTitle(draft.title);
         setDate(draft.date);
-        setNotes(draft.notes);
         setRows(draft.rows);
         setStartedAt(draft.startedAt);
         setPausedAt(draft.pausedAt ?? null);
@@ -122,8 +121,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   useEffect(() => {
     if (!draftReady || finished) return;
     const href = window.location.pathname + window.location.search;
-    saveDraft({ href, title, date, notes, rows, startedAt, pausedAt, pausedTotalMs });
-  }, [draftReady, title, date, notes, rows, startedAt, pausedAt, pausedTotalMs, finished]);
+    saveDraft({ href, title, date, rows, startedAt, pausedAt, pausedTotalMs });
+  }, [draftReady, title, date, rows, startedAt, pausedAt, pausedTotalMs, finished]);
 
   useEffect(() => {
     if (pausedAt || finished) return;
@@ -253,7 +252,6 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       date,
       durationMin,
       endedAtMs: freezeAt,
-      notes,
       splitId: initial.splitId,
       dayTemplateId: initial.dayTemplateId,
       variant: initial.variant,
@@ -373,12 +371,13 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </div>
       ) : null}
 
-      <details className="group rounded-card border border-border bg-surface">
-        <summary className="flex cursor-pointer list-none items-center justify-between p-3 text-sm font-medium text-muted [&::-webkit-details-marker]:hidden">
-          Name, date and notes
-          <IconChevron className="h-4 w-4 text-dim transition-transform group-open:rotate-90" />
+      <details className="group self-start rounded-field border border-border bg-surface">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted [&::-webkit-details-marker]:hidden">
+          <IconGear className="h-3.5 w-3.5 text-dim" />
+          Settings
+          <IconChevron className="h-3 w-3 text-dim transition-transform group-open:rotate-90" />
         </summary>
-        <div className="flex flex-col gap-4 border-t border-border p-4">
+        <div className="flex w-[min(20rem,calc(100vw-3rem))] flex-col gap-4 border-t border-border p-3.5">
           <Field label="Workout name">
             <input
               value={title}
@@ -400,40 +399,30 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               />
             </div>
           </Field>
-          <Field label="Session notes">
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              placeholder="How the session went, energy, anything to remember."
-              className="w-full resize-y rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
-            />
-          </Field>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-muted">Rest timer after each set</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={restTimerOn}
+              aria-label="Rest timer"
+              onClick={() => {
+                setRestTimerOn((v) => !v);
+                if (restTimerOn) setShowRest(false);
+              }}
+              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition-colors ${
+                restTimerOn ? "border-accent bg-accent" : "border-border bg-surface-2"
+              }`}
+            >
+              <span
+                className={`inline-block h-[15px] w-[15px] rounded-full bg-white transition-transform ${
+                  restTimerOn ? "translate-x-[18px]" : "translate-x-[2px]"
+                }`}
+              />
+            </button>
+          </div>
         </div>
       </details>
-
-      <div className="flex items-center justify-between gap-3 rounded-field border border-border bg-surface px-3 py-2">
-        <span className="text-xs font-medium text-muted">Rest timer after each set</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={restTimerOn}
-          aria-label="Rest timer"
-          onClick={() => {
-            setRestTimerOn((v) => !v);
-            if (restTimerOn) setShowRest(false);
-          }}
-          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition-colors ${
-            restTimerOn ? "border-accent bg-accent" : "border-border bg-surface-2"
-          }`}
-        >
-          <span
-            className={`inline-block h-[15px] w-[15px] rounded-full bg-white transition-transform ${
-              restTimerOn ? "translate-x-[18px]" : "translate-x-[2px]"
-            }`}
-          />
-        </button>
-      </div>
 
       {rows.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-border p-8">
@@ -485,8 +474,13 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </p>
       ) : null}
 
-      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex flex-col gap-2 rounded-card border border-accent/30 bg-accent-soft p-3 backdrop-blur md:bottom-4">
-        <div className="flex items-center gap-2">
+      {barMinimised ? (
+        <button
+          type="button"
+          onClick={() => setBarMinimised(false)}
+          aria-label="Expand timer and save"
+          className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex items-center gap-2 self-center rounded-full border border-accent/30 bg-accent-soft px-4 py-2 backdrop-blur md:bottom-4"
+        >
           <span
             className={`h-2 w-2 shrink-0 rounded-full ${
               pausedAt || finished ? "bg-dim" : "animate-pulse bg-accent"
@@ -494,35 +488,60 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
             aria-hidden="true"
           />
           <span className="clock text-sm font-semibold text-fg">{formatElapsed(elapsedSeconds)}</span>
-          <span className="text-xs text-muted">
-            {finished ? "stopped" : pausedAt ? "paused" : "recording"}
-          </span>
-          {!finished ? (
+          <span className="text-dim" aria-hidden="true">·</span>
+          <span className="tabular text-sm font-semibold text-fg">{Math.round(totalVolume)} {U}</span>
+          <IconChevron className="h-3.5 w-3.5 shrink-0 -rotate-90 text-dim" />
+        </button>
+      ) : (
+        <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex flex-col gap-2 rounded-card border border-accent/30 bg-accent-soft p-3 backdrop-blur md:bottom-4">
+          <div className="flex items-center gap-2">
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${
+                pausedAt || finished ? "bg-dim" : "animate-pulse bg-accent"
+              }`}
+              aria-hidden="true"
+            />
+            <span className="clock text-sm font-semibold text-fg">{formatElapsed(elapsedSeconds)}</span>
+            <span className="text-xs text-muted">
+              {finished ? "stopped" : pausedAt ? "paused" : "recording"}
+            </span>
+            <div className="ml-auto flex shrink-0 items-center gap-1">
+              {!finished ? (
+                <button
+                  type="button"
+                  onClick={togglePause}
+                  aria-label={pausedAt ? "Resume timer" : "Pause timer"}
+                  className="flex h-7 w-7 items-center justify-center rounded-field text-muted transition-colors hover:bg-accent/10 hover:text-fg"
+                >
+                  {pausedAt ? <IconPlay className="h-4 w-4" /> : <IconPause className="h-4 w-4" />}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setBarMinimised(true)}
+                aria-label="Minimise timer bar"
+                className="flex h-7 w-7 items-center justify-center rounded-field text-muted transition-colors hover:bg-accent/10 hover:text-fg"
+              >
+                <IconChevron className="h-4 w-4 rotate-90" />
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 border-t border-accent/20 pt-2">
+            <span className="flex flex-col">
+              <span className="text-xs text-muted">Total volume</span>
+              <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} {U}</span>
+            </span>
             <button
               type="button"
-              onClick={togglePause}
-              aria-label={pausedAt ? "Resume timer" : "Pause timer"}
-              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-field text-muted transition-colors hover:bg-accent/10 hover:text-fg"
+              onClick={onSave}
+              disabled={saving || savedOffline}
+              className="ml-auto rounded-field bg-accent px-5 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
             >
-              {pausedAt ? <IconPlay className="h-4 w-4" /> : <IconPause className="h-4 w-4" />}
+              {savedOffline ? "Saved on this device" : saving ? "Saving..." : "Save Workout"}
             </button>
-          ) : null}
+          </div>
         </div>
-        <div className="flex items-center gap-3 border-t border-accent/20 pt-2">
-          <span className="flex flex-col">
-            <span className="text-xs text-muted">Total volume</span>
-            <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} {U}</span>
-          </span>
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={saving || savedOffline}
-            className="ml-auto rounded-field bg-accent px-5 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
-          >
-            {savedOffline ? "Saved on this device" : saving ? "Saving..." : "Save Workout"}
-          </button>
-        </div>
-      </div>
+      )}
 
       {pickerOpen ? (
         <ExercisePicker exercises={allExercises} onPick={addExercise} onClose={() => setPickerOpen(false)} />
@@ -723,11 +742,17 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
           </h2>
           {meso.totalDays > 0 ? (
             <>
-              <ProgressBar label="This week" value={Math.min(meso.sessionsThisWeek, meso.totalDays)} max={meso.totalDays} />
+              <ProgressBar
+                label="This week"
+                value={Math.min(meso.sessionsThisWeek, meso.totalDays)}
+                max={meso.totalDays}
+                tone="danger"
+              />
               <ProgressBar
                 label="Whole program"
                 value={Math.min(meso.sessionsLogged, meso.weeks * meso.totalDays)}
                 max={meso.weeks * meso.totalDays}
+                tone="good"
               />
             </>
           ) : null}
@@ -950,6 +975,14 @@ function IconChevron(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+function IconGear(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   );
 }
