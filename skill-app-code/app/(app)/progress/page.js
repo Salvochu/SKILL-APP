@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getProgressData } from "@/lib/data/progress";
 import { getWeeklyMuscleVolume } from "@/lib/data/volume";
 import { getPersonalRecords } from "@/lib/data/prs";
+import { getStrengthScore } from "@/lib/data/strength";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getUnitPreference } from "@/lib/data/profile";
 import { fromKg, unitLabel } from "@/lib/units";
@@ -12,6 +13,7 @@ import StrengthChart from "@/components/progress/StrengthChart";
 import CompareExercises from "@/components/progress/CompareExercises";
 import MuscleVolume from "@/components/progress/MuscleVolume";
 import PersonalRecords from "@/components/progress/PersonalRecords";
+import StrengthScoreCard from "@/components/progress/StrengthScoreCard";
 import RangeFilter from "@/components/progress/RangeFilter";
 import ShareProgress from "@/components/progress/ShareProgress";
 
@@ -35,10 +37,11 @@ async function ProgressBody({ searchParams }) {
   const sp = (await searchParams) ?? {};
   const range = parseRange(sp.range);
 
-  const [rawData, muscleVolume, records, summary, unit] = await Promise.all([
+  const [rawData, muscleVolume, records, strength, summary, unit] = await Promise.all([
     getProgressData(range),
     getWeeklyMuscleVolume(),
     getPersonalRecords(),
+    getStrengthScore(),
     getWorkoutSummary(),
     getUnitPreference(),
   ]);
@@ -101,6 +104,10 @@ async function ProgressBody({ searchParams }) {
         <Stat label="Time" value={`${Math.floor(summary.minutes / 60)}h ${summary.minutes % 60}m`} />
         {topPRValue ? <Stat label="Top est. 1RM" value={`${compact(topPRValue)} ${U}`} sub={topPR.name} /> : null}
       </div>
+
+      {strength && strength.covered > 0 ? (
+        <StrengthScoreCard data={strength} unit={unit} />
+      ) : null}
 
       <Card title="Weekly sets by muscle" subtitle="Hard sets this week. Tap a group to see each muscle">
         <MuscleVolume data={muscleVolume} />
