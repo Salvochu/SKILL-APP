@@ -553,7 +553,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               disabled={saving || savedOffline}
               className="ml-auto rounded-field bg-accent px-5 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
             >
-              {savedOffline ? "Saved on this device" : saving ? "Saving..." : "Save Workout"}
+              {savedOffline ? "Saved on this device" : saving ? "Finishing..." : "Finish"}
             </button>
           </div>
         </div>
