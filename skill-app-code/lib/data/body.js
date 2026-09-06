@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
-const FIELDS = ["weight", "waist_cm", "chest_cm", "arm_cm", "thigh_cm", "hip_cm"];
+const FIELDS = ["weight", "body_fat", "waist_cm", "chest_cm", "arm_cm", "thigh_cm", "hip_cm"];
 
 // The signed-in user's body check-ins (weight and optional tape
 // measurements), oldest first. RLS scopes body_logs to auth.uid().
@@ -9,13 +9,14 @@ export async function getBodyLog() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("body_logs")
-    .select("logged_at, weight, waist_cm, chest_cm, arm_cm, thigh_cm, hip_cm, note")
+    .select("logged_at, weight, body_fat, waist_cm, chest_cm, arm_cm, thigh_cm, hip_cm, note")
     .order("logged_at", { ascending: true });
   if (error) throw new Error(`Failed to load body log: ${error.message}`);
 
   const entries = (data ?? []).map((r) => ({
     date: r.logged_at,
     weight: r.weight == null ? null : Number(r.weight),
+    fat: r.body_fat == null ? null : Number(r.body_fat),
     waist: r.waist_cm == null ? null : Number(r.waist_cm),
     chest: r.chest_cm == null ? null : Number(r.chest_cm),
     arm: r.arm_cm == null ? null : Number(r.arm_cm),
