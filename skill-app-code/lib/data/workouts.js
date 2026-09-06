@@ -101,6 +101,13 @@ export async function getWorkoutDetail(sessionId) {
     });
   }
 
+  // Sets come back in `position` order, which groups each exercise
+  // together and keeps its sets in sequence. Sort by set_number as a
+  // backstop for older rows whose position predates an edit.
+  for (const entry of byExercise.values()) {
+    entry.sets.sort((a, b) => a.setNumber - b.setNumber);
+  }
+
   const exercises = [...byExercise.values()];
   const volumeKg = exercises.reduce(
     (sum, ex) =>
