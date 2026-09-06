@@ -111,6 +111,29 @@ h4 {
   font-variant-numeric: tabular-nums;
 }
 
+/* Indeterminate loading bar: a segment that sweeps across the track. */
+@keyframes indeterminate-bar {
+  0% { left: -40%; width: 40%; }
+  50% { width: 55%; }
+  100% { left: 100%; width: 40%; }
+}
+.loading-bar {
+  position: relative;
+  overflow: hidden;
+}
+.loading-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: var(--color-accent);
+  animation: indeterminate-bar 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-bar::after { animation: none; left: 0; width: 100%; opacity: 0.4; }
+}
+
 :where(a, button, input, textarea, select):focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;

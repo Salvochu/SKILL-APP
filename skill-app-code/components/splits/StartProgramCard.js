@@ -14,6 +14,7 @@ export default function StartProgramCard({ template }) {
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [variant, setVariant] = useState("");
+  const [sessionsPerWeek, setSessionsPerWeek] = useState(null);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -30,12 +31,14 @@ export default function StartProgramCard({ template }) {
     }
     setOverview(detail);
     setVariant(detail.variants[0] ?? "Standard");
+    const opts = detail.sessionOptions ?? [];
+    setSessionsPerWeek(opts.length ? opts[opts.length - 1] : null);
   }
 
   async function onStart() {
     setStarting(true);
     setError(null);
-    const result = await startMesocycle(template.id, variant);
+    const result = await startMesocycle(template.id, variant, sessionsPerWeek);
     setStarting(false);
     if (result?.error) {
       setError(result.error);
@@ -81,6 +84,8 @@ export default function StartProgramCard({ template }) {
           overview={overview}
           variant={variant}
           onVariantChange={setVariant}
+          sessionsPerWeek={sessionsPerWeek}
+          onSessionsChange={setSessionsPerWeek}
           onStart={onStart}
           starting={starting}
           error={error}

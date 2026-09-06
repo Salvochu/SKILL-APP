@@ -19,7 +19,7 @@ function isActive(pathname, href) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export default function NavBar() {
+export default function NavBar({ streak = null }) {
   const pathname = usePathname() ?? "";
 
   return (
@@ -48,7 +48,8 @@ export default function NavBar() {
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-1 md:ml-0">
+          <div className="ml-auto flex items-center gap-1.5 md:ml-0">
+            {streak}
             <ThemeToggle />
             <Link
               href="/profile"

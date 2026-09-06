@@ -21,7 +21,7 @@ export async function loadMesocycleOverview(templateId) {
 // Starts a new run of a mesocycle template. Only one active run at a
 // time: abandons any other active one first, rather than blocking with
 // an error, since switching programs is a normal thing to want to do.
-export async function startMesocycle(templateId, variant) {
+export async function startMesocycle(templateId, variant, sessionsPerWeek) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -29,6 +29,8 @@ export async function startMesocycle(templateId, variant) {
   if (!user) return { error: "Please sign in again." };
 
   const safeVariant = VARIANT_ORDER.includes(variant) ? variant : "Standard";
+  const spw = Number(sessionsPerWeek);
+  const safeSpw = Number.isInteger(spw) && spw >= 1 && spw <= 14 ? spw : null;
 
   const { error: abandonError } = await supabase
     .from("user_mesocycles")
@@ -43,6 +45,7 @@ export async function startMesocycle(templateId, variant) {
     start_date: new Date().toISOString().slice(0, 10),
     status: "active",
     variant: safeVariant,
+    sessions_per_week: safeSpw,
   });
   if (error) return { error: error.message };
 

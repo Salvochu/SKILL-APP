@@ -1,13 +1,11 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import TapLink from "@/components/TapLink";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getWeeklyMuscleVolume } from "@/lib/data/volume";
 import { getProfile, getUnitPreference } from "@/lib/data/profile";
 import { fromKg, unitLabel } from "@/lib/units";
+import TapLink from "@/components/TapLink";
 import MesocycleSection from "@/components/dashboard/MesocycleSection";
 import WeeklySetsMini from "@/components/dashboard/WeeklySetsMini";
-import WorkoutHistoryModal from "@/components/dashboard/WorkoutHistoryModal";
 
 export const metadata = { title: "Dashboard" };
 
@@ -22,10 +20,6 @@ export default function DashboardPage() {
         <MesocycleSection />
       </Suspense>
 
-      <Suspense fallback={<div className="h-[4.5rem] rounded-card bg-surface" />}>
-        <Streak />
-      </Suspense>
-
       <Suspense fallback={<StatsSkeleton />}>
         <Stats />
       </Suspense>
@@ -33,13 +27,6 @@ export default function DashboardPage() {
       <Suspense fallback={<div className="h-52 rounded-card bg-surface" />}>
         <WeeklySets />
       </Suspense>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Workout History</h2>
-        <Suspense fallback={<div className="h-24 rounded-card bg-surface" />}>
-          <Recent />
-        </Suspense>
-      </section>
 
       <QuickLink href="/body" title="Body measurements" body="Weight, body fat, photos" />
     </div>
@@ -76,74 +63,9 @@ async function Stats() {
   );
 }
 
-async function Streak() {
-  const s = await getWorkoutSummary();
-  const has = s.streakWeeks > 0;
-  return (
-    <div className="flex items-center gap-4 rounded-card border border-border bg-surface p-4">
-      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${has ? "bg-accent-soft" : "bg-surface-2"}`}>
-        <IconFlame className={`h-6 w-6 ${has ? "text-accent" : "text-dim"}`} />
-      </span>
-      <div className="flex flex-col">
-        <span className="tabular text-2xl font-bold text-fg">
-          {s.streakWeeks} {s.streakWeeks === 1 ? "week" : "weeks"}
-        </span>
-        <span className="text-xs text-dim">
-          {has
-            ? s.longestStreakWeeks > s.streakWeeks
-              ? `current streak . best ${s.longestStreakWeeks}`
-              : "current streak"
-            : "log a workout this week to start a streak"}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 async function WeeklySets() {
   const data = await getWeeklyMuscleVolume();
   return <WeeklySetsMini data={data} />;
-}
-
-async function Recent() {
-  const s = await getWorkoutSummary();
-  if (s.recent.length === 0) {
-    return (
-      <div className="rounded-card border border-border bg-surface p-6 text-center text-sm text-muted">
-        No workouts yet. Log your first session.
-      </div>
-    );
-  }
-  return (
-    <div className="flex flex-col gap-2">
-      <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
-        {s.recent.map((w) => (
-          <li key={w.id}>
-            <TapLink
-              href={`/workouts/${w.id}`}
-              className="flex items-center justify-between gap-3 bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
-            >
-              <span className="text-sm font-medium text-fg">{w.title}</span>
-              <span className="flex items-center gap-1.5 text-xs text-dim">
-                {new Date(w.started_at).toLocaleDateString()}
-                <IconChevron className="h-3.5 w-3.5" />
-              </span>
-            </TapLink>
-          </li>
-        ))}
-      </ul>
-      {s.history.length > s.recent.length ? (
-        <WorkoutHistoryModal sessions={s.history}>
-          <button
-            type="button"
-            className="self-start rounded-field px-1 text-sm font-medium text-accent hover:text-accent-2"
-          >
-            Show all
-          </button>
-        </WorkoutHistoryModal>
-      ) : null}
-    </div>
-  );
 }
 
 function StatTile({ label, value, sub, accent }) {
@@ -184,17 +106,3 @@ function StatsSkeleton() {
   );
 }
 
-function IconFlame(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M12 2c1 3-1 5-1 7a3 3 0 0 0 6 0c0-1 0-2-.5-3 2 2 3.5 4.5 3.5 7a8 8 0 0 1-16 0c0-4 3-6 4-9 .7-2 3-2 4 -2z" />
-    </svg>
-  );
-}
-function IconChevron(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m9 6 6 6-6 6" />
-    </svg>
-  );
-}

@@ -8,6 +8,7 @@ import {
   nextDayIndex,
   weekDateRange,
   weekGuidance,
+  sessionOptionsFromCadence,
 } from "@/lib/mesocycle";
 import { sortVariants } from "@/lib/exercises";
 
@@ -60,6 +61,9 @@ export async function getMesocycleOverview(templateId) {
     startingRir: template.starting_rir,
     splitName: template.split.name,
     variants,
+    // When the split's cadence is a range (Full Body "2-3x per week")
+    // the user picks how many sessions a week; otherwise it is fixed.
+    sessionOptions: sessionOptionsFromCadence(template.split.cadence),
     days: (days ?? []).map((d) => ({
       position: d.position,
       name: d.day_template?.name ?? d.label ?? "Day",
@@ -81,7 +85,7 @@ export async function getActiveMesocycle() {
   const { data: run, error } = await supabase
     .from("user_mesocycles")
     .select(
-      "id, start_date, status, variant, template:mesocycle_templates(id, name, weeks, starting_rir, split:splits(id, name))",
+      "id, start_date, status, variant, sessions_per_week, template:mesocycle_templates(id, name, weeks, starting_rir, split:splits(id, name))",
     )
     .eq("user_id", user.id)
     .eq("status", "active")
@@ -145,6 +149,9 @@ export async function getActiveMesocycle() {
     sessionsLogged: sessionsLogged ?? 0,
     sessionsThisWeek: sessionsThisWeek ?? 0,
     totalDays,
+    // Sessions the user aims for each week. Chosen at start for
+    // range-cadence splits (Full Body); otherwise the split's day count.
+    sessionsPerWeek: run.sessions_per_week || totalDays || 1,
     nextDay: nextDay
       ? {
           position: nextDay.position,
