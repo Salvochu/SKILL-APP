@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getProgressData } from "@/lib/data/progress";
 import { getWeeklyMuscleVolume } from "@/lib/data/volume";
 import { getPersonalRecords } from "@/lib/data/prs";
+import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getUnitPreference } from "@/lib/data/profile";
 import { fromKg, unitLabel } from "@/lib/units";
 import { parseRange } from "@/lib/dateRange";
@@ -34,10 +35,11 @@ async function ProgressBody({ searchParams }) {
   const sp = (await searchParams) ?? {};
   const range = parseRange(sp.range);
 
-  const [rawData, muscleVolume, records, unit] = await Promise.all([
+  const [rawData, muscleVolume, records, summary, unit] = await Promise.all([
     getProgressData(range),
     getWeeklyMuscleVolume(),
     getPersonalRecords(),
+    getWorkoutSummary(),
     getUnitPreference(),
   ]);
 
@@ -93,9 +95,10 @@ async function ProgressBody({ searchParams }) {
         <ShareProgress stats={shareStats} muscles={shareMuscles} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Total volume" value={`${compact(data.totalVolumeKg)} ${U}`} />
         <Stat label="Workouts" value={data.workouts} />
+        <Stat label="Time" value={`${Math.floor(summary.minutes / 60)}h ${summary.minutes % 60}m`} />
         {topPRValue ? <Stat label="Top est. 1RM" value={`${compact(topPRValue)} ${U}`} sub={topPR.name} /> : null}
       </div>
 
@@ -110,9 +113,17 @@ async function ProgressBody({ searchParams }) {
       ) : null}
 
       {hasTrends ? (
-        <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
+        <details className="group flex flex-col rounded-card border border-border bg-surface">
+          <summary className="flex cursor-pointer list-none items-center justify-between p-4 [&::-webkit-details-marker]:hidden">
+            <span className="flex flex-col">
+              <span className="font-display text-base font-semibold text-fg">Trends</span>
+              <span className="text-xs text-dim">Volume and strength over time</span>
+            </span>
+            <IconChevron className="h-4 w-4 text-dim transition-transform group-open:rotate-90" />
+          </summary>
+
+          <div className="flex flex-col gap-4 border-t border-border p-4">
           <div className="flex flex-col gap-2">
-            <h2 className="font-display text-base font-semibold text-fg">Trends</h2>
             <Suspense fallback={<div className="h-8" />}>
               <RangeFilter />
             </Suspense>
@@ -154,9 +165,18 @@ async function ProgressBody({ searchParams }) {
               <CompareExercises exercises={data.exercises} unit={U} />
             </div>
           ) : null}
-        </section>
+          </div>
+        </details>
       ) : null}
     </>
+  );
+}
+
+function IconChevron(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m9 6 6 6-6 6" />
+    </svg>
   );
 }
 

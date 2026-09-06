@@ -237,7 +237,7 @@ function Toggle({ label, body, checked, disabled, onChange }) {
 
 function ToggleRow({ label, body, checked, disabled, onChange }) {
   return (
-    <label className={`flex items-center justify-between gap-3 ${disabled ? "opacity-40" : "cursor-pointer"}`}>
+    <div className={`flex items-center justify-between gap-4 ${disabled ? "opacity-45" : ""}`}>
       <span className="flex min-w-0 flex-col">
         <span className="text-sm font-medium text-fg">{label}</span>
         <span className="text-xs text-dim">{body}</span>
@@ -249,16 +249,16 @@ function ToggleRow({ label, body, checked, disabled, onChange }) {
         aria-label={label}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-10 shrink-0 rounded-full transition-colors ${
-          checked ? "bg-accent" : "bg-surface-2 border border-border"
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors disabled:cursor-not-allowed ${
+          checked ? "border-accent bg-accent" : "border-border bg-surface-2"
         }`}
       >
         <span
-          className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-5" : "translate-x-1"
+          className={`inline-block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform ${
+            checked ? "translate-x-[22px]" : "translate-x-[3px]"
           }`}
         />
       </button>
-    </label>
+    </div>
   );
 }

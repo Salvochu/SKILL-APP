@@ -2,11 +2,11 @@ import { Suspense } from "react";
 import Link from "next/link";
 import TapLink from "@/components/TapLink";
 import { getWorkoutSummary } from "@/lib/data/workouts";
-import { getProgressData } from "@/lib/data/progress";
+import { getWeeklyMuscleVolume } from "@/lib/data/volume";
 import { getProfile, getUnitPreference } from "@/lib/data/profile";
 import { fromKg, unitLabel } from "@/lib/units";
-import BarChart from "@/components/progress/BarChart";
 import MesocycleSection from "@/components/dashboard/MesocycleSection";
+import WeeklySetsMini from "@/components/dashboard/WeeklySetsMini";
 import WorkoutHistoryModal from "@/components/dashboard/WorkoutHistoryModal";
 
 export const metadata = { title: "Dashboard" };
@@ -31,7 +31,7 @@ export default function DashboardPage() {
       </Suspense>
 
       <Suspense fallback={<div className="h-52 rounded-card bg-surface" />}>
-        <VolumeTrend />
+        <WeeklySets />
       </Suspense>
 
       <section className="flex flex-col gap-3">
@@ -100,27 +100,9 @@ async function Streak() {
   );
 }
 
-async function VolumeTrend() {
-  const [{ sessionVolumes }, unit] = await Promise.all([getProgressData(), getUnitPreference()]);
-  if (sessionVolumes.length === 0) {
-    return (
-      <div className="rounded-card border border-border bg-surface p-6 text-center text-sm text-muted">
-        Log a workout to see your volume trend.
-      </div>
-    );
-  }
-  return (
-    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
-        Training volume, recent sessions
-      </h2>
-      <BarChart
-        data={sessionVolumes.map((v) => ({ ...v, volumeKg: Math.round(fromKg(v.volumeKg, unit)) }))}
-        max={10}
-        unit={unitLabel(unit)}
-      />
-    </section>
-  );
+async function WeeklySets() {
+  const data = await getWeeklyMuscleVolume();
+  return <WeeklySetsMini data={data} />;
 }
 
 async function Recent() {

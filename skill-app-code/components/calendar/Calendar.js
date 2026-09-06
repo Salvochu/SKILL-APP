@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import TapLink from "@/components/TapLink";
 import { compact } from "@/components/progress/chartkit";
 
 const MONTHS = [
@@ -109,10 +109,10 @@ export default function Calendar({ sessions, bodyDates }) {
           <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
             {selectedSessions.map((s) => (
               <li key={s.id}>
-                <Link href={`/workouts/${s.id}`} className="flex items-center justify-between gap-3 bg-surface px-3 py-2.5 transition-colors hover:bg-surface-2">
+                <TapLink href={`/workouts/${s.id}`} className="flex items-center justify-between gap-3 bg-surface px-3 py-2.5 transition-colors hover:bg-surface-2">
                   <span className="text-sm font-medium text-fg">{s.title}</span>
                   <span className="tabular shrink-0 text-xs text-dim">{compact(s.volumeKg)} kg</span>
-                </Link>
+                </TapLink>
               </li>
             ))}
             {bodySet.has(selected) ? (
