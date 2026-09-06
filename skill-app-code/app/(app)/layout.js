@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
+import RouteProgress from "@/components/RouteProgress";
 import OfflineQueueSync from "@/components/OfflineQueueSync";
 import ActiveWorkoutBar from "@/components/log/ActiveWorkoutBar";
 import UnfinishedWorkoutPrompt from "@/components/log/UnfinishedWorkoutPrompt";
@@ -11,6 +12,9 @@ import OnboardingGate from "@/components/onboarding/OnboardingGate";
 export default function AppLayout({ children }) {
   return (
     <div className="min-h-full">
+      <Suspense fallback={null}>
+        <RouteProgress />
+      </Suspense>
       <Suspense fallback={<div className="fixed inset-x-0 top-0 z-40 h-14 border-b border-border bg-bg md:h-16" />}>
         <NavBar />
       </Suspense>

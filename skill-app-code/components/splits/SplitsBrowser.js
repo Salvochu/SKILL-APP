@@ -31,7 +31,7 @@ export default function SplitsBrowser({ splits, mesocycleTemplates = [] }) {
                 <button
                   type="button"
                   onClick={() => setSelectedId(split.id)}
-                  className="flex w-full items-center gap-4 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+                  className="flex w-full items-center gap-4 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2 active:bg-accent-soft"
                 >
                   <SplitGlyph />
                   <span className="flex-1">
