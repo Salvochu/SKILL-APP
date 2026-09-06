@@ -1,7 +1,4 @@
-import { Suspense } from "react";
 import Link from "next/link";
-import { getAllWorkoutSessions } from "@/lib/data/workouts";
-import WorkoutHistoryModal from "@/components/dashboard/WorkoutHistoryModal";
 import ReminderToggle from "@/components/ReminderToggle";
 
 export const metadata = { title: "Menu" };
@@ -19,9 +16,7 @@ export default function MenuPage() {
         <MenuLink href="/progress" label="Progress" body="Strength and volume over time" icon={IconProgress} />
         <MenuLink href="/body" label="Body" body="Weight and measurements" icon={IconBody} />
         <MenuLink href="/library" label="Library" body="Exercises, stretching and lessons" icon={IconLibrary} />
-        <Suspense fallback={<MenuRowSkeleton />}>
-          <WorkoutHistoryRow />
-        </Suspense>
+        <MenuLink href="/history" label="Workout History" body="Every session you have logged" icon={IconHistory} />
         <a href="/api/export" className="block transition-colors hover:bg-surface-2">
           <MenuRow
             label="Export training log"
@@ -32,17 +27,6 @@ export default function MenuPage() {
         <ReminderToggle />
       </div>
     </div>
-  );
-}
-
-async function WorkoutHistoryRow() {
-  const sessions = await getAllWorkoutSessions();
-  return (
-    <WorkoutHistoryModal sessions={sessions}>
-      <button type="button" className="w-full text-left">
-        <MenuRow label="Workout History" body="Every session you have logged" icon={IconHistory} />
-      </button>
-    </WorkoutHistoryModal>
   );
 }
 
@@ -69,9 +53,6 @@ function MenuRow({ label, body, icon: Icon }) {
   );
 }
 
-function MenuRowSkeleton() {
-  return <div className="h-[62px] bg-surface" />;
-}
 
 function IconUser(props) {
   return (
