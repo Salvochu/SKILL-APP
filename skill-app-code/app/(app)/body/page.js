@@ -35,6 +35,7 @@ async function BodyBody() {
   const conv = (key, v) => (v == null ? null : key === "weight" ? Math.round(fromKg(v, unit) * 10) / 10 : v);
   const METRICS = [
     { key: "weight", label: "Weight", unit: ` ${wu}` },
+    { key: "fat", label: "Body fat", unit: " %" },
     { key: "waist", label: "Waist", unit: " cm" },
     { key: "chest", label: "Chest", unit: " cm" },
     { key: "arm", label: "Arm", unit: " cm" },

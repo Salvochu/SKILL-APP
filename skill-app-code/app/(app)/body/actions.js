@@ -24,17 +24,18 @@ export async function logBodyEntry(formData) {
     : new Date().toISOString().slice(0, 10);
 
   const weight = num(formData.get("weight"), 20, 400);
+  const bodyFat = num(formData.get("bodyFat"), 2, 70);
   const waist = num(formData.get("waist"), 30, 250);
   const chest = num(formData.get("chest"), 40, 250);
   const arm = num(formData.get("arm"), 15, 100);
   const thigh = num(formData.get("thigh"), 25, 150);
   const hip = num(formData.get("hip"), 40, 250);
-  for (const v of [weight, waist, chest, arm, thigh, hip]) {
+  for (const v of [weight, bodyFat, waist, chest, arm, thigh, hip]) {
     if (Number.isNaN(v)) return { error: "One of those numbers looks off. Check and try again." };
   }
   const note = (formData.get("note") || "").toString().trim() || null;
 
-  if (weight == null && waist == null && chest == null && arm == null && thigh == null && hip == null) {
+  if (weight == null && bodyFat == null && waist == null && chest == null && arm == null && thigh == null && hip == null) {
     return { error: "Add a weight or at least one measurement." };
   }
 
@@ -43,6 +44,7 @@ export async function logBodyEntry(formData) {
       user_id: user.id,
       logged_at: date,
       weight,
+      body_fat: bodyFat,
       waist_cm: waist,
       chest_cm: chest,
       arm_cm: arm,

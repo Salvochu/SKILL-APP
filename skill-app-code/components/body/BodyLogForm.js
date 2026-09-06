@@ -64,10 +64,11 @@ export default function BodyLogForm({ latest, unit = "kg" }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Date">
-          <input type="date" name="date" defaultValue={today} max={today} className={inputClass} />
-        </Field>
+      <Field label="Date">
+        <input type="date" name="date" defaultValue={today} max={today} className={inputClass} />
+      </Field>
+
+      <div className="grid grid-cols-2 gap-3">
         <Field label={`Weight (${unitLabel(unit)})`}>
           <input
             type="number"
@@ -79,6 +80,16 @@ export default function BodyLogForm({ latest, unit = "kg" }) {
                 ? String(Math.round(fromKg(latest.weight, unit) * 10) / 10)
                 : "0.0"
             }
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Body fat (%)">
+          <input
+            type="number"
+            name="bodyFat"
+            inputMode="decimal"
+            step="0.1"
+            placeholder={latest?.fat != null ? String(latest.fat) : "0.0"}
             className={inputClass}
           />
         </Field>
