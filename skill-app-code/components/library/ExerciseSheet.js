@@ -65,7 +65,12 @@ export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <MusclePill muscle={exercise.muscle} />
+          {(exercise.muscles && exercise.muscles.length
+            ? exercise.muscles
+            : [{ id: exercise.muscle, name: exercise.muscle, role: "primary" }]
+          ).map((m) => (
+            <MusclePill key={m.id} muscle={m.name} subtle={m.role === "secondary"} />
+          ))}
           {exercise.equipment ? (
             <span className="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-muted">
               {exercise.equipment}
@@ -82,6 +87,10 @@ export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
             </a>
           ) : null}
         </div>
+
+        {exercise.muscles?.some((m) => m.role === "secondary") ? (
+          <p className="mt-2 text-[11px] text-dim">Faded tags are assisting muscles.</p>
+        ) : null}
 
         {exercise.instructions ? (
           <div className="mt-4 rounded-field bg-surface-2 p-3">

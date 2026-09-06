@@ -74,7 +74,7 @@ async function ProgressBody() {
         {heaviest ? <Stat label="Top est. 1RM" value={`${compact(heaviest.best1rm)} ${U}`} sub={heaviest.name} /> : null}
       </div>
 
-      <Card title="Weekly sets by muscle" subtitle="Hard sets logged this week, per muscle group">
+      <Card title="Weekly sets by muscle" subtitle="Hard sets this week. Tap a group for the muscle breakdown">
         <MuscleVolume data={muscleVolume} />
       </Card>
 

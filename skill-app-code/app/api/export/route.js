@@ -19,7 +19,9 @@ export async function GET() {
       .order("started_at", { ascending: true }),
     supabase
       .from("workout_sets")
-      .select("session_id, set_number, reps, weight, rir, completed, exercise:exercises(name, muscle)"),
+      .select(
+        "session_id, set_number, reps, weight, rir, completed, exercise:exercises(name, muscle, exercise_muscles(role, muscle:muscles(name, position)))",
+      ),
   ]);
   if (sessionsRes.error || setsRes.error) {
     return new Response("Could not build the export. Try again.", { status: 500 });
@@ -39,7 +41,9 @@ export async function GET() {
     "Duration (min)",
     "Effort (1-5)",
     "Exercise",
-    "Muscle",
+    "Muscle group",
+    "Primary muscles",
+    "Assisting muscles",
     "Set",
     "Weight (kg)",
     "Reps",
@@ -69,6 +73,8 @@ export async function GET() {
           s.perceived_effort ?? "",
           set?.exercise?.name ?? "",
           set?.exercise?.muscle ?? "",
+          muscleNames(set, "primary"),
+          muscleNames(set, "secondary"),
           set?.set_number ?? "",
           set?.weight ?? "",
           set?.reps ?? "",
@@ -90,6 +96,15 @@ export async function GET() {
       "Cache-Control": "no-store",
     },
   });
+}
+
+function muscleNames(set, role) {
+  const tags = set?.exercise?.exercise_muscles ?? [];
+  return tags
+    .filter((t) => t.role === role && t.muscle)
+    .sort((a, b) => (a.muscle.position ?? 0) - (b.muscle.position ?? 0))
+    .map((t) => t.muscle.name)
+    .join(", ");
 }
 
 function csv(value) {

@@ -58,7 +58,7 @@ export default function ExercisePicker({ exercises, onPick, onClose }) {
                   <span className="block text-sm font-medium text-fg">{e.name}</span>
                   <span className="block text-xs text-dim">{e.equipment}</span>
                 </span>
-                <MusclePill muscle={e.muscle} />
+                <MusclePill muscle={e.muscles?.find((m) => m.role === "primary")?.name ?? e.muscle} />
               </button>
             </li>
           ))}

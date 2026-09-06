@@ -44,3 +44,6 @@ next-env.d.ts
 
 # scratch: extracted reference-app data, not part of the app
 .reference-data/
+
+# claude code local config
+/.claude/
