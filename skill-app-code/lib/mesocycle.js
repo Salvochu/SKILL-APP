@@ -63,6 +63,35 @@ export function setsForWeek(baseSets, week, weeks) {
   return Math.max(1, Math.ceil(baseSets / 2));
 }
 
+// Plain-language guidance for the week you are in: what to aim for on
+// every set. Derived from the week number so there is nothing to author
+// per template. `headline` is a short chip; `detail` is a sentence.
+export function weekGuidance(week, weeks, startingRir = 3) {
+  if (isDeloadWeek(week, weeks)) {
+    return {
+      headline: "Deload week",
+      detail:
+        "Half the sets, drop the weight by a third or so, and keep 4 to 5 reps in reserve. This week is for recovery, not progress.",
+    };
+  }
+  if (week === 1) {
+    return {
+      headline: "Baseline week",
+      detail:
+        `Leave about ${startingRir} reps in the tank on every set. Pick weights you are sure of. These numbers become your reference for the whole block.`,
+    };
+  }
+  const rir = rirForWeek(week, weeks, startingRir);
+  const trainingWeeks = Math.max(1, weeks - 1);
+  const last = week === trainingWeeks;
+  return {
+    headline: last ? "Last hard week" : `Beat last week`,
+    detail: last
+      ? `Everything you have. Match or beat last week's reps with 0 to 1 left in reserve, then you deload.`
+      : `Add a rep or two per set, or a little weight, versus last week. Aim for about ${rir} rep${rir === 1 ? "" : "s"} in reserve.`,
+  };
+}
+
 // 0-based position in the split's day sequence that comes next, given
 // how many sessions have already been logged against this mesocycle
 // run. Cycles through the split's own days in order, independent of

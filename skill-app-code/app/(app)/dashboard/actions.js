@@ -1,8 +1,16 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getMesocycleOverview } from "@/lib/data/mesocycles";
 import { VARIANT_ORDER } from "@/lib/exercises";
+
+// The mesocycle state is read on the dashboard and the log screen; after
+// any change to a run, both need fresh data on the next visit.
+function revalidateMesocycle() {
+  revalidatePath("/dashboard");
+  revalidatePath("/log");
+}
 
 // Thin read wrapper: MesocyclePanel is a Client Component and cannot
 // import a server-only data module directly, so it calls this instead.
@@ -38,6 +46,7 @@ export async function startMesocycle(templateId, variant) {
   });
   if (error) return { error: error.message };
 
+  revalidateMesocycle();
   return { ok: true };
 }
 
@@ -55,6 +64,7 @@ export async function finishMesocycle(userMesocycleId) {
     .eq("user_id", user.id);
   if (error) return { error: error.message };
 
+  revalidateMesocycle();
   return { ok: true };
 }
 
@@ -72,5 +82,6 @@ export async function abandonMesocycle(userMesocycleId) {
     .eq("user_id", user.id);
   if (error) return { error: error.message };
 
+  revalidateMesocycle();
   return { ok: true };
 }

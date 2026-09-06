@@ -8,7 +8,7 @@ import { finishMesocycle } from "@/app/(app)/dashboard/actions";
 
 // The end-of-block moment: what got done, where strength moved, and the
 // nudge to check in and start the next block.
-export default function MesocycleComplete({ active, summary, onPickProgram }) {
+export default function MesocycleComplete({ active, summary }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -76,14 +76,12 @@ export default function MesocycleComplete({ active, summary, onPickProgram }) {
       {error ? <p className="text-sm text-danger">{error}</p> : null}
 
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={onPickProgram}
-          disabled={busy}
-          className="rounded-field bg-accent px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+        <Link
+          href="/splits"
+          className="rounded-field bg-accent px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
         >
           Start the next block
-        </button>
+        </Link>
         <button
           type="button"
           onClick={onFinish}

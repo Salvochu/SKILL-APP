@@ -2,6 +2,7 @@ import { getExercises } from "@/lib/data/exercises";
 import { getDayTemplateExercises, getDayTemplate } from "@/lib/data/dayTemplates";
 import { getRecentPerformance } from "@/lib/data/history";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
+import { getNotificationPrefs } from "@/lib/data/notifications";
 import { getUnitPreference } from "@/lib/data/profile";
 import { setsForWeek } from "@/lib/mesocycle";
 import { fromKg } from "@/lib/units";
@@ -21,13 +22,14 @@ export default async function LogPage({ searchParams }) {
   const exerciseId = strOrNull(params?.exercise);
   const mesoId = strOrNull(params?.meso);
 
-  const [allExercises, historyKg, activeMeso, unit] = await Promise.all([
+  const [allExercises, historyKg, activeMeso, prefs, unit] = await Promise.all([
     getExercises(),
     getRecentPerformance(),
     // Re-fetched fresh here rather than trusting the link's query params,
     // so a bookmarked or day-old link always reflects the real current
     // week, not whatever week it was when the link was made.
     mesoId ? getActiveMesocycle() : null,
+    getNotificationPrefs(),
     getUnitPreference(),
   ]);
   // The logger works entirely in the user's chosen unit: history comes
@@ -86,8 +88,17 @@ export default async function LogPage({ searchParams }) {
       allExercises={allExercises}
       history={history}
       unit={unit}
+      restTimer={prefs.restTimerEnabled}
       mesoContext={
-        meso ? { week: meso.week, weeks: meso.weeks, isDeload: meso.isDeload, rirTarget: meso.rirTarget } : null
+        meso
+          ? {
+              week: meso.week,
+              weeks: meso.weeks,
+              isDeload: meso.isDeload,
+              rirTarget: meso.rirTarget,
+              guidance: meso.guidance ?? null,
+            }
+          : null
       }
       initial={{
         title,

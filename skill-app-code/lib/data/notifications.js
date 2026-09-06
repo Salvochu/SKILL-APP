@@ -9,6 +9,7 @@ export const DEFAULT_PREFS = {
   streakAtRisk: false,
   restTimerDone: false,
   unfinishedWorkout: true,
+  restTimerEnabled: true,
 };
 
 function fromRow(row) {
@@ -21,6 +22,7 @@ function fromRow(row) {
     streakAtRisk: row.streak_at_risk ?? false,
     restTimerDone: row.rest_timer_done ?? false,
     unfinishedWorkout: row.unfinished_workout ?? true,
+    restTimerEnabled: row.rest_timer_enabled ?? true,
   };
 }
 

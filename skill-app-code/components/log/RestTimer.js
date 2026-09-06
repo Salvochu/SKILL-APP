@@ -9,7 +9,7 @@ const PRESETS = [60, 90, 120];
 // by the "rest timer done" toggle, mirrored to localStorage.
 function notifyRestDone() {
   try {
-    if (localStorage.getItem("notif:restTimer") !== "on") return;
+    if (localStorage.getItem("notif:restTimerDone") !== "on") return;
     if (document.visibilityState === "visible") return;
     if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
     navigator.serviceWorker?.ready?.then((reg) => {
@@ -87,24 +87,30 @@ export default function RestTimer({ startSeconds, onDismiss }) {
             <TimerIcon label="Restart timer" onClick={() => { setRemaining(total); setRunning(true); buzzed.current = false; }}>
               <IconRestart />
             </TimerIcon>
-            <TimerIcon label="Dismiss timer" onClick={onDismiss}>
-              <IconX />
-            </TimerIcon>
           </div>
         </div>
-        <div className="flex gap-1.5 px-3 pb-3">
-          {PRESETS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => { setTotal(p); setRemaining(p); setRunning(true); buzzed.current = false; }}
-              className={`rounded-field px-2.5 py-1 text-xs font-medium transition-colors ${
-                total === p ? "bg-accent-soft text-accent" : "text-muted hover:text-fg"
-              }`}
-            >
-              {p}s
-            </button>
-          ))}
+        <div className="flex items-center gap-2 px-3 pb-3">
+          <div className="flex gap-1">
+            {PRESETS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => { setTotal(p); setRemaining(p); setRunning(true); buzzed.current = false; }}
+                className={`rounded-field px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  total === p ? "bg-accent-soft text-accent" : "text-muted hover:text-fg"
+                }`}
+              >
+                {p}s
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="ml-auto rounded-field bg-surface-2 px-4 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-border active:bg-accent-soft"
+          >
+            {remaining === 0 ? "Done" : "Skip rest"}
+          </button>
         </div>
       </div>
     </div>
@@ -133,7 +139,4 @@ function IconPlay() {
 }
 function IconRestart() {
   return <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>;
-}
-function IconX() {
-  return <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>;
 }

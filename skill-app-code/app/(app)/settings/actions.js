@@ -9,6 +9,7 @@ const BOOL_KEYS = {
   streakAtRisk: "streak_at_risk",
   restTimerDone: "rest_timer_done",
   unfinishedWorkout: "unfinished_workout",
+  restTimerEnabled: "rest_timer_enabled",
 };
 
 // Merge a partial set of preference changes into the user's row.
