@@ -4,33 +4,42 @@ import { getWeeklyMuscleVolume } from "@/lib/data/volume";
 import { getPersonalRecords } from "@/lib/data/prs";
 import { getUnitPreference } from "@/lib/data/profile";
 import { fromKg, unitLabel } from "@/lib/units";
+import { parseRange } from "@/lib/dateRange";
 import { compact, shortDate } from "@/components/progress/chartkit";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
 import CompareExercises from "@/components/progress/CompareExercises";
 import MuscleVolume from "@/components/progress/MuscleVolume";
 import PersonalRecords from "@/components/progress/PersonalRecords";
+import RangeFilter from "@/components/progress/RangeFilter";
+import ShareProgress from "@/components/progress/ShareProgress";
 
 export const metadata = { title: "Progress" };
 
-export default function ProgressPage() {
+export default function ProgressPage({ searchParams }) {
   return (
     <div className="flex flex-col gap-6 py-2">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-fg">Progress</h1>
         <p className="text-sm text-muted">Track strength gains and training volume over time.</p>
       </header>
+      <Suspense fallback={<div className="h-8" />}>
+        <RangeFilter />
+      </Suspense>
       <Suspense fallback={<div className="h-64 rounded-card bg-surface" />}>
-        <ProgressBody />
+        <ProgressBody searchParams={searchParams} />
       </Suspense>
     </div>
   );
 }
 
-async function ProgressBody() {
+async function ProgressBody({ searchParams }) {
+  const sp = (await searchParams) ?? {};
+  const range = parseRange(sp.range);
+
   const [rawData, muscleVolume, records, unit] = await Promise.all([
-    getProgressData(),
-    getWeeklyMuscleVolume(),
+    getProgressData(range),
+    getWeeklyMuscleVolume(range),
     getPersonalRecords(),
     getUnitPreference(),
   ]);
@@ -38,7 +47,9 @@ async function ProgressBody() {
   if (rawData.workouts === 0) {
     return (
       <div className="rounded-card border border-dashed border-border bg-surface p-10 text-center text-sm text-muted">
-        No data yet. Log a workout to start tracking progress.
+        {range.sinceISO
+          ? "No workouts logged in this range. Try a wider one."
+          : "No data yet. Log a workout to start tracking progress."}
       </div>
     );
   }
@@ -66,20 +77,47 @@ async function ProgressBody() {
     .flatMap((e) => e.points.map((p) => ({ name: e.name, ...p })))
     .sort((a, b) => b.best1rm - a.best1rm)[0];
 
+  const inRange = range.sinceISO;
+  const volumeLabel = inRange ? "Volume" : "Total volume";
+
+  const shareStats = [
+    [inRange ? "Volume" : "Total volume", `${compact(data.totalVolumeKg)} ${U}`],
+    ["Workouts", String(data.workouts)],
+  ];
+  if (heaviest) shareStats.push(["Top est. 1RM", `${compact(heaviest.best1rm)} ${U}`]);
+  const shareMuscles = [...muscleVolume.groups]
+    .flatMap((g) => g.muscles)
+    .filter((m) => m.thisWeek > 0)
+    .sort((a, b) => b.thisWeek - a.thisWeek)
+    .slice(0, 6)
+    .map((m) => ({ name: m.muscle.replace(/\s*\(.*\)$/, ""), value: m.thisWeek }));
+
   return (
     <>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-dim">Showing {inRange ? range.label : "all time"}</p>
+        <ShareProgress rangeLabel={range.label} stats={shareStats} muscles={shareMuscles} />
+      </div>
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Stat label="Total volume" value={`${compact(data.totalVolumeKg)} ${U}`} />
+        <Stat label={volumeLabel} value={`${compact(data.totalVolumeKg)} ${U}`} />
         <Stat label="Workouts" value={data.workouts} />
         {heaviest ? <Stat label="Top est. 1RM" value={`${compact(heaviest.best1rm)} ${U}`} sub={heaviest.name} /> : null}
       </div>
 
-      <Card title="Weekly sets by muscle" subtitle="Hard sets this week. Tap a group for the muscle breakdown">
+      <Card
+        title="Weekly sets by muscle"
+        subtitle={
+          muscleVolume.perWeek
+            ? "Average hard sets per week. Tap a group for the breakdown"
+            : "Hard sets this week. Tap a group for the muscle breakdown"
+        }
+      >
         <MuscleVolume data={muscleVolume} />
       </Card>
 
       {records.length > 0 ? (
-        <Card title="Personal records" subtitle="Your best estimated 1RM on each lift">
+        <Card title="Personal records" subtitle="Your best estimated 1RM on each lift, all time">
           <PersonalRecords records={records} unit={unit} />
         </Card>
       ) : null}

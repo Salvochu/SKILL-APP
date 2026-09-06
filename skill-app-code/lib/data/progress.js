@@ -8,25 +8,36 @@ const dayKey = (iso) => new Date(iso).toISOString().slice(0, 10);
 
 // Everything the Progress page and the dashboard volume card need, computed
 // from the user's sessions and sets. RLS scopes both to auth.uid().
-export async function getProgressData() {
+// `range` is a resolved range from lib/dateRange (parseRange); when its
+// sinceISO/untilISO are set, only sessions started in that window count.
+export async function getProgressData(range = {}) {
   const supabase = await createClient();
 
-  const [sessionsRes, setsRes] = await Promise.all([
-    supabase
-      .from("workout_sessions")
-      .select("id, title, started_at, completed_at")
-      .order("started_at", { ascending: true }),
+  let sessionQuery = supabase
+    .from("workout_sessions")
+    .select("id, title, started_at, completed_at")
+    .order("started_at", { ascending: true });
+  if (range.sinceISO) sessionQuery = sessionQuery.gte("started_at", range.sinceISO);
+  if (range.untilISO) sessionQuery = sessionQuery.lte("started_at", range.untilISO);
+
+  const [sessionsRes, setsRes, earliestRes] = await Promise.all([
+    sessionQuery,
     supabase
       .from("workout_sets")
       .select("session_id, exercise_id, reps, weight, completed, exercise:exercises(name)"),
+    supabase
+      .from("workout_sessions")
+      .select("started_at")
+      .order("started_at", { ascending: true })
+      .limit(1),
   ]);
-  for (const r of [sessionsRes, setsRes]) {
+  for (const r of [sessionsRes, setsRes, earliestRes]) {
     if (r.error) throw new Error(`Failed to load progress: ${r.error.message}`);
   }
 
   const sessions = sessionsRes.data ?? [];
-  const sets = (setsRes.data ?? []).filter((s) => s.completed);
   const sessionById = new Map(sessions.map((s) => [s.id, s]));
+  const sets = (setsRes.data ?? []).filter((s) => s.completed && sessionById.has(s.session_id));
 
   // volume per session
   const volBySession = new Map();
@@ -83,5 +94,6 @@ export async function getProgressData() {
     totalVolumeKg: Math.round([...volBySession.values()].reduce((a, b) => a + b, 0)),
     sessionVolumes,
     exercises,
+    earliestISO: earliestRes.data?.[0]?.started_at ?? null,
   };
 }
