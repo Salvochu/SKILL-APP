@@ -193,7 +193,7 @@ export async function getMesocycleSummary(userMesocycleId) {
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("session_id, reps, weight, completed, exercise:exercises(name)")
+    .select("session_id, reps, weight, completed, is_warmup, exercise:exercises(name)")
     .in("session_id", sessionIds);
 
   const startedAt = new Map((sessions ?? []).map((s) => [s.id, new Date(s.started_at).getTime()]));
@@ -204,7 +204,7 @@ export async function getMesocycleSummary(userMesocycleId) {
   let totalVolume = 0;
   const perLift = new Map(); // name -> { early: bestE1, late: bestE1 }
   for (const s of sets ?? []) {
-    if (s.completed === false) continue;
+    if (s.completed === false || s.is_warmup) continue;
     const w = Number(s.weight) || 0;
     const r = Number(s.reps) || 0;
     if (w > 0 && r > 0) totalVolume += w * r;

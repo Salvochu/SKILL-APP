@@ -33,13 +33,13 @@ async function loadWindow(supabase) {
 
   const { data: sets, error } = await supabase
     .from("workout_sets")
-    .select("session_id, weight, reps, completed, exercise:exercises(name)")
+    .select("session_id, weight, reps, completed, is_warmup, exercise:exercises(name)")
     .in("session_id", sessionIds);
   if (error) throw new Error(`Failed to load strength score: ${error.message}`);
 
   const rows = [];
   for (const s of sets ?? []) {
-    if (s.completed === false) continue;
+    if (s.completed === false || s.is_warmup) continue;
     const name = s.exercise?.name;
     if (!patternForExercise(name)) continue;
     rows.push({ sessionId: s.session_id, name, weight: s.weight, reps: s.reps });

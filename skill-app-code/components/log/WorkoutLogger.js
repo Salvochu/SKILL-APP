@@ -47,6 +47,7 @@ function makeExercise(exercise, targetSets = 3, targetReps = "", last = null) {
         reps: prev?.reps != null ? String(prev.reps) : "",
         rir: prev?.rir != null ? String(prev.rir) : "",
         completed: false,
+        warmup: false,
       };
     }),
     targetReps,
@@ -164,7 +165,11 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         (sum, r) =>
           sum +
           r.sets.reduce(
-            (s, set) => s + (set.completed ? (Number(set.weight) || 0) * (Number(set.reps) || 0) : 0),
+            (s, set) =>
+              s +
+              (set.completed && !set.warmup
+                ? (Number(set.weight) || 0) * (Number(set.reps) || 0)
+                : 0),
             0,
           ),
         0,
@@ -188,7 +193,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     const row = rows.find((r) => r.key === key);
     const next = !row.sets[i].completed;
     patchSet(key, i, { completed: next });
-    if (next && restTimerOn) {
+    // Warm-ups do not kick off the rest timer.
+    if (next && restTimerOn && !row.sets[i].warmup) {
       setRestKey((k) => k + 1);
       setShowRest(true);
     }
@@ -206,6 +212,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
                   reps: "",
                   rir: r.sets.at(-1)?.rir ?? "",
                   completed: false,
+                  warmup: false,
                 },
               ],
             }
@@ -265,6 +272,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
           reps: s.reps,
           rir: s.rir,
           completed: s.completed,
+          warmup: s.warmup === true,
         })),
       })),
     };
@@ -880,8 +888,12 @@ function IconClock(props) {
 
 function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
-  const best1rm = Math.max(0, ...sets.map((s) => epley1rm(s.weight, s.reps)));
-  const volume = sets.reduce((v, s) => v + (s.completed ? (Number(s.weight) || 0) * (Number(s.reps) || 0) : 0), 0);
+  const workSets = sets.filter((s) => !s.warmup);
+  const best1rm = Math.max(0, ...workSets.map((s) => epley1rm(s.weight, s.reps)));
+  const volume = workSets.reduce(
+    (v, s) => v + (s.completed ? (Number(s.weight) || 0) * (Number(s.reps) || 0) : 0),
+    0,
+  );
   const [showHistory, setShowHistory] = useState(false);
 
   const lastLine =
@@ -954,17 +966,29 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
         <span />
       </div>
       {sets.map((set, i) => {
-        const fieldCls = set.completed
-          ? "border-accent/50 bg-accent-soft"
-          : "border-border bg-bg";
+        const fieldCls = set.warmup
+          ? "border-border bg-bg text-muted"
+          : set.completed
+            ? "border-accent/50 bg-accent-soft"
+            : "border-border bg-bg";
         return (
         <div
           key={i}
           className={`grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 rounded-field -mx-1.5 px-1.5 py-1 transition-colors ${
-            set.completed ? "bg-accent-soft" : ""
+            set.warmup ? "opacity-60" : set.completed ? "bg-accent-soft" : ""
           }`}
         >
-          <span className="tabular text-sm text-dim">{i + 1}</span>
+          <button
+            type="button"
+            onClick={() => onPatchSet(i, { warmup: !set.warmup })}
+            aria-label={set.warmup ? "Warm-up set. Make it a working set" : "Working set. Mark as warm-up"}
+            aria-pressed={set.warmup}
+            className={`tabular flex h-6 items-center justify-center rounded text-sm font-semibold transition-colors ${
+              set.warmup ? "text-accent" : "text-dim hover:text-fg"
+            }`}
+          >
+            {set.warmup ? "W" : sets.slice(0, i + 1).filter((x) => !x.warmup).length}
+          </button>
           <input
             type="number"
             inputMode="decimal"
@@ -1015,6 +1039,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
           </span>
         ) : null}
       </div>
+      <p className="text-[11px] text-dim">Tap a set number to mark it a warm-up. Warm-ups are not counted.</p>
 
       {row.showNote ? (
         <div className="rounded-field border border-border bg-bg/40 p-2">

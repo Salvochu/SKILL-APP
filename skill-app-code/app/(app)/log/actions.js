@@ -60,6 +60,7 @@ export async function saveWorkout(payload) {
         weight: Number.isFinite(weight) ? weight : null,
         rir,
         completed: s.completed !== false,
+        is_warmup: s.warmup === true,
         note: n === 1 && ex.note ? String(ex.note).trim() || null : null,
       });
     }

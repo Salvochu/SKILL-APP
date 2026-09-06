@@ -13,14 +13,16 @@ async function loadLoadedSets(supabase) {
     supabase.from("workout_sessions").select("id, started_at"),
     supabase
       .from("workout_sets")
-      .select("session_id, exercise_id, reps, weight, completed, exercise:exercises(name, muscle)"),
+      .select("session_id, exercise_id, reps, weight, completed, is_warmup, exercise:exercises(name, muscle)"),
   ]);
   for (const r of [sessionsRes, setsRes]) {
     if (r.error) throw new Error(`Failed to load records: ${r.error.message}`);
   }
   const startedAt = new Map((sessionsRes.data ?? []).map((s) => [s.id, s.started_at]));
   return (setsRes.data ?? [])
-    .filter((s) => s.completed !== false && Number(s.weight) > 0 && Number(s.reps) > 0)
+    .filter(
+      (s) => s.completed !== false && !s.is_warmup && Number(s.weight) > 0 && Number(s.reps) > 0,
+    )
     .map((s) => ({
       sessionId: s.session_id,
       exerciseId: s.exercise_id,

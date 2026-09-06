@@ -15,7 +15,7 @@ async function loadJourneyData(supabase) {
       .order("started_at", { ascending: true }),
     supabase
       .from("workout_sets")
-      .select("session_id, exercise_id, reps, weight, completed, exercise:exercises(name)"),
+      .select("session_id, exercise_id, reps, weight, completed, is_warmup, exercise:exercises(name)"),
     supabase.from("user_mesocycles").select("id, status, sessions_per_week"),
     supabase.from("body_logs").select("logged_at"),
   ]);
@@ -63,7 +63,7 @@ function computeXp({ sessions, sets, mesos, body }, excludeSessionId = null) {
   // per day.
   const dayBest = new Map(); // `${exId}|${day}` -> best e1RM
   for (const s of sets) {
-    if (s.completed === false || !sessById.has(s.session_id)) continue;
+    if (s.completed === false || s.is_warmup || !sessById.has(s.session_id)) continue;
     const name = s.exercise?.name ?? "";
     if (!patternForExercise(name)) continue;
     const w = Number(s.weight);

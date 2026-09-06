@@ -23,7 +23,7 @@ export async function getProgressData(range = {}) {
       .order("started_at", { ascending: true }),
     supabase
       .from("workout_sets")
-      .select("session_id, exercise_id, reps, weight, completed, exercise:exercises(name)"),
+      .select("session_id, exercise_id, reps, weight, completed, is_warmup, exercise:exercises(name)"),
   ]);
   for (const r of [sessionsRes, setsRes]) {
     if (r.error) throw new Error(`Failed to load progress: ${r.error.message}`);
@@ -31,7 +31,9 @@ export async function getProgressData(range = {}) {
 
   const sessions = sessionsRes.data ?? [];
   const sessionById = new Map(sessions.map((s) => [s.id, s]));
-  const allSets = (setsRes.data ?? []).filter((s) => s.completed && sessionById.has(s.session_id));
+  const allSets = (setsRes.data ?? []).filter(
+    (s) => s.completed && !s.is_warmup && sessionById.has(s.session_id),
+  );
 
   // all-time headline totals
   const totalVolumeKg = Math.round(

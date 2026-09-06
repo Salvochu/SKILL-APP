@@ -13,7 +13,7 @@ export async function getWorkoutCalendar() {
       .from("workout_sessions")
       .select("id, title, started_at")
       .order("started_at", { ascending: true }),
-    supabase.from("workout_sets").select("session_id, reps, weight, completed"),
+    supabase.from("workout_sets").select("session_id, reps, weight, completed, is_warmup"),
     supabase.from("body_logs").select("logged_at"),
   ]);
   for (const r of [sessionsRes, setsRes, bodyRes]) {
@@ -22,7 +22,7 @@ export async function getWorkoutCalendar() {
 
   const volume = new Map();
   for (const s of setsRes.data ?? []) {
-    if (s.completed === false) continue;
+    if (s.completed === false || s.is_warmup) continue;
     const v = (Number(s.weight) || 0) * (Number(s.reps) || 0);
     volume.set(s.session_id, (volume.get(s.session_id) || 0) + v);
   }

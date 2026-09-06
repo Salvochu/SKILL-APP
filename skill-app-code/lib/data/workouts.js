@@ -12,7 +12,7 @@ export async function getWorkoutSummary() {
       .from("workout_sessions")
       .select("id, title, started_at, completed_at")
       .order("started_at", { ascending: false }),
-    supabase.from("workout_sets").select("reps, weight, completed"),
+    supabase.from("workout_sets").select("reps, weight, completed, is_warmup"),
   ]);
 
   for (const r of [sessionsRes, setsRes]) {
@@ -20,7 +20,7 @@ export async function getWorkoutSummary() {
   }
 
   const sessions = sessionsRes.data ?? [];
-  const sets = (setsRes.data ?? []).filter((s) => s.completed);
+  const sets = (setsRes.data ?? []).filter((s) => s.completed && !s.is_warmup);
 
   const volumeKg = sets.reduce((sum, s) => sum + (Number(s.weight) || 0) * (Number(s.reps) || 0), 0);
   const minutes = sessions.reduce((sum, s) => {
@@ -78,7 +78,7 @@ export async function getWorkoutDetail(sessionId) {
 
   const { data: sets, error: setsError } = await supabase
     .from("workout_sets")
-    .select("id, exercise_id, set_number, position, reps, weight, rir, completed, note, exercise:exercises(id, name, muscle)")
+    .select("id, exercise_id, set_number, position, reps, weight, rir, completed, is_warmup, note, exercise:exercises(id, name, muscle)")
     .eq("session_id", sessionId)
     .order("position", { ascending: true, nullsFirst: true })
     .order("set_number", { ascending: true });
@@ -98,6 +98,7 @@ export async function getWorkoutDetail(sessionId) {
       reps: s.reps,
       rir: s.rir,
       completed: s.completed !== false,
+      isWarmup: s.is_warmup === true,
     });
   }
 
@@ -113,7 +114,8 @@ export async function getWorkoutDetail(sessionId) {
     (sum, ex) =>
       sum +
       ex.sets.reduce(
-        (s, set) => s + (set.completed ? (Number(set.weight) || 0) * (Number(set.reps) || 0) : 0),
+        (s, set) =>
+          s + (set.completed && !set.isWarmup ? (Number(set.weight) || 0) * (Number(set.reps) || 0) : 0),
         0,
       ),
     0,

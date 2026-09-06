@@ -14,14 +14,14 @@ export async function getExerciseHistory(exerciseId, { limit = null } = {}) {
 
   const { data, error } = await supabase
     .from("workout_sets")
-    .select("set_number, reps, weight, rir, completed, session:workout_sessions!inner(id, title, started_at)")
+    .select("set_number, reps, weight, rir, completed, is_warmup, session:workout_sessions!inner(id, title, started_at)")
     .eq("exercise_id", exerciseId);
   if (error) throw new Error(`Failed to load exercise history: ${error.message}`);
 
   const bySession = new Map();
   for (const row of data ?? []) {
     const s = row.session;
-    if (!s?.id) continue;
+    if (!s?.id || row.is_warmup) continue;
     if (!bySession.has(s.id)) {
       bySession.set(s.id, { id: s.id, title: s.title, date: s.started_at, sets: [] });
     }
