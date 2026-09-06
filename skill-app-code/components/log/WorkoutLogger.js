@@ -332,10 +332,9 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   return (
     <div className="flex flex-col gap-6 py-2">
       <header className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-fg">Log Workout</h1>
-          <p className="text-sm text-muted">Add exercises, enter your sets, and save to your history.</p>
-        </div>
+        <h1 className="min-w-0 text-2xl font-bold text-fg">
+          {title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "") || "Workout"}
+        </h1>
         <button
           type="button"
           onClick={() => setCancelConfirm(true)}
@@ -374,15 +373,19 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </div>
       ) : null}
 
-      <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
-        <Field label="Workout name">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
-          />
-        </Field>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <details className="group rounded-card border border-border bg-surface">
+        <summary className="flex cursor-pointer list-none items-center justify-between p-3 text-sm font-medium text-muted [&::-webkit-details-marker]:hidden">
+          Name, date and notes
+          <IconChevron className="h-4 w-4 text-dim transition-transform group-open:rotate-90" />
+        </summary>
+        <div className="flex flex-col gap-4 border-t border-border p-4">
+          <Field label="Workout name">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
+            />
+          </Field>
           <Field label="Date" className="min-w-0">
             {/* iOS Safari's native date control can paint wider than the
                width it is given. overflow-hidden on this wrapper clips it
@@ -393,45 +396,21 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full min-w-0 bg-transparent px-3 py-2 text-sm text-fg outline-none"
+                className="w-full min-w-0 appearance-none bg-transparent px-3 py-2 text-sm text-fg outline-none"
               />
             </div>
           </Field>
-          <Field label="Session time" className="min-w-0">
-            <div className="flex w-full min-w-0 items-center gap-2 rounded-field border border-border bg-bg py-1.5 pl-3 pr-1.5">
-              <span
-                className={`h-2 w-2 shrink-0 rounded-full ${
-                  pausedAt || finished ? "bg-dim" : "animate-pulse bg-accent"
-                }`}
-                aria-hidden="true"
-              />
-              <span className="clock text-sm text-fg">{formatElapsed(elapsedSeconds)}</span>
-              <span className="flex-1 text-xs text-dim">
-                {finished ? "stopped" : pausedAt ? "paused" : "recording"}
-              </span>
-              {!finished ? (
-                <button
-                  type="button"
-                  onClick={togglePause}
-                  aria-label={pausedAt ? "Resume timer" : "Pause timer"}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-field text-dim transition-colors hover:bg-surface-2 hover:text-fg"
-                >
-                  {pausedAt ? <IconPlay className="h-4 w-4" /> : <IconPause className="h-4 w-4" />}
-                </button>
-              ) : null}
-            </div>
+          <Field label="Session notes">
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              placeholder="How the session went, energy, anything to remember."
+              className="w-full resize-y rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
+            />
           </Field>
         </div>
-        <Field label="Session notes">
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={2}
-            placeholder="How the session went, energy, anything to remember."
-            className="w-full resize-y rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
-          />
-        </Field>
-      </section>
+      </details>
 
       <div className="flex items-center justify-between gap-3 rounded-field border border-border bg-surface px-3 py-2">
         <span className="text-xs font-medium text-muted">Rest timer after each set</span>
@@ -506,19 +485,43 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </p>
       ) : null}
 
-      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex items-center gap-4 rounded-card border border-border bg-surface p-4 md:bottom-4">
-        <span className="flex flex-col">
-          <span className="text-xs text-dim">Total volume</span>
-          <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} {U}</span>
-        </span>
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving || savedOffline}
-          className="ml-auto rounded-field bg-accent px-5 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
-        >
-          {savedOffline ? "Saved on this device" : saving ? "Saving..." : "Save Workout"}
-        </button>
+      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex flex-col gap-2 rounded-card border border-border bg-surface p-3 md:bottom-4">
+        <div className="flex items-center gap-2">
+          <span
+            className={`h-2 w-2 shrink-0 rounded-full ${
+              pausedAt || finished ? "bg-dim" : "animate-pulse bg-accent"
+            }`}
+            aria-hidden="true"
+          />
+          <span className="clock text-sm font-semibold text-fg">{formatElapsed(elapsedSeconds)}</span>
+          <span className="text-xs text-dim">
+            {finished ? "stopped" : pausedAt ? "paused" : "recording"}
+          </span>
+          {!finished ? (
+            <button
+              type="button"
+              onClick={togglePause}
+              aria-label={pausedAt ? "Resume timer" : "Pause timer"}
+              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-field text-dim transition-colors hover:bg-surface-2 hover:text-fg"
+            >
+              {pausedAt ? <IconPlay className="h-4 w-4" /> : <IconPause className="h-4 w-4" />}
+            </button>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-3 border-t border-border pt-2">
+          <span className="flex flex-col">
+            <span className="text-xs text-dim">Total volume</span>
+            <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} {U}</span>
+          </span>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving || savedOffline}
+            className="ml-auto rounded-field bg-accent px-5 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+          >
+            {savedOffline ? "Saved on this device" : saving ? "Saving..." : "Save Workout"}
+          </button>
+        </div>
       </div>
 
       {pickerOpen ? (
@@ -942,4 +945,11 @@ function IconPause(props) {
 }
 function IconPlay(props) {
   return <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M8 5.5v13l11-6.5z" /></svg>;
+}
+function IconChevron(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
 }
