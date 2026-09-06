@@ -1,4 +1,4 @@
-import { Inter, Archivo, JetBrains_Mono } from "next/font/google";
+import { Inter, Archivo, JetBrains_Mono, Barlow_Semi_Condensed } from "next/font/google";
 import "./globals.css";
 import { themeInitScript } from "@/components/ThemeToggle";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
@@ -18,6 +18,15 @@ const archivo = Archivo({
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+});
+
+// Numbers: an athletic, slightly condensed face for stats, weights and
+// reps. Its figures have tabular width, so columns still line up.
+const barlow = Barlow_Semi_Condensed({
+  variable: "--font-barlow",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
   display: "swap",
@@ -45,7 +54,7 @@ export default function RootLayout({ children }) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${archivo.variable} ${jetbrainsMono.variable} h-full`}
+      className={`${inter.variable} ${archivo.variable} ${jetbrainsMono.variable} ${barlow.variable} h-full`}
     >
       <head>
         {/* Applies the saved theme before first paint (no flash). */}

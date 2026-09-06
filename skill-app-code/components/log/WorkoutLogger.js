@@ -396,7 +396,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
                 }`}
                 aria-hidden="true"
               />
-              <span className="tabular text-sm text-fg">{formatElapsed(elapsedSeconds)}</span>
+              <span className="clock text-sm text-fg">{formatElapsed(elapsedSeconds)}</span>
               <span className="flex-1 text-xs text-dim">
                 {finished ? "stopped" : pausedAt ? "paused" : "recording"}
               </span>

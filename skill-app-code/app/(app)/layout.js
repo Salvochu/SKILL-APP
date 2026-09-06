@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
 import OfflineQueueSync from "@/components/OfflineQueueSync";
 import ActiveWorkoutBar from "@/components/log/ActiveWorkoutBar";
+import UnfinishedWorkoutPrompt from "@/components/log/UnfinishedWorkoutPrompt";
 import OnboardingGate from "@/components/onboarding/OnboardingGate";
 
 // Shared chrome for every signed-in screen. NavBar reads the current path
@@ -23,6 +24,9 @@ export default function AppLayout({ children }) {
          Suspense boundary as NavBar above. */}
       <Suspense fallback={null}>
         <ActiveWorkoutBar />
+      </Suspense>
+      <Suspense fallback={null}>
+        <UnfinishedWorkoutPrompt />
       </Suspense>
       {/* Checked once per layout mount (persists across client-side
          navigation between sibling pages), so a new account sees this

@@ -40,11 +40,7 @@ export default function DashboardPage() {
         </Suspense>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        <QuickLink href="/log" title="Log Workout" body="Record sets, reps and weight" />
-        <QuickLink href="/library" title="Library" body="Exercises, stretching and lessons" />
-        <QuickLink href="/splits" title="Training Splits" body="Full Gym, dumbbell and bodyweight" />
-      </section>
+      <QuickLink href="/body" title="Body measurements" body="Weight, body fat, photos" />
     </div>
   );
 }

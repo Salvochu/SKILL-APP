@@ -29,6 +29,7 @@
   --font-display: var(--font-archivo), var(--font-inter), ui-sans-serif,
     sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
+  --font-num: var(--font-barlow), var(--font-inter), ui-sans-serif, sans-serif;
 
   --radius-card: 12px;
   --radius-field: 8px;
@@ -97,8 +98,15 @@ h4 {
   letter-spacing: -0.01em;
 }
 
-/* Numbers (weights, reps, timers) read better tabular and monospaced. */
+/* Numbers (stats, weights, reps) in the athletic Barlow face, tabular so
+   columns still line up. `.clock` keeps the true monospace for live
+   timers, where a fixed glyph width matters most. */
 .tabular {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+.clock {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
