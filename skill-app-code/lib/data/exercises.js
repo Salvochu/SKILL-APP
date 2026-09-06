@@ -76,6 +76,22 @@ export async function getStretches() {
   return rows.error ? [] : rows;
 }
 
+// One library row by id, with its muscle tags. null if not found.
+export async function getExerciseById(id) {
+  if (!id) return null;
+  const supabase = await createClient();
+  const full = await supabase
+    .from("exercises")
+    .select(`${BASE_COLS}, ${MUSCLE_JOIN}`)
+    .eq("id", id)
+    .maybeSingle();
+  if (!full.error) return full.data ? withMuscles([full.data])[0] : null;
+
+  const noJoin = await supabase.from("exercises").select(BASE_COLS).eq("id", id).maybeSingle();
+  if (noJoin.error) return null;
+  return noJoin.data ? withMuscles([noJoin.data])[0] : null;
+}
+
 export async function getExercisesByMuscle() {
   const exercises = await getExercises();
   const groups = new Map();

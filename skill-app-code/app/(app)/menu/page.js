@@ -1,4 +1,4 @@
-import Link from "next/link";
+import TapLink from "@/components/TapLink";
 
 export const metadata = { title: "Menu" };
 
@@ -20,13 +20,9 @@ export default function MenuPage() {
 
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
         {ITEMS.map((it) => (
-          <Link
-            key={it.href}
-            href={it.href}
-            className="block transition-colors hover:bg-surface-2 active:bg-accent-soft"
-          >
+          <TapLink key={it.href} href={it.href} className="block transition-colors hover:bg-surface-2">
             <MenuRow label={it.label} body={it.body} icon={it.icon} tint={it.tint} />
-          </Link>
+          </TapLink>
         ))}
         <a
           href="/api/export"

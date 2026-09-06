@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDraft } from "@/lib/activeWorkout";
@@ -14,6 +14,17 @@ import ConfirmModal from "@/components/ConfirmModal";
 export default function GuardedStartLink({ href, className, children, ...rest }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const timer = useRef(null);
+
+  function press() {
+    if (timer.current) clearTimeout(timer.current);
+    setPressed(true);
+  }
+  function release() {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setPressed(false), 500);
+  }
 
   function onClick(e) {
     const draft = getDraft();
@@ -26,7 +37,15 @@ export default function GuardedStartLink({ href, className, children, ...rest })
 
   return (
     <>
-      <Link href={href} onClick={onClick} className={className} {...rest}>
+      <Link
+        href={href}
+        onClick={onClick}
+        onPointerDown={press}
+        onPointerUp={release}
+        onPointerCancel={release}
+        className={`${className ?? ""} ${pressed ? "bg-accent-soft" : ""}`}
+        {...rest}
+      >
         {children}
       </Link>
       {confirming ? (
