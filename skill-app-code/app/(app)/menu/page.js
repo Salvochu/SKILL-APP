@@ -4,13 +4,20 @@ import ExportRow from "@/components/menu/ExportRow";
 export const metadata = { title: "Menu" };
 
 const ITEMS = [
-  { href: "/settings", label: "Settings", body: "Notifications, rest timer, preferences", icon: IconGear, tint: "#fc7605" },
-  { href: "/calendar", label: "Calendar", body: "Every training day, at a glance", icon: IconCalendar, tint: "#3987e5" },
   { href: "/progress", label: "Progress", body: "Strength and volume over time", icon: IconProgress, tint: "#1faa77" },
-  { href: "/body", label: "Body", body: "Weight, body fat and photos", icon: IconBody, tint: "#d55181" },
+  { href: "/body", label: "Body measurements", body: "Weight, body fat and photos", icon: IconBody, tint: "#d55181" },
   { href: "/library", label: "Library", body: "Exercises, stretching and lessons", icon: IconLibrary, tint: "#9085e9" },
+  { href: "/calendar", label: "Calendar", body: "Every training day, at a glance", icon: IconCalendar, tint: "#3987e5" },
   { href: "/history", label: "Workout History", body: "Every session you have logged", icon: IconHistory, tint: "#cf8a1f" },
 ];
+
+const SETTINGS = {
+  href: "/settings",
+  label: "Settings",
+  body: "Notifications, rest timer, preferences",
+  icon: IconGear,
+  tint: "#fc7605",
+};
 
 export default function MenuPage() {
   return (
@@ -26,6 +33,9 @@ export default function MenuPage() {
           </TapLink>
         ))}
         <ExportRow />
+        <TapLink href={SETTINGS.href} className="block transition-colors hover:bg-surface-2">
+          <MenuRow label={SETTINGS.label} body={SETTINGS.body} icon={SETTINGS.icon} tint={SETTINGS.tint} />
+        </TapLink>
       </div>
     </div>
   );

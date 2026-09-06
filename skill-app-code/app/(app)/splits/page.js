@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { getSplits } from "@/lib/data/splits";
-import { getMesocycleTemplates } from "@/lib/data/mesocycles";
+import { getMesocycleTemplates, getActiveMesocycle } from "@/lib/data/mesocycles";
 import SplitsBrowser from "@/components/splits/SplitsBrowser";
 
 export const metadata = { title: "Splits" };
@@ -23,8 +23,16 @@ export default function SplitsPage() {
 }
 
 async function SplitsList() {
-  const [splits, mesocycleTemplates] = await Promise.all([getSplits(), getMesocycleTemplates()]);
-  return <SplitsBrowser splits={splits} mesocycleTemplates={mesocycleTemplates} />;
+  const [splits, mesocycleTemplates, active] = await Promise.all([
+    getSplits(),
+    getMesocycleTemplates(),
+    getActiveMesocycle(),
+  ]);
+  const activeProgram =
+    active && !active.isComplete ? { splitName: active.splitName, week: active.week, weeks: active.weeks } : null;
+  return (
+    <SplitsBrowser splits={splits} mesocycleTemplates={mesocycleTemplates} activeProgram={activeProgram} />
+  );
 }
 
 function SplitsSkeleton() {
