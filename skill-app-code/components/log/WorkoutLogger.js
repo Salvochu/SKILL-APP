@@ -568,31 +568,19 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   );
 }
 
-function ShareCard({ summary, extras, timeLabel, unit = "kg" }) {
+function ShareCard({ summary, timeLabel, effortLabel, unit = "kg" }) {
   const [status, setStatus] = useState("idle"); // idle | preparing | shared | downloaded | copied
 
-  const j = extras?.journey ?? null;
-  const s = extras?.strength ?? null;
-  const strengthLabel =
-    s && s.covered > 0 ? `${Math.round(fromKg(s.after, unit))} ${unit}` : null;
-  const levelLabel = j ? `${j.tier} · Level ${j.level}` : null;
-  const xpLabel = j?.xpGained > 0 ? `+${j.xpGained} XP` : null;
-
-  const caption = `Just logged ${Math.round(summary.totalVolume)} ${unit} in ${timeLabel} with SKILL.${
-    xpLabel ? ` ${xpLabel}.` : ""
-  } @salvador_skfitness`;
+  const caption = `Just logged ${Math.round(summary.totalVolume)} ${unit} in ${timeLabel} with SKILL. @salvador_skfitness`;
 
   async function onShare() {
     setStatus("preparing");
     let blob = null;
     try {
       blob = await buildShareImageBlob({
-        strengthLabel,
         volumeLabel: `${Math.round(summary.totalVolume)} ${unit}`,
         timeLabel,
-        levelLabel,
-        tierColor: j?.tierColor ?? null,
-        xpLabel,
+        effortLabel,
       });
     } catch {
       // Image generation failed (e.g. the logo did not load); fall back
@@ -846,7 +834,7 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
         </section>
       ) : null}
 
-      <ShareCard summary={summary} extras={extras} timeLabel={timeLabel} unit={unit} />
+      <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} />
 
       <button
         type="button"
