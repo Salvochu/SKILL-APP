@@ -1,10 +1,20 @@
 "use client";
 
-// The days list + equipment picker + Start button for one mesocycle
-// template's overview. Shared by the dashboard's ProgramPicker (reached
-// via a dropdown of every program) and Splits' per-split "run this as a
-// program" entry (reached with the split already implied).
-export default function ProgramOverview({ overview, variant, onVariantChange, onStart, starting, error }) {
+// The days list, equipment picker, sessions-per-week picker (only when
+// the split's cadence is a range) and Start button for one mesocycle
+// template's overview. Used by Splits' per-split "run as a program" card.
+export default function ProgramOverview({
+  overview,
+  variant,
+  onVariantChange,
+  sessionsPerWeek,
+  onSessionsChange,
+  onStart,
+  starting,
+  error,
+}) {
+  const sessionOptions = overview.sessionOptions ?? [];
+
   return (
     <div className="flex flex-col gap-3 rounded-field border border-border bg-bg/40 p-3">
       {overview.description ? <p className="text-sm text-muted">{overview.description}</p> : null}
@@ -34,6 +44,30 @@ export default function ProgramOverview({ overview, variant, onVariantChange, on
                 }`}
               >
                 {v}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {sessionOptions.length > 0 ? (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-dim">
+            Sessions per week
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {sessionOptions.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => onSessionsChange(n)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  n === sessionsPerWeek
+                    ? "border-accent bg-accent-soft text-accent"
+                    : "border-border text-muted hover:text-fg"
+                }`}
+              >
+                {n}
               </button>
             ))}
           </div>

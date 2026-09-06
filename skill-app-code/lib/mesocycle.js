@@ -92,6 +92,19 @@ export function weekGuidance(week, weeks, startingRir = 3) {
   };
 }
 
+// Weekly-session options implied by a split's cadence string. A range
+// ("2-3x per week") returns [2, 3] so the user is asked to pick; a fixed
+// count ("5 days") returns [] and the split's own day count is used.
+export function sessionOptionsFromCadence(cadence) {
+  const nums = (String(cadence || "").match(/\d+/g) || []).map(Number).filter((n) => n > 0);
+  if (nums.length < 2) return [];
+  const lo = Math.min(...nums);
+  const hi = Math.max(...nums);
+  const out = [];
+  for (let n = lo; n <= hi && out.length < 8; n++) out.push(n);
+  return out;
+}
+
 // 0-based position in the split's day sequence that comes next, given
 // how many sessions have already been logged against this mesocycle
 // run. Cycles through the split's own days in order, independent of

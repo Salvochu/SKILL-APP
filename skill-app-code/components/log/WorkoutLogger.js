@@ -485,7 +485,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </p>
       ) : null}
 
-      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex flex-col gap-2 rounded-card border border-border bg-surface p-3 md:bottom-4">
+      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex flex-col gap-2 rounded-card border border-accent/30 bg-accent-soft p-3 backdrop-blur md:bottom-4">
         <div className="flex items-center gap-2">
           <span
             className={`h-2 w-2 shrink-0 rounded-full ${
@@ -494,7 +494,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
             aria-hidden="true"
           />
           <span className="clock text-sm font-semibold text-fg">{formatElapsed(elapsedSeconds)}</span>
-          <span className="text-xs text-dim">
+          <span className="text-xs text-muted">
             {finished ? "stopped" : pausedAt ? "paused" : "recording"}
           </span>
           {!finished ? (
@@ -502,15 +502,15 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               type="button"
               onClick={togglePause}
               aria-label={pausedAt ? "Resume timer" : "Pause timer"}
-              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-field text-dim transition-colors hover:bg-surface-2 hover:text-fg"
+              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-field text-muted transition-colors hover:bg-accent/10 hover:text-fg"
             >
               {pausedAt ? <IconPlay className="h-4 w-4" /> : <IconPause className="h-4 w-4" />}
             </button>
           ) : null}
         </div>
-        <div className="flex items-center gap-3 border-t border-border pt-2">
+        <div className="flex items-center gap-3 border-t border-accent/20 pt-2">
           <span className="flex flex-col">
-            <span className="text-xs text-dim">Total volume</span>
+            <span className="text-xs text-muted">Total volume</span>
             <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} {U}</span>
           </span>
           <button

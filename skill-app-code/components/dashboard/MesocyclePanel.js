@@ -69,7 +69,7 @@ export default function MesocyclePanel({ active, summary }) {
             Week {active.week} of {active.weeks}
             {active.isDeload ? " . Deload" : ""}
           </span>
-          <h2 className="font-display text-lg font-semibold text-fg">{active.templateName}</h2>
+          <h2 className="font-display text-lg font-semibold text-fg">{active.splitName}</h2>
         </div>
 
         <div ref={menuRef} className="relative shrink-0">
@@ -112,13 +112,18 @@ export default function MesocyclePanel({ active, summary }) {
         </div>
       ) : null}
 
-      {active.totalDays > 0 ? (
+      {active.sessionsPerWeek > 0 ? (
         <div className="flex flex-col gap-2 rounded-field border border-border bg-bg/40 p-3">
-          <ProgressBar label="This week" value={Math.min(active.sessionsThisWeek, active.totalDays)} max={active.totalDays} />
+          <ProgressBar
+            label="This week"
+            value={Math.min(active.sessionsThisWeek, active.sessionsPerWeek)}
+            max={active.sessionsPerWeek}
+          />
           <ProgressBar
             label="Whole program"
-            value={Math.min(active.sessionsLogged, active.weeks * active.totalDays)}
-            max={active.weeks * active.totalDays}
+            value={Math.min(active.sessionsLogged, active.weeks * active.sessionsPerWeek)}
+            max={active.weeks * active.sessionsPerWeek}
+            tone="good"
           />
         </div>
       ) : null}

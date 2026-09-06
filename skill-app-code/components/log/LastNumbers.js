@@ -41,7 +41,10 @@ export default function LastNumbers({ exerciseId, exerciseName, onClose }) {
 
         <div className="flex flex-col gap-3 overflow-y-auto p-4">
           {state.loading ? (
-            <p className="py-6 text-center text-sm text-dim">Loading...</p>
+            <div className="flex flex-col gap-2 py-6">
+              <div className="loading-bar h-1 w-full rounded-full bg-surface-2" />
+              <p className="text-center text-xs text-dim">Loading history</p>
+            </div>
           ) : state.sessions.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted">No history for this exercise yet.</p>
           ) : (
