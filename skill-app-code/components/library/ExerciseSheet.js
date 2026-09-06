@@ -102,12 +102,20 @@ export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
         ) : null}
 
         {canLog ? (
-          <Link
-            href={`/log?exercise=${exercise.id}`}
-            className="mt-4 flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 font-semibold text-black transition-colors hover:bg-accent-2"
-          >
-            Log this exercise
-          </Link>
+          <div className="mt-4 flex flex-col gap-2">
+            <Link
+              href={`/log?exercise=${exercise.id}`}
+              className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 font-semibold text-black transition-colors hover:bg-accent-2 active:bg-accent-2"
+            >
+              Log this exercise
+            </Link>
+            <Link
+              href={`/library/exercises/${exercise.id}`}
+              className="flex w-full items-center justify-center rounded-field border border-border px-4 py-2.5 text-sm font-semibold text-fg transition-colors hover:bg-surface-2 active:bg-accent-soft"
+            >
+              Your history
+            </Link>
+          </div>
         ) : null}
       </div>
     </div>

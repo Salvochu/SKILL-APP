@@ -4,6 +4,28 @@ import { useEffect, useRef, useState } from "react";
 
 const PRESETS = [60, 90, 120];
 
+// When the rest is over and the app is in the background, fire a local
+// notification through the service worker (no server round trip). Gated
+// by the "rest timer done" toggle, mirrored to localStorage.
+function notifyRestDone() {
+  try {
+    if (localStorage.getItem("notif:restTimer") !== "on") return;
+    if (document.visibilityState === "visible") return;
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    navigator.serviceWorker?.ready?.then((reg) => {
+      reg.showNotification("Rest over", {
+        body: "Time for your next set.",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag: "rest-timer",
+        data: { url: "/log" },
+      });
+    });
+  } catch {
+    // best effort
+  }
+}
+
 // Floating rest timer. Mounts when a set is logged; counts down and can be
 // paused, restarted, nudged by 15s, skipped or dismissed.
 export default function RestTimer({ startSeconds, onDismiss }) {
@@ -32,6 +54,7 @@ export default function RestTimer({ startSeconds, onDismiss }) {
       } catch {
         /* not supported */
       }
+      notifyRestDone();
     }
   }, [remaining, running]);
 
@@ -46,7 +69,7 @@ export default function RestTimer({ startSeconds, onDismiss }) {
           <div className="h-full bg-accent transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} />
         </div>
         <div className="flex items-center gap-3 p-3">
-          <span className="tabular text-xl font-bold text-fg">
+          <span className="clock text-xl font-bold text-fg">
             {mm}:{ss}
           </span>
           <div className="flex items-center gap-1">

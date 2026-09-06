@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import TapLink from "@/components/TapLink";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getProgressData } from "@/lib/data/progress";
 import { getProfile, getUnitPreference } from "@/lib/data/profile";
@@ -40,11 +41,7 @@ export default function DashboardPage() {
         </Suspense>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        <QuickLink href="/log" title="Log Workout" body="Record sets, reps and weight" />
-        <QuickLink href="/library" title="Library" body="Exercises, stretching and lessons" />
-        <QuickLink href="/splits" title="Training Splits" body="Full Gym, dumbbell and bodyweight" />
-      </section>
+      <QuickLink href="/body" title="Body measurements" body="Weight, body fat, photos" />
     </div>
   );
 }
@@ -140,7 +137,7 @@ async function Recent() {
       <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
         {s.recent.map((w) => (
           <li key={w.id}>
-            <Link
+            <TapLink
               href={`/workouts/${w.id}`}
               className="flex items-center justify-between gap-3 bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
             >
@@ -149,7 +146,7 @@ async function Recent() {
                 {new Date(w.started_at).toLocaleDateString()}
                 <IconChevron className="h-3.5 w-3.5" />
               </span>
-            </Link>
+            </TapLink>
           </li>
         ))}
       </ul>
@@ -185,13 +182,13 @@ function StatTile({ label, value, sub, accent }) {
 
 function QuickLink({ href, title, body }) {
   return (
-    <Link
+    <TapLink
       href={href}
       className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4 transition-colors hover:border-border-strong hover:bg-surface-2"
     >
       <span className="font-display text-base font-semibold text-fg">{title}</span>
       <span className="text-sm text-muted">{body}</span>
-    </Link>
+    </TapLink>
   );
 }
 

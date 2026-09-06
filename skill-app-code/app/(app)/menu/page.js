@@ -1,7 +1,15 @@
-import Link from "next/link";
-import ReminderToggle from "@/components/ReminderToggle";
+import TapLink from "@/components/TapLink";
 
 export const metadata = { title: "Menu" };
+
+const ITEMS = [
+  { href: "/notifications", label: "Notifications", body: "Reminders and alerts", icon: IconBell, tint: "#fc7605" },
+  { href: "/calendar", label: "Calendar", body: "Every training day, at a glance", icon: IconCalendar, tint: "#3987e5" },
+  { href: "/progress", label: "Progress", body: "Strength and volume over time", icon: IconProgress, tint: "#1faa77" },
+  { href: "/body", label: "Body", body: "Weight, body fat and photos", icon: IconBody, tint: "#d55181" },
+  { href: "/library", label: "Library", body: "Exercises, stretching and lessons", icon: IconLibrary, tint: "#9085e9" },
+  { href: "/history", label: "Workout History", body: "Every session you have logged", icon: IconHistory, tint: "#cf8a1f" },
+];
 
 export default function MenuPage() {
   return (
@@ -11,37 +19,37 @@ export default function MenuPage() {
       </header>
 
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
-        <MenuLink href="/profile" label="Profile" body="Your details and account" icon={IconUser} />
-        <MenuLink href="/calendar" label="Calendar" body="Every training day, at a glance" icon={IconCalendar} />
-        <MenuLink href="/progress" label="Progress" body="Strength and volume over time" icon={IconProgress} />
-        <MenuLink href="/body" label="Body" body="Weight and measurements" icon={IconBody} />
-        <MenuLink href="/library" label="Library" body="Exercises, stretching and lessons" icon={IconLibrary} />
-        <MenuLink href="/history" label="Workout History" body="Every session you have logged" icon={IconHistory} />
-        <a href="/api/export" className="block transition-colors hover:bg-surface-2">
+        {ITEMS.map((it) => (
+          <TapLink key={it.href} href={it.href} className="block transition-colors hover:bg-surface-2">
+            <MenuRow label={it.label} body={it.body} icon={it.icon} tint={it.tint} />
+          </TapLink>
+        ))}
+        <a
+          href="/api/export"
+          className="block transition-colors hover:bg-surface-2 active:bg-accent-soft"
+        >
           <MenuRow
             label="Export training log"
             body="Download every set you have logged as a CSV"
             icon={IconDownload}
+            tint="#3fb6a8"
           />
         </a>
-        <ReminderToggle />
       </div>
     </div>
   );
 }
 
-function MenuLink({ href, label, body, icon }) {
-  return (
-    <Link href={href} className="block transition-colors hover:bg-surface-2">
-      <MenuRow label={label} body={body} icon={icon} />
-    </Link>
-  );
-}
-
-function MenuRow({ label, body, icon: Icon }) {
+function MenuRow({ label, body, icon: Icon, tint }) {
   return (
     <div className="flex items-center gap-3 bg-surface px-4 py-3.5">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted">
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+        style={{
+          color: tint,
+          backgroundColor: `color-mix(in srgb, ${tint} 16%, transparent)`,
+        }}
+      >
         <Icon className="h-[18px] w-[18px]" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -53,12 +61,10 @@ function MenuRow({ label, body, icon: Icon }) {
   );
 }
 
-
-function IconUser(props) {
+function IconBell(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6" />
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />
     </svg>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import TapLink from "@/components/TapLink";
 import LoggedAt from "@/components/LoggedAt";
 import { deleteAllWorkouts } from "@/app/(app)/workouts/actions";
 
@@ -45,7 +45,7 @@ export default function HistoryList({ sessions, onNavigate }) {
             <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
               {group.sessions.map((w) => (
                 <li key={w.id}>
-                  <Link
+                  <TapLink
                     href={`/workouts/${w.id}`}
                     onClick={onNavigate}
                     className="flex items-center justify-between gap-3 bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
@@ -54,7 +54,7 @@ export default function HistoryList({ sessions, onNavigate }) {
                     <span className="shrink-0 text-xs text-dim">
                       <LoggedAt iso={w.started_at} />
                     </span>
-                  </Link>
+                  </TapLink>
                 </li>
               ))}
             </ul>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { saveWorkout, getPostSaveSummary, rateWorkout } from "@/app/(app)/log/actions";
 import RestTimer from "@/components/log/RestTimer";
 import ExercisePicker from "@/components/log/ExercisePicker";
+import LastNumbers from "@/components/log/LastNumbers";
 import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
 import ConfirmModal from "@/components/ConfirmModal";
@@ -49,6 +50,7 @@ function makeExercise(exercise, targetSets = 3, targetReps = "", last = null) {
       };
     }),
     targetReps,
+    targetSets: Math.max(1, targetSets),
   };
 }
 
@@ -396,7 +398,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
                 }`}
                 aria-hidden="true"
               />
-              <span className="tabular text-sm text-fg">{formatElapsed(elapsedSeconds)}</span>
+              <span className="clock text-sm text-fg">{formatElapsed(elapsedSeconds)}</span>
               <span className="flex-1 text-xs text-dim">
                 {finished ? "stopped" : pausedAt ? "paused" : "recording"}
               </span>
@@ -450,6 +452,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               onRemoveSet={(i) => removeSet(row.key, i)}
               onRemove={() => removeExercise(row.key)}
               onVideo={() => setVideoFor(row.exercise)}
+              rirTarget={mesoContext?.rirTarget ?? null}
             />
           ))}
           <button
@@ -725,11 +728,20 @@ function IconTrophy(props) {
     </svg>
   );
 }
+function IconClock(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
 
-function ExerciseCard({ row, unit = "kg", last, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, rirTarget = null, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
   const best1rm = Math.max(0, ...sets.map((s) => epley1rm(s.weight, s.reps)));
   const volume = sets.reduce((v, s) => v + (s.completed ? (Number(s.weight) || 0) * (Number(s.reps) || 0) : 0), 0);
+  const [showHistory, setShowHistory] = useState(false);
 
   const lastLine =
     last && last.sets.length
@@ -739,6 +751,11 @@ function ExerciseCard({ row, unit = "kg", last, onPatch, onPatchSet, onToggleSet
           .join("  .  ")
       : null;
 
+  const targetParts = [];
+  if (row.targetSets) targetParts.push(`${row.targetSets} sets`);
+  if (row.targetReps) targetParts.push(`${row.targetReps} reps`);
+  if (rirTarget != null) targetParts.push(`RIR ${rirTarget}`);
+
   return (
     <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
       <div className="flex items-start gap-2">
@@ -746,7 +763,11 @@ function ExerciseCard({ row, unit = "kg", last, onPatch, onPatchSet, onToggleSet
           <span className="font-display text-base font-semibold text-fg">{exercise.name}</span>
           <span className="mt-1 flex flex-wrap items-center gap-2">
             <MusclePill muscle={exercise.muscle} />
-            {row.targetReps ? <span className="text-xs text-dim">target {row.targetReps}</span> : null}
+            {targetParts.length ? (
+              <span className="tabular rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent">
+                {targetParts.join("  .  ")}
+              </span>
+            ) : null}
           </span>
         </div>
         {exercise.video_url ? (
@@ -760,11 +781,24 @@ function ExerciseCard({ row, unit = "kg", last, onPatch, onPatchSet, onToggleSet
       </div>
 
       {lastLine ? (
-        <div className="rounded-field border border-border bg-bg/40 px-3 py-2">
-          <span className="tabular text-xs text-muted">
+        <button
+          type="button"
+          onClick={() => setShowHistory(true)}
+          className="flex items-center gap-2 rounded-field border border-border bg-bg/40 px-3 py-2 text-left transition-colors hover:border-border-strong active:bg-accent-soft"
+        >
+          <span className="tabular flex-1 text-xs text-muted">
             <span className="text-dim">Last{last?.date ? ` (${last.date})` : ""}:</span> {lastLine}
           </span>
-        </div>
+          <IconClock className="h-3.5 w-3.5 shrink-0 text-dim" />
+        </button>
+      ) : null}
+
+      {showHistory ? (
+        <LastNumbers
+          exerciseId={exercise.id}
+          exerciseName={exercise.name}
+          onClose={() => setShowHistory(false)}
+        />
       ) : null}
 
       <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-dim">

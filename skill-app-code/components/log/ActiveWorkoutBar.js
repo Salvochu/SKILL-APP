@@ -46,7 +46,7 @@ export default function ActiveWorkoutBar() {
           aria-hidden="true"
         />
         <span className="flex-1 truncate text-sm font-medium text-fg">{draft.title || "Workout in progress"}</span>
-        <span className="tabular shrink-0 text-sm font-semibold text-accent">{formatElapsed(elapsedSeconds)}</span>
+        <span className="clock shrink-0 text-sm font-semibold text-accent">{formatElapsed(elapsedSeconds)}</span>
         <IconChevron className="h-4 w-4 shrink-0 text-dim" />
       </button>
     </div>

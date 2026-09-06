@@ -91,7 +91,7 @@ export default function LibraryBrowser({ exercises, noun = "exercise", canLog = 
                 <button
                   type="button"
                   onClick={() => setOpenId(e.id)}
-                  className="flex w-full flex-col gap-1.5 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+                  className="flex w-full flex-col gap-1.5 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2 active:bg-accent-soft"
                 >
                   <span className="flex items-start justify-between gap-3">
                     <span className="font-display text-base font-semibold text-fg">{e.name}</span>

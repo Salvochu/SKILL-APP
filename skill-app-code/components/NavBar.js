@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import TapLink from "@/components/TapLink";
 import Wordmark from "@/components/Wordmark";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -73,7 +74,7 @@ export default function NavBar() {
             const active = isActive(pathname, tab.href);
             const Icon = tab.icon;
             return (
-              <Link
+              <TapLink
                 key={tab.href}
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
@@ -86,7 +87,7 @@ export default function NavBar() {
                 ) : null}
                 <Icon className="h-[22px] w-[22px]" />
                 {tab.label}
-              </Link>
+              </TapLink>
             );
           })}
         </div>
