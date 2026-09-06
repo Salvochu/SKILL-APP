@@ -957,7 +957,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
         />
       ) : null}
 
-      <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-dim">
+      <div className="grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-dim">
         <span>Set</span>
         <span>Weight ({unit})</span>
         <span>Reps</span>
@@ -974,7 +974,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
         return (
         <div
           key={i}
-          className={`grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 rounded-field -mx-1.5 px-1.5 py-1 transition-colors ${
+          className={`grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 rounded-field -mx-1.5 px-1.5 py-1 transition-colors ${
             set.warmup ? "opacity-60" : set.completed ? "bg-accent-soft" : ""
           }`}
         >
@@ -983,8 +983,10 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
             onClick={() => onPatchSet(i, { warmup: !set.warmup })}
             aria-label={set.warmup ? "Warm-up set. Make it a working set" : "Working set. Mark as warm-up"}
             aria-pressed={set.warmup}
-            className={`tabular flex h-6 items-center justify-center rounded text-sm font-semibold transition-colors ${
-              set.warmup ? "text-accent" : "text-dim hover:text-fg"
+            className={`tabular flex h-7 w-7 items-center justify-center rounded-field border text-sm font-semibold transition-colors ${
+              set.warmup
+                ? "border-accent bg-accent-soft text-accent"
+                : "border-border bg-bg text-dim hover:border-border-strong hover:text-fg"
             }`}
           >
             {set.warmup ? "W" : sets.slice(0, i + 1).filter((x) => !x.warmup).length}

@@ -70,15 +70,22 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false }) {
   const done = remaining === 0;
 
   const panel = (
-    <div className="overflow-hidden rounded-card border border-border bg-surface shadow-lg shadow-black/40">
+    <div
+      className={`overflow-hidden rounded-card border bg-surface shadow-lg shadow-black/40 ${
+        done ? "border-alert blink-alert" : "border-border"
+      }`}
+    >
       <div className="h-1 bg-border">
-        <div className="h-full bg-accent transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} />
+        <div
+          className={`h-full transition-[width] duration-1000 ease-linear ${done ? "bg-alert" : "bg-accent"}`}
+          style={{ width: done ? "100%" : `${pct}%` }}
+        />
       </div>
 
       {expanded ? (
         <>
           <div className="flex items-center gap-3 p-3">
-            <span className="clock text-xl font-bold text-fg">
+            <span className={`clock text-xl font-bold ${done ? "text-alert" : "text-fg"}`}>
               {mm}:{ss}
             </span>
             <div className="flex items-center gap-1">
@@ -126,26 +133,28 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false }) {
           </div>
         </>
       ) : (
-        <div className="flex items-center gap-2 py-2 pl-3 pr-2">
-          <span className="clock text-lg font-bold text-fg">
-            {mm}:{ss}
-          </span>
-          <span className="text-xs text-dim">{done ? "rest over" : "rest"}</span>
-          <TimerButton label="Add 15 seconds" onClick={() => setRemaining((r) => r + 15)}>
-            +15
-          </TimerButton>
-          <div className="ml-auto flex items-center gap-1">
-            <button
-              type="button"
-              onClick={onDismiss}
-              className="rounded-field bg-surface-2 px-3.5 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-border active:bg-accent-soft"
-            >
-              {done ? "Done" : "Skip"}
-            </button>
-            <TimerIcon label="Expand rest timer" onClick={() => setExpanded(true)}>
-              <IconChevron className="-rotate-90" />
-            </TimerIcon>
-          </div>
+        <div className="flex items-center gap-3 px-3 py-3.5">
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            aria-label="More rest timer options"
+            className="flex items-center gap-2 rounded-field text-left transition-colors hover:opacity-80"
+          >
+            <span className={`clock text-2xl font-bold ${done ? "text-alert" : "text-fg"}`}>
+              {mm}:{ss}
+            </span>
+            <span className={`text-xs font-medium ${done ? "text-alert" : "text-dim"}`}>
+              {done ? "rest over" : "rest"}
+            </span>
+            <IconChevron className={`-rotate-90 ${done ? "text-alert" : "text-dim"}`} />
+          </button>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="ml-auto rounded-field bg-surface-2 px-5 py-2.5 text-sm font-semibold text-fg transition-colors hover:bg-border active:bg-accent-soft"
+          >
+            {done ? "Done" : "Skip"}
+          </button>
         </div>
       )}
     </div>
