@@ -3,7 +3,7 @@
 import { useState } from "react";
 import MusclePill from "@/components/MusclePill";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
-import StartProgramCard from "@/components/splits/StartProgramCard";
+import ProgramSetup from "@/components/splits/ProgramSetup";
 import { sortVariants } from "@/lib/exercises";
 
 const SECTION_LABEL = { primary: "Choose your split", coached: "Coached programs" };
@@ -52,6 +52,8 @@ export default function SplitsBrowser({ splits, mesocycleTemplates = [] }) {
 }
 
 function SplitDetail({ split, template, onBack }) {
+  const [mode, setMode] = useState(null); // null | "program" | "free"
+
   return (
     <div className="flex flex-col gap-5">
       <button
@@ -59,22 +61,73 @@ function SplitDetail({ split, template, onBack }) {
         onClick={onBack}
         className="flex items-center gap-1.5 self-start text-sm font-medium text-muted transition-colors hover:text-fg"
       >
-        <IconChevron className="h-4 w-4 rotate-90" />
+        <IconChevron className="h-4 w-4 rotate-180" />
         All splits
       </button>
 
-      <header className="flex flex-col gap-1">
+      <header className="flex flex-col gap-1.5">
         <h1 className="text-2xl font-bold text-fg">{split.name}</h1>
         <p className="text-sm text-muted">{split.description}</p>
+        <span className="mt-1 self-start rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-dim">
+          {split.cadence}
+        </span>
       </header>
 
-      {template ? <StartProgramCard template={template} /> : null}
+      {split.days.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-dim">Your week</span>
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+            {split.days.map((day, i) => (
+              <span
+                key={day.id}
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent/30 bg-accent-soft px-3 py-1"
+              >
+                <span className="text-[10px] font-bold text-accent/70">{i + 1}</span>
+                <span className="text-xs font-semibold text-fg">{shortDayName(day.template.name)}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
-      <div className="flex flex-col gap-4">
-        {split.days.map((day, i) => (
-          <DayCard key={day.id} day={day} split={split} index={i} single={split.days.length === 1} />
-        ))}
+      <div className="grid gap-2 sm:grid-cols-2">
+        {template ? (
+          <button
+            type="button"
+            onClick={() => setMode(mode === "program" ? null : "program")}
+            className={`flex flex-col gap-0.5 rounded-card border p-4 text-left transition-colors ${
+              mode === "program"
+                ? "border-accent bg-accent-soft"
+                : "border-accent/40 bg-accent-soft/50 hover:bg-accent-soft"
+            }`}
+          >
+            <span className="text-sm font-bold text-fg">Start a {template.weeks}-week program</span>
+            <span className="text-xs text-muted">Guided, effort builds every week</span>
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => setMode(mode === "free" ? null : "free")}
+          className={`flex flex-col gap-0.5 rounded-card border p-4 text-left transition-colors ${
+            mode === "free" ? "border-accent bg-accent-soft" : "border-border bg-surface hover:bg-surface-2"
+          }`}
+        >
+          <span className="text-sm font-bold text-fg">Log a single session</span>
+          <span className="text-xs text-muted">Pick any day and log it freely</span>
+        </button>
       </div>
+
+      {mode === "program" && template ? (
+        <ProgramSetup template={template} onCancel={() => setMode(null)} />
+      ) : null}
+
+      {mode === "free" ? (
+        <div className="flex flex-col gap-4">
+          {split.days.map((day, i) => (
+            <DayCard key={day.id} day={day} split={split} index={i} single={split.days.length === 1} />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -82,55 +135,68 @@ function SplitDetail({ split, template, onBack }) {
 function DayCard({ day, split, index, single }) {
   const variants = sortVariants(Object.keys(day.variants));
   const [variant, setVariant] = useState(variants[0]);
+  const [open, setOpen] = useState(false);
   const list = day.variants[variant] ?? [];
 
   return (
     <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-xs font-semibold uppercase tracking-wider text-accent">
-          {single ? day.template.focus : day.label || `Day ${index + 1}`}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-start justify-between gap-2 text-left"
+      >
+        <span className="flex flex-col gap-0.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+            {single ? day.template.focus : day.label || `Day ${index + 1}`}
+          </span>
+          <span className="font-display text-lg font-semibold text-fg">{day.template.name}</span>
         </span>
-        <h3 className="font-display text-lg font-semibold text-fg">{day.template.name}</h3>
-        {day.template.description ? (
-          <p className="text-sm text-muted">{day.template.description}</p>
-        ) : null}
-      </div>
+        <IconChevron className={`mt-1 h-4 w-4 shrink-0 text-dim transition-transform ${open ? "rotate-90" : ""}`} />
+      </button>
 
-      {variants.length > 1 ? (
-        <div className="flex flex-wrap gap-2">
-          {variants.map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setVariant(v)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                v === variant
-                  ? "border-accent bg-accent-soft text-accent"
-                  : "border-border text-muted hover:text-fg"
-              }`}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
+      {open ? (
+        <>
+          {day.template.description ? (
+            <p className="text-sm text-muted">{day.template.description}</p>
+          ) : null}
+
+          {variants.length > 1 ? (
+            <div className="flex flex-wrap gap-2">
+              {variants.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setVariant(v)}
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                    v === variant
+                      ? "border-accent bg-accent-soft text-accent"
+                      : "border-border text-muted hover:text-fg"
+                  }`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
+            {list.map((item) => (
+              <li key={`${item.variant}-${item.position}`} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">
+                <span className="flex-1">
+                  <span className="block text-sm font-medium text-fg">{item.exercise.name}</span>
+                  <span className="mt-1 flex flex-wrap items-center gap-2">
+                    <MusclePill muscle={item.exercise.muscle} />
+                    <span className="text-xs text-dim">{item.exercise.equipment}</span>
+                  </span>
+                </span>
+                <span className="tabular shrink-0 text-xs text-muted">
+                  {item.sets} x {item.reps}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
       ) : null}
-
-      <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
-        {list.map((item) => (
-          <li key={`${item.variant}-${item.position}`} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">
-            <span className="flex-1">
-              <span className="block text-sm font-medium text-fg">{item.exercise.name}</span>
-              <span className="mt-1 flex flex-wrap items-center gap-2">
-                <MusclePill muscle={item.exercise.muscle} />
-                <span className="text-xs text-dim">{item.exercise.equipment}</span>
-              </span>
-            </span>
-            <span className="tabular shrink-0 text-xs text-muted">
-              {item.sets} x {item.reps}
-            </span>
-          </li>
-        ))}
-      </ul>
 
       <GuardedStartLink
         href={`/log?split=${split.id}&day=${day.template.id}&variant=${encodeURIComponent(variant)}`}
@@ -143,6 +209,13 @@ function DayCard({ day, split, index, single }) {
   );
 }
 
+function shortDayName(name) {
+  const n = String(name || "").trim();
+  const parts = n.split(/\s+/);
+  if (parts.length === 2 && /^(day|body)$/i.test(parts[1])) return parts[0];
+  return n;
+}
+
 function groupBySection(splits) {
   const order = ["primary", "coached"];
   const map = new Map();
@@ -151,10 +224,9 @@ function groupBySection(splits) {
     map.get(s.section).push(s);
   }
   return [...map.keys()]
-    .sort((a, b) => (order.indexOf(a) + 99) - (order.indexOf(b) + 99))
+    .sort((a, b) => order.indexOf(a) + 99 - (order.indexOf(b) + 99))
     .map((section) => ({ section, items: map.get(section) }));
 }
-
 
 function SplitGlyph() {
   return (
