@@ -54,20 +54,11 @@ export async function buildPhotoCompareBlob({ beforeUrl, afterUrl, beforeLabel, 
   ctx.fillStyle = COLORS.bg;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  try {
-    const logo = await loadImage("/skill-logo.png");
-    const logoW = 200;
-    const logoH = logoW * (logo.height / logo.width);
-    ctx.drawImage(logo, (WIDTH - logoW) / 2, 44, logoW, logoH);
-  } catch {
-    // logo is decorative
-  }
-
   const pad = 40;
   const gap = 16;
   const colW = (WIDTH - pad * 2 - gap) / 2;
-  const imgTop = 190;
-  const imgH = 800;
+  const imgTop = 120;
+  const imgH = 850;
 
   drawCover(ctx, before, pad, imgTop, colW, imgH);
   drawCover(ctx, after, pad + colW + gap, imgTop, colW, imgH);
@@ -84,7 +75,7 @@ export async function buildPhotoCompareBlob({ beforeUrl, afterUrl, beforeLabel, 
   ctx.fillText(beforeLabel, pad + colW / 2, imgTop + imgH + 44);
   ctx.fillText(afterLabel, pad + colW + gap + colW / 2, imgTop + imgH + 44);
 
-  let y = imgTop + imgH + 110;
+  let y = imgTop + imgH + 100;
   ctx.font = `500 32px ${SYS_FONT}`;
   for (const line of deltaLines.slice(0, 3)) {
     ctx.fillStyle = COLORS.muted;
@@ -92,9 +83,16 @@ export async function buildPhotoCompareBlob({ beforeUrl, afterUrl, beforeLabel, 
     y += 46;
   }
 
-  ctx.fillStyle = COLORS.accent;
-  ctx.font = `700 38px ${SYS_FONT}`;
-  ctx.fillText("@salvador_skfitness", WIDTH / 2, HEIGHT - 46);
+  try {
+    const logo = await loadImage("/skill-logo.png");
+    const logoW = 220;
+    const logoH = logoW * (logo.height / logo.width);
+    ctx.drawImage(logo, (WIDTH - logoW) / 2, HEIGHT - logoH - 44, logoW, logoH);
+  } catch {
+    ctx.fillStyle = COLORS.accent;
+    ctx.font = `800 44px ${SYS_FONT}`;
+    ctx.fillText("SKILL", WIDTH / 2, HEIGHT - 50);
+  }
 
   before.close?.();
   after.close?.();
