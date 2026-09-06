@@ -1,29 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
-// A thin bar across the very top that appears the moment an internal link
-// is tapped and completes when the new route commits, so a slow
-// navigation always shows that something is happening. Catches any <a>
-// (Link, TapLink) via a capturing click listener; same-page and external
-// links are ignored.
+// A thin bar across the very top that shows the moment a navigation
+// starts and finishes when the new route commits, so nothing in the app
+// ever feels like a dead tap. It catches:
+//   - clicks on internal <a> (Link, TapLink)
+//   - router.push / router.replace (via history.pushState/replaceState)
+//   - browser back / forward (popstate)
+// and completes on a pathname or query-string change, with a safety
+// timeout so it can never get stuck.
 export default function RouteProgress() {
   const pathname = usePathname();
+  const search = useSearchParams();
   const [phase, setPhase] = useState("idle"); // idle | loading | done
+  const safety = useRef(null);
 
-  // Route committed -> finish the bar.
+  function start() {
+    setPhase((p) => (p === "loading" ? p : "loading"));
+  }
+
+  // Route (or query) committed -> finish.
   useEffect(() => {
     function settle() {
       setPhase((p) => (p === "loading" ? "done" : "idle"));
     }
     settle();
-  }, [pathname]);
+  }, [pathname, search]);
 
   useEffect(() => {
-    if (phase !== "done") return;
-    const t = setTimeout(() => setPhase("idle"), 400);
-    return () => clearTimeout(t);
+    if (phase === "loading") {
+      clearTimeout(safety.current);
+      safety.current = setTimeout(() => setPhase("done"), 10000);
+      return () => clearTimeout(safety.current);
+    }
+    if (phase === "done") {
+      const t = setTimeout(() => setPhase("idle"), 400);
+      return () => clearTimeout(t);
+    }
   }, [phase]);
 
   useEffect(() => {
@@ -41,16 +56,41 @@ export default function RouteProgress() {
       }
       if (url.origin !== window.location.origin) return;
       if (url.pathname === window.location.pathname && url.search === window.location.search) return;
-      setPhase("loading");
+      start();
     }
+
+    const { pushState, replaceState } = window.history;
+    function wrap(fn) {
+      return function (...args) {
+        const nextUrl = args[2];
+        if (nextUrl != null) {
+          try {
+            const u = new URL(String(nextUrl), window.location.href);
+            if (u.pathname !== window.location.pathname || u.search !== window.location.search) start();
+          } catch {
+            /* ignore */
+          }
+        }
+        return fn.apply(this, args);
+      };
+    }
+    window.history.pushState = wrap(pushState);
+    window.history.replaceState = wrap(replaceState);
+
     document.addEventListener("click", onClick, true);
-    return () => document.removeEventListener("click", onClick, true);
+    window.addEventListener("popstate", start);
+    return () => {
+      document.removeEventListener("click", onClick, true);
+      window.removeEventListener("popstate", start);
+      window.history.pushState = pushState;
+      window.history.replaceState = replaceState;
+    };
   }, []);
 
   return (
     <div
       aria-hidden="true"
-      className={`pointer-events-none fixed left-0 top-0 z-[60] h-[3px] bg-accent ${
+      className={`pointer-events-none fixed left-0 top-0 z-[70] h-[3px] bg-accent ${
         phase === "loading"
           ? "w-[88%] opacity-100 transition-[width] duration-[6000ms] ease-out"
           : phase === "done"
