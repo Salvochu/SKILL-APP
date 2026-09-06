@@ -45,8 +45,7 @@ export default function MuscleVolume({ data }) {
       </ul>
 
       <p className="text-xs text-dim">
-        The shaded band is {target.low} to {target.high} hard sets per muscle, a common weekly range
-        for growth. A set counts once for each main muscle and a half for each assisting muscle.
+        Shaded band: {target.low}–{target.high} hard sets, a typical range for growth.
       </p>
     </div>
   );

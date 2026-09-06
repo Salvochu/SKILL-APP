@@ -24,6 +24,7 @@
   --color-danger: #f0623a;
   --color-good: #4caf72;
   --color-sky: #5bc0eb;
+  --color-alert: #ef4444;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", sans-serif;
@@ -133,6 +134,18 @@ h4 {
 }
 @media (prefers-reduced-motion: reduce) {
   .loading-bar::after { animation: none; left: 0; width: 100%; opacity: 0.4; }
+}
+
+/* Rest timer, once it hits zero: a slow attention blink. */
+@keyframes blink-alert {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.blink-alert {
+  animation: blink-alert 1.3s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .blink-alert { animation: none; }
 }
 
 :where(a, button, input, textarea, select):focus-visible {

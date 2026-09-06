@@ -163,7 +163,7 @@ export default function WorkoutSets({ sessionId, title, dateOnly, exercises, uni
           <span className="font-display text-base font-semibold text-fg">
             {ex.exercise?.name ?? "Exercise"}
           </span>
-          <div className="grid grid-cols-[1.25rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2rem] items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-dim">
+          <div className="grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2rem] items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-dim">
             <span>#</span>
             <span>Weight ({unit})</span>
             <span>Reps</span>
@@ -178,7 +178,7 @@ export default function WorkoutSets({ sessionId, title, dateOnly, exercises, uni
             return (
               <div
                 key={s.id}
-                className={`grid grid-cols-[1.25rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2rem] items-center gap-1.5 ${
+                className={`grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2rem] items-center gap-1.5 ${
                   v.warmup ? "opacity-60" : ""
                 }`}
               >
@@ -187,7 +187,11 @@ export default function WorkoutSets({ sessionId, title, dateOnly, exercises, uni
                   onClick={() => patchSet(s.id, { warmup: !v.warmup })}
                   aria-pressed={v.warmup}
                   aria-label={v.warmup ? "Warm-up set. Make it a working set" : "Working set. Mark as warm-up"}
-                  className={`tabular text-sm font-semibold ${v.warmup ? "text-accent" : "text-dim hover:text-fg"}`}
+                  className={`tabular flex h-7 w-7 items-center justify-center rounded-field border text-sm font-semibold transition-colors ${
+                    v.warmup
+                      ? "border-accent bg-accent-soft text-accent"
+                      : "border-border bg-bg text-dim hover:border-border-strong hover:text-fg"
+                  }`}
                 >
                   {v.warmup ? "W" : workNo}
                 </button>
