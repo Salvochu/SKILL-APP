@@ -4,41 +4,30 @@ import { useState } from "react";
 import MusclePill from "@/components/MusclePill";
 import { muscleKey } from "@/lib/exercises";
 
-// Hard sets per muscle against a reference band. The point is the RP-style
-// read: is each muscle getting enough stimulus, and how does it compare
-// to the period before. Two levels: the 6 parent groups roll up their
-// specific muscles; tap a group to see the breakdown.
+// Hard sets per muscle this week against a reference band. The RP-style
+// read: is each muscle getting enough stimulus this week, and how does
+// it compare to last week. Two levels: the 6 parent groups are shown
+// collapsed; tap one to see its muscles.
 export default function MuscleVolume({ data }) {
-  const { groups, target, trainedThisWeek, perWeek, periodLabel } = data;
+  const { groups, target, trainedThisWeek } = data;
 
-  // Children share the per-muscle scale (band lives at 10-20). Parents get
-  // their own scale so the tallest group fills the bar rather than every
-  // group pinning to 100%.
   const muscleMax = Math.max(
     target.high + 4,
     ...groups.flatMap((g) => g.muscles.map((m) => m.thisWeek)),
   );
   const groupMax = Math.max(1, ...groups.map((g) => g.thisWeek));
 
-  const [open, setOpen] = useState(() => {
-    const seed = {};
-    for (const g of groups) seed[g.parent] = g.thisWeek > 0;
-    return seed;
-  });
+  const [open, setOpen] = useState({});
 
   return (
     <div className="flex flex-col gap-3">
       {!trainedThisWeek ? (
-        <p className="text-sm text-muted">
-          No sets logged {perWeek ? "in this period" : "yet this week"}.
-        </p>
+        <p className="text-sm text-muted">No sets logged yet this week.</p>
       ) : null}
 
       <div className="flex items-baseline justify-between pl-3 pr-1">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-dim">Muscle</span>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-dim">
-          {perWeek ? "Sets / week" : "This week"}
-        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-dim">This week</span>
       </div>
 
       <ul className="flex flex-col gap-1.5">
@@ -56,9 +45,8 @@ export default function MuscleVolume({ data }) {
       </ul>
 
       <p className="text-xs text-dim">
-        The shaded band is {target.low} to {target.high} hard sets per muscle{perWeek ? " per week" : ""},
-        a common range for growth. A set counts once for each main muscle and a half for each
-        assisting muscle.{periodLabel ? ` Averaged over ${periodLabel}.` : ""}
+        The shaded band is {target.low} to {target.high} hard sets per muscle, a common weekly range
+        for growth. A set counts once for each main muscle and a half for each assisting muscle.
       </p>
     </div>
   );

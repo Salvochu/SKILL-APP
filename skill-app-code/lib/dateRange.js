@@ -4,16 +4,15 @@
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Preset ranges in the order the filter shows them.
+// Preset ranges in the order the filter shows them. Kept short on
+// purpose; the parser still understands the finer-grained tokens below
+// if one arrives in a URL.
 export const RANGE_PRESETS = [
-  { token: "7d", label: "7 days" },
-  { token: "14d", label: "14 days" },
   { token: "30d", label: "30 days" },
-  { token: "5w", label: "5 weeks" },
   { token: "8w", label: "8 weeks" },
   { token: "3m", label: "3 months" },
   { token: "6m", label: "6 months" },
-  { token: "12m", label: "12 months" },
+  { token: "12m", label: "1 year" },
   { token: "all", label: "All time" },
 ];
 
