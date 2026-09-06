@@ -118,7 +118,7 @@ export default function MesocyclePanel({ active, summary }) {
             label="This week"
             value={Math.min(active.sessionsThisWeek, active.sessionsPerWeek)}
             max={active.sessionsPerWeek}
-            tone="danger"
+            tone="sky"
           />
           <ProgressBar
             label="Whole program"

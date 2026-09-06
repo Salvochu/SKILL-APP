@@ -80,6 +80,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [showRest, setShowRest] = useState(false);
   const [restTimerOn, setRestTimerOn] = useState(restTimer);
   const [barMinimised, setBarMinimised] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
@@ -330,16 +331,31 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   return (
     <div className="flex flex-col gap-6 py-2">
       <header className="flex items-start justify-between gap-2">
-        <h1 className="min-w-0 text-2xl font-bold text-fg">
+        <h1 className="min-w-0 flex-1 truncate text-2xl font-bold text-fg">
           {title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "") || "Workout"}
         </h1>
-        <button
-          type="button"
-          onClick={() => setCancelConfirm(true)}
-          className="shrink-0 rounded-field border border-danger/40 bg-danger/10 px-3 py-1.5 text-xs font-semibold text-danger transition-colors hover:bg-danger hover:text-black"
-        >
-          Cancel workout
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSettingsOpen((v) => !v)}
+            aria-expanded={settingsOpen}
+            aria-label="Workout settings"
+            className={`flex h-[30px] w-[30px] items-center justify-center rounded-field border transition-colors ${
+              settingsOpen
+                ? "border-accent bg-accent-soft text-accent"
+                : "border-border bg-surface text-muted hover:text-fg"
+            }`}
+          >
+            <IconGear className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setCancelConfirm(true)}
+            className="rounded-field border border-danger/40 bg-danger/10 px-3 py-1.5 text-xs font-semibold text-danger transition-colors hover:bg-danger hover:text-black"
+          >
+            Cancel workout
+          </button>
+        </div>
       </header>
 
       {cancelConfirm ? (
@@ -354,30 +370,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         />
       ) : null}
 
-      {mesoContext ? (
-        <div className="flex flex-col gap-1.5 rounded-card border border-accent/40 bg-accent-soft px-4 py-3">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-sm font-semibold text-accent">
-              Week {mesoContext.week} of {mesoContext.weeks}
-            </span>
-            <span className="text-sm text-accent">
-              {mesoContext.guidance?.headline ??
-                (mesoContext.isDeload ? "Deload week" : `Target effort: RIR ${mesoContext.rirTarget}`)}
-            </span>
-          </div>
-          {mesoContext.guidance?.detail ? (
-            <p className="text-sm text-fg">{mesoContext.guidance.detail}</p>
-          ) : null}
-        </div>
-      ) : null}
-
-      <details className="group self-start rounded-field border border-border bg-surface">
-        <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted [&::-webkit-details-marker]:hidden">
-          <IconGear className="h-3.5 w-3.5 text-dim" />
-          Settings
-          <IconChevron className="h-3 w-3 text-dim transition-transform group-open:rotate-90" />
-        </summary>
-        <div className="flex w-[min(20rem,calc(100vw-3rem))] flex-col gap-4 border-t border-border p-3.5">
+      {settingsOpen ? (
+        <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
           <Field label="Workout name">
             <input
               value={title}
@@ -422,7 +416,24 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
             </button>
           </div>
         </div>
-      </details>
+      ) : null}
+
+      {mesoContext ? (
+        <div className="flex flex-col gap-1.5 rounded-card border border-accent/40 bg-accent-soft px-4 py-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-sm font-semibold text-accent">
+              Week {mesoContext.week} of {mesoContext.weeks}
+            </span>
+            <span className="text-sm text-accent">
+              {mesoContext.guidance?.headline ??
+                (mesoContext.isDeload ? "Deload week" : `Target effort: RIR ${mesoContext.rirTarget}`)}
+            </span>
+          </div>
+          {mesoContext.guidance?.detail ? (
+            <p className="text-sm text-fg">{mesoContext.guidance.detail}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       {rows.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-border p-8">
@@ -474,12 +485,17 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </p>
       ) : null}
 
-      {barMinimised ? (
+      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 flex flex-col gap-2 md:bottom-4">
+        {showRest ? (
+          <RestTimer key={restKey} startSeconds={restSeconds} onDismiss={() => setShowRest(false)} docked />
+        ) : null}
+
+        {barMinimised ? (
         <button
           type="button"
           onClick={() => setBarMinimised(false)}
           aria-label="Expand timer and save"
-          className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex items-center gap-2 self-center rounded-full border border-accent/30 bg-accent-soft px-4 py-2 backdrop-blur md:bottom-4"
+          className="flex items-center gap-2 self-center rounded-full border border-accent/30 bg-accent-soft px-4 py-2 backdrop-blur"
         >
           <span
             className={`h-2 w-2 shrink-0 rounded-full ${
@@ -493,7 +509,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
           <IconChevron className="h-3.5 w-3.5 shrink-0 -rotate-90 text-dim" />
         </button>
       ) : (
-        <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] flex flex-col gap-2 rounded-card border border-accent/30 bg-accent-soft p-3 backdrop-blur md:bottom-4">
+        <div className="flex flex-col gap-2 rounded-card border border-accent/30 bg-accent-soft p-3 backdrop-blur">
           <div className="flex items-center gap-2">
             <span
               className={`h-2 w-2 shrink-0 rounded-full ${
@@ -541,15 +557,13 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
             </button>
           </div>
         </div>
-      )}
+        )}
+      </div>
 
       {pickerOpen ? (
         <ExercisePicker exercises={allExercises} onPick={addExercise} onClose={() => setPickerOpen(false)} />
       ) : null}
       {videoFor ? <VideoModal exercise={videoFor} onClose={() => setVideoFor(null)} /> : null}
-      {showRest ? (
-        <RestTimer key={restKey} startSeconds={restSeconds} onDismiss={() => setShowRest(false)} />
-      ) : null}
     </div>
   );
 }
@@ -746,7 +760,7 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
                 label="This week"
                 value={Math.min(meso.sessionsThisWeek, meso.totalDays)}
                 max={meso.totalDays}
-                tone="danger"
+                tone="sky"
               />
               <ProgressBar
                 label="Whole program"
