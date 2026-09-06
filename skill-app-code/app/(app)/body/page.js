@@ -1,9 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getBodyLog } from "@/lib/data/body";
+import { getProgressPhotos } from "@/lib/data/photos";
 import { getUnitPreference } from "@/lib/data/profile";
 import { fromKg, unitLabel } from "@/lib/units";
 import BodyLogForm from "@/components/body/BodyLogForm";
+import ProgressPhotos from "@/components/body/ProgressPhotos";
 import MetricChart from "@/components/body/MetricChart";
 import { shortDate } from "@/components/progress/chartkit";
 
@@ -26,8 +28,9 @@ export default function BodyPage() {
 }
 
 async function BodyBody() {
-  const [{ entries, latest, weightChange, hasAny }, unit] = await Promise.all([
+  const [{ entries, latest, weightChange, hasAny }, photos, unit] = await Promise.all([
     getBodyLog(),
+    getProgressPhotos(),
     getUnitPreference(),
   ]);
   const wu = unitLabel(unit);
@@ -43,9 +46,15 @@ async function BodyBody() {
     { key: "hip", label: "Hip", unit: " cm" },
   ];
 
+  const bodyByDate = Object.fromEntries(
+    entries.map((e) => [e.date, { weight: conv("weight", e.weight), fat: e.fat }]),
+  );
+
   return (
     <>
       <BodyLogForm latest={latest} unit={unit} />
+
+      <ProgressPhotos dates={photos.dates} bodyByDate={bodyByDate} unit={wu} />
 
       {!hasAny ? (
         <div className="rounded-card border border-dashed border-border bg-surface p-8 text-center text-sm text-muted">
