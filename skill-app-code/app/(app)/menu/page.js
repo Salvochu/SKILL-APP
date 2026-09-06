@@ -1,4 +1,5 @@
 import TapLink from "@/components/TapLink";
+import ExportRow from "@/components/menu/ExportRow";
 
 export const metadata = { title: "Menu" };
 
@@ -24,17 +25,7 @@ export default function MenuPage() {
             <MenuRow label={it.label} body={it.body} icon={it.icon} tint={it.tint} />
           </TapLink>
         ))}
-        <a
-          href="/api/export"
-          className="block transition-colors hover:bg-surface-2 active:bg-accent-soft"
-        >
-          <MenuRow
-            label="Export training log"
-            body="Download every set you have logged as a CSV"
-            icon={IconDownload}
-            tint="#3fb6a8"
-          />
-        </a>
+        <ExportRow />
       </div>
     </div>
   );
@@ -106,13 +97,6 @@ function IconHistory(props) {
       <path d="M3 12a9 9 0 1 0 3-6.7" />
       <path d="M3 4v5h5" />
       <path d="M12 7v5l4 2" />
-    </svg>
-  );
-}
-function IconDownload(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
     </svg>
   );
 }
