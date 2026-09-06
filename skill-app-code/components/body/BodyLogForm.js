@@ -65,7 +65,19 @@ export default function BodyLogForm({ latest, unit = "kg" }) {
       </div>
 
       <Field label="Date">
-        <input type="date" name="date" defaultValue={today} max={today} className={inputClass} />
+        {/* iOS renders a native date control that ignores height/padding
+           and comes out taller than the number inputs. Wrapping it in a
+           bordered box and making the input itself borderless and
+           transparent keeps it the same size as its siblings. */}
+        <div className="flex w-full min-w-0 items-center overflow-hidden rounded-field border border-border bg-bg focus-within:border-accent">
+          <input
+            type="date"
+            name="date"
+            defaultValue={today}
+            max={today}
+            className="w-full min-w-0 appearance-none bg-transparent px-3 py-2 text-sm text-fg outline-none"
+          />
+        </div>
       </Field>
 
       <div className="grid grid-cols-2 gap-3">

@@ -7,6 +7,7 @@ import {
   rirForWeek,
   nextDayIndex,
   weekDateRange,
+  weekGuidance,
 } from "@/lib/mesocycle";
 import { sortVariants } from "@/lib/exercises";
 
@@ -139,6 +140,7 @@ export async function getActiveMesocycle() {
     week,
     isDeload: deload,
     rirTarget: rir,
+    guidance: weekGuidance(week, weeks, startingRir),
     isComplete: complete,
     sessionsLogged: sessionsLogged ?? 0,
     sessionsThisWeek: sessionsThisWeek ?? 0,

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getProgressData } from "@/lib/data/progress";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
@@ -104,8 +105,10 @@ export async function saveWorkout(payload) {
     return { error: setsError.message };
   }
 
-  // Dashboard / Progress read workout data at request time, so the next
-  // navigation already reflects this save.
+  // Dashboard, Progress and the mesocycle card all read workout data, so
+  // clear their cache for the next navigation.
+  revalidatePath("/dashboard");
+  revalidatePath("/progress");
   return { ok: true, sessionId: session.id };
 }
 

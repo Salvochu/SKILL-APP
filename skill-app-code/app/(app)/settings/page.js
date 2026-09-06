@@ -3,9 +3,9 @@ import Link from "next/link";
 import { getNotificationPrefs } from "@/lib/data/notifications";
 import NotificationSettings from "@/components/notifications/NotificationSettings";
 
-export const metadata = { title: "Notifications" };
+export const metadata = { title: "Settings" };
 
-export default function NotificationsPage() {
+export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-6 py-2">
       <header className="flex flex-col gap-1">
@@ -15,8 +15,8 @@ export default function NotificationsPage() {
           </svg>
           Menu
         </Link>
-        <h1 className="text-2xl font-bold text-fg">Notifications</h1>
-        <p className="text-sm text-muted">Choose what SKILL reminds you about.</p>
+        <h1 className="text-2xl font-bold text-fg">Settings</h1>
+        <p className="text-sm text-muted">Notifications, the rest timer, and how the app behaves.</p>
       </header>
 
       <Suspense fallback={<div className="h-64 rounded-card bg-surface" />}>

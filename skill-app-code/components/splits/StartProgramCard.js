@@ -41,6 +41,7 @@ export default function StartProgramCard({ template }) {
       setError(result.error);
       return;
     }
+    router.refresh();
     router.push("/dashboard");
   }
 

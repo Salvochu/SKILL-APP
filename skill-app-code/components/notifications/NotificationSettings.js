@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { saveNotificationPrefs } from "@/app/(app)/notifications/actions";
+import { saveNotificationPrefs } from "@/app/(app)/settings/actions";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
@@ -13,12 +13,14 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
-// Keep the two client-read prefs in localStorage so RestTimer and the
-// unfinished-workout prompt can check them without a round trip.
+// Keep the client-read prefs in localStorage so the workout logger,
+// RestTimer and the unfinished-workout prompt can check them without a
+// round trip.
 function mirror(prefs) {
   try {
-    localStorage.setItem("notif:restTimer", prefs.restTimerDone ? "on" : "off");
+    localStorage.setItem("notif:restTimerDone", prefs.restTimerDone ? "on" : "off");
     localStorage.setItem("notif:unfinished", prefs.unfinishedWorkout ? "on" : "off");
+    localStorage.setItem("pref:restTimer", prefs.restTimerEnabled ? "on" : "off");
   } catch {
     // storage unavailable is fine
   }
@@ -215,14 +217,23 @@ export default function NotificationSettings({ initialPrefs }) {
         />
       </section>
 
-      <section className="flex flex-col overflow-hidden rounded-card border border-border">
-        <Toggle
-          label="Unfinished workout reminder"
-          body="If a workout is still running 90 minutes after you started, prompt to finish or discard it next time you open the app"
-          checked={prefs.unfinishedWorkout}
-          onChange={(v) => patch({ unfinishedWorkout: v })}
-        />
-      </section>
+      <div className="flex flex-col gap-2">
+        <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-dim">Workout</h2>
+        <section className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
+          <Toggle
+            label="Rest timer"
+            body="Show a rest countdown after you log a set"
+            checked={prefs.restTimerEnabled}
+            onChange={(v) => patch({ restTimerEnabled: v })}
+          />
+          <Toggle
+            label="Unfinished workout reminder"
+            body="If a workout is still running 90 minutes after you started, prompt to finish or discard it next time you open the app"
+            checked={prefs.unfinishedWorkout}
+            onChange={(v) => patch({ unfinishedWorkout: v })}
+          />
+        </section>
+      </div>
     </div>
   );
 }

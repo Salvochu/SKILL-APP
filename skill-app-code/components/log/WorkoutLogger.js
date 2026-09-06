@@ -54,7 +54,7 @@ function makeExercise(exercise, targetSets = 3, targetReps = "", last = null) {
   };
 }
 
-export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial, unit = "kg" }) {
+export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial, unit = "kg", restTimer = true }) {
   const U = unit === "lb" ? "lb" : "kg";
   const router = useRouter();
   const [title, setTitle] = useState(initial.title);
@@ -79,6 +79,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [restKey, setRestKey] = useState(0);
   const [restSeconds, setRestSeconds] = useState(90);
   const [showRest, setShowRest] = useState(false);
+  const [restTimerOn, setRestTimerOn] = useState(restTimer);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
@@ -187,7 +188,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     const row = rows.find((r) => r.key === key);
     const next = !row.sets[i].completed;
     patchSet(key, i, { completed: next });
-    if (next) {
+    if (next && restTimerOn) {
       setRestKey((k) => k + 1);
       setShowRest(true);
     }
@@ -357,13 +358,19 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       ) : null}
 
       {mesoContext ? (
-        <div className="flex items-center gap-3 rounded-card border border-accent/40 bg-accent-soft px-4 py-3">
-          <span className="text-sm font-semibold text-accent">
-            Week {mesoContext.week} of {mesoContext.weeks}
-          </span>
-          <span className="text-sm text-accent">
-            {mesoContext.isDeload ? "Deload, take it easy" : `Target effort: RIR ${mesoContext.rirTarget}`}
-          </span>
+        <div className="flex flex-col gap-1.5 rounded-card border border-accent/40 bg-accent-soft px-4 py-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-sm font-semibold text-accent">
+              Week {mesoContext.week} of {mesoContext.weeks}
+            </span>
+            <span className="text-sm text-accent">
+              {mesoContext.guidance?.headline ??
+                (mesoContext.isDeload ? "Deload week" : `Target effort: RIR ${mesoContext.rirTarget}`)}
+            </span>
+          </div>
+          {mesoContext.guidance?.detail ? (
+            <p className="text-sm text-fg">{mesoContext.guidance.detail}</p>
+          ) : null}
         </div>
       ) : null}
 
@@ -426,6 +433,29 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </Field>
       </section>
 
+      <div className="flex items-center justify-between gap-3 rounded-field border border-border bg-surface px-3 py-2">
+        <span className="text-xs font-medium text-muted">Rest timer after each set</span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={restTimerOn}
+          aria-label="Rest timer"
+          onClick={() => {
+            setRestTimerOn((v) => !v);
+            if (restTimerOn) setShowRest(false);
+          }}
+          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition-colors ${
+            restTimerOn ? "border-accent bg-accent" : "border-border bg-surface-2"
+          }`}
+        >
+          <span
+            className={`inline-block h-[15px] w-[15px] rounded-full bg-white transition-transform ${
+              restTimerOn ? "translate-x-[18px]" : "translate-x-[2px]"
+            }`}
+          />
+        </button>
+      </div>
+
       {rows.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-border p-8">
           <p className="text-sm text-muted">No exercises added yet.</p>
@@ -453,6 +483,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               onRemove={() => removeExercise(row.key)}
               onVideo={() => setVideoFor(row.exercise)}
               rirTarget={mesoContext?.rirTarget ?? null}
+              beatLastWeek={Boolean(mesoContext && mesoContext.week > 1 && !mesoContext.isDeload)}
             />
           ))}
           <button
@@ -737,7 +768,7 @@ function IconClock(props) {
   );
 }
 
-function ExerciseCard({ row, unit = "kg", last, rirTarget = null, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
   const best1rm = Math.max(0, ...sets.map((s) => epley1rm(s.weight, s.reps)));
   const volume = sets.reduce((v, s) => v + (s.completed ? (Number(s.weight) || 0) * (Number(s.reps) || 0) : 0), 0);
@@ -787,7 +818,10 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, onPatch, onPat
           className="flex items-center gap-2 rounded-field border border-border bg-bg/40 px-3 py-2 text-left transition-colors hover:border-border-strong active:bg-accent-soft"
         >
           <span className="tabular flex-1 text-xs text-muted">
-            <span className="text-dim">Last{last?.date ? ` (${last.date})` : ""}:</span> {lastLine}
+            <span className={beatLastWeek ? "font-semibold text-accent" : "text-dim"}>
+              {beatLastWeek ? "Beat last week" : `Last${last?.date ? ` (${last.date})` : ""}`}:
+            </span>{" "}
+            {lastLine}
           </span>
           <IconClock className="h-3.5 w-3.5 shrink-0 text-dim" />
         </button>
