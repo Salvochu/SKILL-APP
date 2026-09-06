@@ -2,11 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getWorkoutDetail } from "@/lib/data/workouts";
 import { getUnitPreference } from "@/lib/data/profile";
-import { formatSet, EFFORT_LABELS } from "@/lib/training";
+import { EFFORT_LABELS } from "@/lib/training";
 import { formatWeight } from "@/lib/units";
-import MusclePill from "@/components/MusclePill";
 import LoggedAt from "@/components/LoggedAt";
-import DeleteWorkoutButton from "@/components/workouts/DeleteWorkoutButton";
+import WorkoutSets from "@/components/workouts/WorkoutSets";
 
 export const metadata = { title: "Workout" };
 
@@ -57,38 +56,6 @@ export default async function WorkoutDetailPage({ params }) {
         </div>
       ) : null}
 
-      {workout.exercises.length === 0 ? (
-        <p className="rounded-card border border-dashed border-border p-6 text-center text-sm text-muted">
-          No sets were logged for this session.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {workout.exercises.map((ex) => (
-            <section key={ex.exercise?.id ?? ex.note} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-display text-base font-semibold text-fg">{ex.exercise?.name ?? "Exercise"}</span>
-                {ex.exercise?.muscle ? <MusclePill muscle={ex.exercise.muscle} /> : null}
-              </div>
-              <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
-                {ex.sets.map((s) => (
-                  <li
-                    key={s.setNumber}
-                    className={`flex items-center justify-between gap-3 px-3 py-2 text-sm ${
-                      s.completed ? "bg-accent-soft text-fg" : "bg-bg/40 text-dim"
-                    }`}
-                  >
-                    <span className="text-dim">Set {s.setNumber}</span>
-                    <span className="tabular">{formatSet(s, unit)}</span>
-                    {!s.completed ? <span className="text-xs">not completed</span> : null}
-                  </li>
-                ))}
-              </ul>
-              {ex.note ? <p className="text-sm text-muted">{ex.note}</p> : null}
-            </section>
-          ))}
-        </div>
-      )}
-
       {workout.notes ? (
         <section className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Session notes</h2>
@@ -96,7 +63,13 @@ export default async function WorkoutDetailPage({ params }) {
         </section>
       ) : null}
 
-      <DeleteWorkoutButton sessionId={workout.id} />
+      <WorkoutSets
+        sessionId={workout.id}
+        title={workout.title}
+        dateOnly={workout.date.slice(0, 10)}
+        exercises={workout.exercises}
+        unit={unit}
+      />
     </div>
   );
 }

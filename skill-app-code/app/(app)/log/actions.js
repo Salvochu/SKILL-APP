@@ -38,6 +38,7 @@ export async function saveWorkout(payload) {
 
   const exercises = Array.isArray(payload.exercises) ? payload.exercises : [];
   const setRows = [];
+  let position = 0;
   for (const ex of exercises) {
     if (!ex?.exerciseId) continue;
     const sets = Array.isArray(ex.sets) ? ex.sets : [];
@@ -52,6 +53,7 @@ export async function saveWorkout(payload) {
       setRows.push({
         exercise_id: ex.exerciseId,
         set_number: n,
+        position: position++,
         reps: Number.isFinite(reps) ? reps : null,
         weight: Number.isFinite(weight) ? weight : null,
         rir,

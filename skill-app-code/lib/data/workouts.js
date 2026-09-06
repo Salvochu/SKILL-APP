@@ -78,9 +78,10 @@ export async function getWorkoutDetail(sessionId) {
 
   const { data: sets, error: setsError } = await supabase
     .from("workout_sets")
-    .select("exercise_id, set_number, reps, weight, rir, completed, note, exercise:exercises(id, name, muscle)")
+    .select("id, exercise_id, set_number, position, reps, weight, rir, completed, note, exercise:exercises(id, name, muscle)")
     .eq("session_id", sessionId)
-    .order("set_number");
+    .order("position", { ascending: true, nullsFirst: true })
+    .order("set_number", { ascending: true });
   if (setsError) throw new Error(`Failed to load workout sets: ${setsError.message}`);
 
   const byExercise = new Map();
@@ -91,12 +92,20 @@ export async function getWorkoutDetail(sessionId) {
     const entry = byExercise.get(s.exercise_id);
     if (s.set_number === 1 && s.note) entry.note = s.note;
     entry.sets.push({
+      id: s.id,
       setNumber: s.set_number,
       weight: s.weight == null ? null : Number(s.weight),
       reps: s.reps,
       rir: s.rir,
       completed: s.completed !== false,
     });
+  }
+
+  // Sets come back in `position` order, which groups each exercise
+  // together and keeps its sets in sequence. Sort by set_number as a
+  // backstop for older rows whose position predates an edit.
+  for (const entry of byExercise.values()) {
+    entry.sets.sort((a, b) => a.setNumber - b.setNumber);
   }
 
   const exercises = [...byExercise.values()];
