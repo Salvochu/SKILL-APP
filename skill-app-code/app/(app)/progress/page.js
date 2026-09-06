@@ -13,9 +13,8 @@ import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
 import CompareExercises from "@/components/progress/CompareExercises";
 import MuscleVolume from "@/components/progress/MuscleVolume";
-import PersonalRecords from "@/components/progress/PersonalRecords";
-import StrengthScoreCard from "@/components/progress/StrengthScoreCard";
-import JourneyCard from "@/components/progress/JourneyCard";
+import IdentityHero from "@/components/progress/IdentityHero";
+import LiftsCard from "@/components/progress/LiftsCard";
 import RangeFilter from "@/components/progress/RangeFilter";
 import ShareProgress from "@/components/progress/ShareProgress";
 
@@ -101,28 +100,20 @@ async function ProgressBody({ searchParams }) {
         <ShareProgress stats={shareStats} muscles={shareMuscles} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Total volume" value={`${compact(data.totalVolumeKg)} ${U}`} />
-        <Stat label="Workouts" value={data.workouts} />
-        <Stat label="Time" value={`${Math.floor(summary.minutes / 60)}h ${summary.minutes % 60}m`} />
-        {topPRValue ? <Stat label="Top est. 1RM" value={`${compact(topPRValue)} ${U}`} sub={topPR.name} /> : null}
-      </div>
+      <IdentityHero
+        strength={strength}
+        journey={journey}
+        workouts={data.workouts}
+        volumeLabel={`${compact(data.totalVolumeKg)} ${U}`}
+        timeLabel={`${Math.floor(summary.minutes / 60)}h ${summary.minutes % 60}m`}
+        unit={unit}
+      />
 
-      {strength && strength.covered > 0 ? (
-        <StrengthScoreCard data={strength} unit={unit} />
-      ) : null}
-
-      {journey ? <JourneyCard data={journey} /> : null}
+      {strength ? <LiftsCard patterns={strength.patterns} records={records} unit={unit} /> : null}
 
       <Card title="Weekly sets by muscle" subtitle="Hard sets this week. Tap a group to see each muscle">
         <MuscleVolume data={muscleVolume} />
       </Card>
-
-      {records.length > 0 ? (
-        <Card title="Personal records" subtitle="Your best estimated 1RM on each lift, all time">
-          <PersonalRecords records={records} unit={unit} />
-        </Card>
-      ) : null}
 
       {hasTrends ? (
         <details className="group flex flex-col rounded-card border border-border bg-surface">
@@ -189,16 +180,6 @@ function IconChevron(props) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="m9 6 6 6-6 6" />
     </svg>
-  );
-}
-
-function Stat({ label, value, sub }) {
-  return (
-    <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
-      <span className="text-xs font-semibold uppercase tracking-wider text-dim">{label}</span>
-      <span className="text-2xl font-bold text-fg">{value}</span>
-      {sub ? <span className="truncate text-xs text-dim">{sub}</span> : null}
-    </div>
   );
 }
 
