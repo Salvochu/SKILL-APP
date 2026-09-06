@@ -26,9 +26,11 @@ function notifyRestDone() {
   }
 }
 
-// Floating rest timer. Mounts when a set is logged; counts down and can be
-// paused, restarted, nudged by 15s, skipped or dismissed.
-export default function RestTimer({ startSeconds, onDismiss }) {
+// Rest timer. Mounts when a set is logged; counts down and can be paused,
+// restarted, nudged by 15s, skipped or dismissed. `docked` renders just
+// the panel (the caller places it, e.g. stacked above the save bar);
+// otherwise it floats above the bottom nav.
+export default function RestTimer({ startSeconds, onDismiss, docked = false }) {
   const [total, setTotal] = useState(startSeconds);
   const [remaining, setRemaining] = useState(startSeconds);
   const [running, setRunning] = useState(true);
@@ -62,9 +64,8 @@ export default function RestTimer({ startSeconds, onDismiss }) {
   const ss = String(remaining % 60).padStart(2, "0");
   const pct = total > 0 ? (remaining / total) * 100 : 0;
 
-  return (
-    <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-lg px-4 md:bottom-6">
-      <div className="overflow-hidden rounded-card border border-border bg-surface shadow-lg shadow-black/40">
+  const panel = (
+    <div className="overflow-hidden rounded-card border border-border bg-surface shadow-lg shadow-black/40">
         <div className="h-1 bg-border">
           <div className="h-full bg-accent transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} />
         </div>
@@ -112,7 +113,14 @@ export default function RestTimer({ startSeconds, onDismiss }) {
             {remaining === 0 ? "Done" : "Skip rest"}
           </button>
         </div>
-      </div>
+    </div>
+  );
+
+  if (docked) return panel;
+
+  return (
+    <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-lg px-4 md:bottom-6">
+      {panel}
     </div>
   );
 }

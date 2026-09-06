@@ -1,8 +1,8 @@
 // Generic labelled progress bar. value/max in whatever unit the caller
 // is counting (sessions, weeks, ...); this just renders the fraction.
-// `tone` picks the fill colour: "accent" (default), "good" (green) or
-// "danger" (red).
-const TONES = { good: "bg-good", danger: "bg-danger", accent: "bg-accent" };
+// `tone` picks the fill colour: "accent" (default), "good" (green),
+// "danger" (red) or "sky" (baby blue).
+const TONES = { good: "bg-good", danger: "bg-danger", accent: "bg-accent", sky: "bg-sky" };
 
 export default function ProgressBar({ label, value, max, tone = "accent" }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
