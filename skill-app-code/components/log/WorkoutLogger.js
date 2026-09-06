@@ -15,7 +15,7 @@ import { formatSet, formatElapsed, EFFORT_LABELS } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
 import { buildShareImageBlob } from "@/lib/shareCard";
-import { toKg, formatWeight } from "@/lib/units";
+import { toKg, fromKg, formatWeight } from "@/lib/units";
 
 // Time-seeded so a resumed draft's saved keys (from a previous page
 // load) can never collide with new ones generated after a reload.
@@ -568,19 +568,31 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   );
 }
 
-function ShareCard({ summary, timeLabel, effortLabel, unit = "kg" }) {
+function ShareCard({ summary, extras, timeLabel, unit = "kg" }) {
   const [status, setStatus] = useState("idle"); // idle | preparing | shared | downloaded | copied
 
-  const caption = `Just logged ${Math.round(summary.totalVolume)} ${unit} in ${timeLabel} with SKILL. @salvador_skfitness`;
+  const j = extras?.journey ?? null;
+  const s = extras?.strength ?? null;
+  const strengthLabel =
+    s && s.covered > 0 ? `${Math.round(fromKg(s.after, unit))} ${unit}` : null;
+  const levelLabel = j ? `${j.tier} · Level ${j.level}` : null;
+  const xpLabel = j?.xpGained > 0 ? `+${j.xpGained} XP` : null;
+
+  const caption = `Just logged ${Math.round(summary.totalVolume)} ${unit} in ${timeLabel} with SKILL.${
+    xpLabel ? ` ${xpLabel}.` : ""
+  } @salvador_skfitness`;
 
   async function onShare() {
     setStatus("preparing");
     let blob = null;
     try {
       blob = await buildShareImageBlob({
+        strengthLabel,
         volumeLabel: `${Math.round(summary.totalVolume)} ${unit}`,
         timeLabel,
-        effortLabel,
+        levelLabel,
+        tierColor: j?.tierColor ?? null,
+        xpLabel,
       });
     } catch {
       // Image generation failed (e.g. the logo did not load); fall back
@@ -676,6 +688,10 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
   const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
   const meso = extras?.meso;
   const prs = extras?.newPRs ?? [];
+  const j = extras?.journey ?? null;
+  const s = extras?.strength ?? null;
+  const scoreU = (kg) => Math.round(fromKg(kg, unit));
+  const showProgress = j || (s && s.covered > 0);
 
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -717,6 +733,63 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
           <span className="tabular text-2xl font-bold text-fg">{Math.round(summary.totalVolume)} {unit}</span>
         </div>
       </div>
+
+      {showProgress ? (
+        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Progress</h2>
+            {j?.xpGained > 0 ? (
+              <span className="tabular text-sm font-bold text-good">+{j.xpGained} XP</span>
+            ) : null}
+          </div>
+
+          {s && s.covered > 0 ? (
+            <div className="flex items-baseline gap-2">
+              <span className="text-sm text-muted">Strength score</span>
+              <span className="tabular text-lg font-bold text-fg">
+                {scoreU(s.after)} <span className="text-xs font-semibold text-dim">{unit}</span>
+              </span>
+              {s.delta > 0 ? (
+                <span className="tabular text-xs font-semibold text-good">+{scoreU(s.delta)}</span>
+              ) : null}
+            </div>
+          ) : null}
+
+          {j ? (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold" style={{ color: j.tierColor }}>
+                  {j.tier} · Level {j.level}
+                </span>
+                <span className="text-dim">
+                  {j.xpToNextLevel > 0 ? `${j.xpToNextLevel} XP to Level ${j.level + 1}` : "Max level"}
+                </span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${j.pctToNextLevel}%`, backgroundColor: j.tierColor }}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {j?.leveledUp ? (
+            <p className="flex items-center gap-1.5 rounded-field bg-good/10 px-3 py-2 text-sm font-semibold text-good">
+              <IconLevelUp className="h-4 w-4" />
+              Level up. You reached Level {j.level}.
+            </p>
+          ) : null}
+          {j?.rankedUp ? (
+            <p
+              className="rounded-field px-3 py-2 text-sm font-semibold"
+              style={{ backgroundColor: `${j.tierColor}1f`, color: j.tierColor }}
+            >
+              New rank unlocked: {j.tier}.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">How hard was this workout?</h2>
@@ -773,7 +846,7 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
         </section>
       ) : null}
 
-      <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} />
+      <ShareCard summary={summary} extras={extras} timeLabel={timeLabel} unit={unit} />
 
       <button
         type="button"
@@ -798,6 +871,13 @@ function IconTrophy(props) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0V4z" />
       <path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3" />
+    </svg>
+  );
+}
+function IconLevelUp(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 19V5M6 11l6-6 6 6" />
     </svg>
   );
 }

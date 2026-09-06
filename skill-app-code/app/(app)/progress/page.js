@@ -3,6 +3,7 @@ import { getProgressData } from "@/lib/data/progress";
 import { getWeeklyMuscleVolume } from "@/lib/data/volume";
 import { getPersonalRecords } from "@/lib/data/prs";
 import { getStrengthScore } from "@/lib/data/strength";
+import { getJourney } from "@/lib/data/journey";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getUnitPreference } from "@/lib/data/profile";
 import { fromKg, unitLabel } from "@/lib/units";
@@ -14,6 +15,7 @@ import CompareExercises from "@/components/progress/CompareExercises";
 import MuscleVolume from "@/components/progress/MuscleVolume";
 import PersonalRecords from "@/components/progress/PersonalRecords";
 import StrengthScoreCard from "@/components/progress/StrengthScoreCard";
+import JourneyCard from "@/components/progress/JourneyCard";
 import RangeFilter from "@/components/progress/RangeFilter";
 import ShareProgress from "@/components/progress/ShareProgress";
 
@@ -37,11 +39,12 @@ async function ProgressBody({ searchParams }) {
   const sp = (await searchParams) ?? {};
   const range = parseRange(sp.range);
 
-  const [rawData, muscleVolume, records, strength, summary, unit] = await Promise.all([
+  const [rawData, muscleVolume, records, strength, journey, summary, unit] = await Promise.all([
     getProgressData(range),
     getWeeklyMuscleVolume(),
     getPersonalRecords(),
     getStrengthScore(),
+    getJourney(),
     getWorkoutSummary(),
     getUnitPreference(),
   ]);
@@ -108,6 +111,8 @@ async function ProgressBody({ searchParams }) {
       {strength && strength.covered > 0 ? (
         <StrengthScoreCard data={strength} unit={unit} />
       ) : null}
+
+      {journey ? <JourneyCard data={journey} /> : null}
 
       <Card title="Weekly sets by muscle" subtitle="Hard sets this week. Tap a group to see each muscle">
         <MuscleVolume data={muscleVolume} />

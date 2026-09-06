@@ -11,16 +11,9 @@ import {
 const WINDOW_WEEKS = 6;
 const WINDOW_MS = WINDOW_WEEKS * 7 * 24 * 60 * 60 * 1000;
 
-// The user's current Strength Score: the best estimated 1RM in each of the
-// six movement patterns over the last six weeks, summed. RLS scopes every
-// query to auth.uid().
-export async function getStrengthScore() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
+// The completed pattern-lift sets from the last six weeks, plus the
+// latest logged bodyweight. Shared by the score and its per-session diff.
+async function loadWindow(supabase) {
   const cutoff = new Date(Date.now() - WINDOW_MS).toISOString();
 
   const [sessionsRes, bodyRes] = await Promise.all([
@@ -36,30 +29,69 @@ export async function getStrengthScore() {
 
   const bodyweightKg = Number(bodyRes.data?.[0]?.weight) || 0;
   const sessionIds = (sessionsRes.data ?? []).map((s) => s.id);
+  if (sessionIds.length === 0) return { rows: [], bodyweightKg };
 
-  let bests = {};
-  if (sessionIds.length > 0) {
-    const { data: sets, error } = await supabase
-      .from("workout_sets")
-      .select("weight, reps, completed, exercise:exercises(name)")
-      .in("session_id", sessionIds);
-    if (error) throw new Error(`Failed to load strength score: ${error.message}`);
+  const { data: sets, error } = await supabase
+    .from("workout_sets")
+    .select("session_id, weight, reps, completed, exercise:exercises(name)")
+    .in("session_id", sessionIds);
+  if (error) throw new Error(`Failed to load strength score: ${error.message}`);
 
-    for (const s of sets ?? []) {
-      if (s.completed === false) continue;
-      const name = s.exercise?.name;
-      const key = patternForExercise(name);
-      if (!key) continue;
-      const e1 = epley1RM(setLoad(name, s.weight, bodyweightKg), s.reps);
-      if (!(e1 > 0)) continue;
-      if (!bests[key] || e1 > bests[key].e1rm) bests[key] = { lift: name, e1rm: e1 };
-    }
+  const rows = [];
+  for (const s of sets ?? []) {
+    if (s.completed === false) continue;
+    const name = s.exercise?.name;
+    if (!patternForExercise(name)) continue;
+    rows.push({ sessionId: s.session_id, name, weight: s.weight, reps: s.reps });
   }
+  return { rows, bodyweightKg };
+}
 
-  return {
-    ...computeStrengthScore(bests, bodyweightKg),
+function scoreFrom(rows, bodyweightKg) {
+  const bests = {};
+  for (const r of rows) {
+    const key = patternForExercise(r.name);
+    if (!key) continue;
+    const e1 = epley1RM(setLoad(r.name, r.weight, bodyweightKg), r.reps);
+    if (!(e1 > 0)) continue;
+    if (!bests[key] || e1 > bests[key].e1rm) bests[key] = { lift: r.name, e1rm: e1 };
+  }
+  return computeStrengthScore(bests, bodyweightKg);
+}
+
+// Current Strength Score: best estimated 1RM per movement pattern over
+// the last six weeks, summed.
+export async function getStrengthScore() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { rows, bodyweightKg } = await loadWindow(supabase);
+  return { ...scoreFrom(rows, bodyweightKg), bodyweightKg, windowWeeks: WINDOW_WEEKS };
+}
+
+// How the just-saved session moved the score.
+export async function getStrengthScoreDelta(sessionId) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || !sessionId) return null;
+
+  const { rows, bodyweightKg } = await loadWindow(supabase);
+  const after = scoreFrom(rows, bodyweightKg);
+  const before = scoreFrom(
+    rows.filter((r) => r.sessionId !== sessionId),
     bodyweightKg,
-    windowWeeks: WINDOW_WEEKS,
+  );
+  return {
+    before: before.score,
+    after: after.score,
+    delta: after.score - before.score,
+    covered: after.covered,
+    patterns: after.patterns,
   };
 }
 

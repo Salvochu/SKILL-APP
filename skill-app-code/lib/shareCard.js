@@ -15,6 +15,7 @@ const COLORS = {
   accent: "#fc7605",
   fg: "#ffffff",
   muted: "#9a938c",
+  good: "#4caf72",
 };
 
 function loadImage(src) {
@@ -30,12 +31,19 @@ function drawStat(ctx, cx, y, label, value) {
   ctx.font = `600 30px ${SYS_FONT}`;
   ctx.fillStyle = COLORS.muted;
   ctx.fillText(label.toUpperCase(), cx, y);
-  ctx.font = `800 86px ${SYS_FONT}`;
+  ctx.font = `800 84px ${SYS_FONT}`;
   ctx.fillStyle = COLORS.fg;
-  ctx.fillText(value, cx, y + 96);
+  ctx.fillText(value, cx, y + 92);
 }
 
-export async function buildShareImageBlob({ volumeLabel, timeLabel, effortLabel }) {
+export async function buildShareImageBlob({
+  strengthLabel,
+  volumeLabel,
+  timeLabel,
+  levelLabel,
+  tierColor,
+  xpLabel,
+}) {
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
@@ -62,15 +70,28 @@ export async function buildShareImageBlob({ volumeLabel, timeLabel, effortLabel 
   ctx.fillStyle = COLORS.accent;
   ctx.fillText("completed.", WIDTH / 2, 590);
 
-  const stats = [
-    ["Volume", volumeLabel],
-    ["Time", timeLabel],
-  ];
-  if (effortLabel) stats.push(["Effort", effortLabel]);
+  const stats = [];
+  if (strengthLabel) stats.push(["Strength score", strengthLabel]);
+  if (volumeLabel) stats.push(["Volume", volumeLabel]);
+  if (timeLabel) stats.push(["Time", timeLabel]);
 
-  const startY = 840;
-  const gap = 230;
+  const startY = stats.length >= 3 ? 800 : 860;
+  const gap = 218;
   stats.forEach(([label, value], i) => drawStat(ctx, WIDTH / 2, startY + i * gap, label, value));
+
+  let footerTop = startY + stats.length * gap + 40;
+
+  if (levelLabel) {
+    ctx.font = `700 40px ${SYS_FONT}`;
+    ctx.fillStyle = tierColor || COLORS.fg;
+    ctx.fillText(levelLabel.toUpperCase(), WIDTH / 2, footerTop);
+    footerTop += 78;
+  }
+  if (xpLabel) {
+    ctx.font = `800 44px ${SYS_FONT}`;
+    ctx.fillStyle = COLORS.good;
+    ctx.fillText(xpLabel, WIDTH / 2, footerTop);
+  }
 
   ctx.font = `700 46px ${SYS_FONT}`;
   ctx.fillStyle = COLORS.accent;
