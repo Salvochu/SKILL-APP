@@ -10,7 +10,6 @@ import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
 import ConfirmModal from "@/components/ConfirmModal";
 import ProgressBar from "@/components/ProgressBar";
-import BarChart from "@/components/progress/BarChart";
 import { formatSet, formatElapsed, EFFORT_LABELS } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
@@ -687,7 +686,10 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
   const j = extras?.journey ?? null;
   const s = extras?.strength ?? null;
   const scoreU = (kg) => Math.round(fromKg(kg, unit));
-  const showProgress = j || (s && s.covered > 0);
+  // Level progress and the strength score only appear once there is a
+  // track record; a first workout's finish screen stays minimal.
+  const established = (extras?.workoutCount ?? 1) >= 2;
+  const hasScore = established && s && s.covered > 0;
 
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -719,73 +721,54 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
         </section>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-dim">Session time</span>
-          <span className="tabular text-2xl font-bold text-fg">{timeLabel}</span>
+      <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
+        <div className={`grid gap-3 ${hasScore ? "grid-cols-3" : "grid-cols-2"}`}>
+          <Metric label="Volume" value={`${Math.round(summary.totalVolume)} ${unit}`} />
+          <Metric label="Time" value={timeLabel} />
+          {hasScore ? (
+            <Metric
+              label="Strength"
+              value={`${scoreU(s.after)} ${unit}`}
+              delta={s.delta > 0 ? `+${scoreU(s.delta)}` : null}
+            />
+          ) : null}
         </div>
-        <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-dim">Volume</span>
-          <span className="tabular text-2xl font-bold text-fg">{Math.round(summary.totalVolume)} {unit}</span>
-        </div>
-      </div>
 
-      {showProgress ? (
-        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Progress</h2>
-            {j?.xpGained > 0 ? (
-              <span className="tabular text-sm font-bold text-good">+{j.xpGained} XP</span>
-            ) : null}
-          </div>
-
-          {s && s.covered > 0 ? (
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm text-muted">Strength score</span>
-              <span className="tabular text-lg font-bold text-fg">
-                {scoreU(s.after)} <span className="text-xs font-semibold text-dim">{unit}</span>
+        {established && j ? (
+          <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold" style={{ color: j.tierColor }}>
+                {j.tier} · Level {j.level}
               </span>
-              {s.delta > 0 ? (
-                <span className="tabular text-xs font-semibold text-good">+{scoreU(s.delta)}</span>
+              {j.xpGained > 0 ? (
+                <span className="tabular font-semibold text-good">+{j.xpGained} XP</span>
               ) : null}
             </div>
-          ) : null}
-
-          {j ? (
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold" style={{ color: j.tierColor }}>
-                  {j.tier} · Level {j.level}
-                </span>
-                <span className="text-dim">
-                  {j.xpToNextLevel > 0 ? `${j.xpToNextLevel} XP to Level ${j.level + 1}` : "Max level"}
-                </span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${j.pctToNextLevel}%`, backgroundColor: j.tierColor }}
-                />
-              </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${j.pctToNextLevel}%`, backgroundColor: j.tierColor }}
+              />
             </div>
-          ) : null}
+          </div>
+        ) : null}
 
-          {j?.leveledUp ? (
-            <p className="flex items-center gap-1.5 rounded-field bg-good/10 px-3 py-2 text-sm font-semibold text-good">
-              <IconLevelUp className="h-4 w-4" />
-              Level up. You reached Level {j.level}.
-            </p>
-          ) : null}
-          {j?.rankedUp ? (
-            <p
-              className="rounded-field px-3 py-2 text-sm font-semibold"
-              style={{ backgroundColor: `${j.tierColor}1f`, color: j.tierColor }}
-            >
-              New rank unlocked: {j.tier}.
-            </p>
-          ) : null}
-        </section>
-      ) : null}
+        {established && j?.rankedUp ? (
+          <p
+            className="flex items-center gap-1.5 rounded-field px-3 py-2 text-sm font-semibold"
+            style={{ backgroundColor: `${j.tierColor}1f`, color: j.tierColor }}
+          >
+            <IconLevelUp className="h-4 w-4" />
+            New rank: {j.tier}
+            {j.leveledUp ? ` · Level ${j.level}` : ""}
+          </p>
+        ) : established && j?.leveledUp ? (
+          <p className="flex items-center gap-1.5 rounded-field bg-good/10 px-3 py-2 text-sm font-semibold text-good">
+            <IconLevelUp className="h-4 w-4" />
+            Level up. You reached Level {j.level}.
+          </p>
+        ) : null}
+      </section>
 
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">How hard was this workout?</h2>
@@ -810,13 +793,6 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
         </div>
         {effort ? <p className="text-center text-xs text-accent">{EFFORT_LABELS[effort]}</p> : null}
       </section>
-
-      {extras?.recentVolumes?.length > 1 ? (
-        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Training volume, recent sessions</h2>
-          <BarChart data={extras.recentVolumes} max={8} />
-        </section>
-      ) : null}
 
       {meso ? (
         <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
@@ -1069,6 +1045,15 @@ function Field({ label, className = "", children }) {
       {label}
       {children}
     </label>
+  );
+}
+function Metric({ label, value, delta }) {
+  return (
+    <div className="flex min-w-0 flex-col">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">{label}</span>
+      <span className="tabular truncate text-lg font-bold text-fg">{value}</span>
+      {delta ? <span className="tabular text-xs font-semibold text-good">{delta}</span> : null}
+    </div>
   );
 }
 function IconPlus() {

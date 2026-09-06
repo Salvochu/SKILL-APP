@@ -130,7 +130,7 @@ export async function getPostSaveSummary(sessionId, userMesocycleId) {
     sessionId ? getSessionJourneyDelta(sessionId) : Promise.resolve(null),
   ]);
   return {
-    recentVolumes: progress.sessionVolumes.slice(-8),
+    workoutCount: progress.workouts ?? 0,
     meso: meso && meso.id === userMesocycleId ? meso : null,
     newPRs: prs,
     strength,
