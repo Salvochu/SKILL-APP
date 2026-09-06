@@ -62,7 +62,7 @@ export default function MesocyclePanel({ active, summary }) {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+    <section className="flex flex-col gap-3 rounded-card border border-accent/30 bg-accent-soft p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="text-xs font-semibold uppercase tracking-wider text-accent">
@@ -78,7 +78,7 @@ export default function MesocyclePanel({ active, summary }) {
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Program options"
             aria-expanded={menuOpen}
-            className="rounded-field p-1.5 text-dim transition-colors hover:bg-surface-2 hover:text-fg"
+            className="rounded-field p-1.5 text-muted transition-colors hover:bg-accent/10 hover:text-fg"
           >
             <IconDots className="h-5 w-5" />
           </button>
@@ -104,7 +104,7 @@ export default function MesocyclePanel({ active, summary }) {
       </div>
 
       {active.guidance ? (
-        <div className="rounded-field border border-accent/30 bg-accent-soft p-3">
+        <div className="rounded-field border border-accent/30 bg-surface p-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-accent">
             {active.guidance.headline}
           </p>
@@ -113,7 +113,7 @@ export default function MesocyclePanel({ active, summary }) {
       ) : null}
 
       {active.sessionsPerWeek > 0 ? (
-        <div className="flex flex-col gap-2 rounded-field border border-border bg-bg/40 p-3">
+        <div className="flex flex-col gap-2 rounded-field border border-border bg-surface p-3">
           <ProgressBar
             label="This week"
             value={Math.min(active.sessionsThisWeek, active.sessionsPerWeek)}

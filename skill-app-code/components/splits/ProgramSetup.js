@@ -4,17 +4,20 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { startMesocycle, loadMesocycleOverview } from "@/app/(app)/dashboard/actions";
 import { rirForWeek, isDeloadWeek } from "@/lib/mesocycle";
+import ConfirmModal from "@/components/ConfirmModal";
 
 // Everything needed to start the guided program for one split: equipment,
 // sessions per week (only for range-cadence splits), a look at how effort
-// steps down across the weeks, then Start.
-export default function ProgramSetup({ template, onCancel }) {
+// steps down across the weeks, then Start. `activeProgram` (if any) means
+// another run is going, so starting is confirmed first.
+export default function ProgramSetup({ template, activeProgram = null, onCancel }) {
   const router = useRouter();
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [variant, setVariant] = useState("");
   const [sessionsPerWeek, setSessionsPerWeek] = useState(null);
   const [starting, setStarting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -38,7 +41,16 @@ export default function ProgramSetup({ template, onCancel }) {
     };
   }, [template.id]);
 
-  async function onStart() {
+  function onStartClick() {
+    if (activeProgram) {
+      setConfirming(true);
+      return;
+    }
+    doStart();
+  }
+
+  async function doStart() {
+    setConfirming(false);
     setStarting(true);
     setError(null);
     const result = await startMesocycle(template.id, variant, sessionsPerWeek);
@@ -133,7 +145,7 @@ export default function ProgramSetup({ template, onCancel }) {
 
           <button
             type="button"
-            onClick={onStart}
+            onClick={onStartClick}
             disabled={starting}
             className="rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
           >
@@ -143,6 +155,18 @@ export default function ProgramSetup({ template, onCancel }) {
       ) : (
         <p className="text-sm text-danger">{error}</p>
       )}
+
+      {confirming ? (
+        <ConfirmModal
+          title="A program is already running"
+          message={`You are on ${activeProgram.splitName}, week ${activeProgram.week} of ${activeProgram.weeks}. Starting this one will end that program and its progress. Continue?`}
+          confirmLabel="Start the new one"
+          cancelLabel="Keep my program"
+          danger
+          onConfirm={doStart}
+          onCancel={() => setConfirming(false)}
+        />
+      ) : null}
     </section>
   );
 }

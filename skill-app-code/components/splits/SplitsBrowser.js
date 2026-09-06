@@ -8,13 +8,20 @@ import { sortVariants } from "@/lib/exercises";
 
 const SECTION_LABEL = { primary: "Choose your split", coached: "Coached programs" };
 
-export default function SplitsBrowser({ splits, mesocycleTemplates = [] }) {
+export default function SplitsBrowser({ splits, mesocycleTemplates = [], activeProgram = null }) {
   const [selectedId, setSelectedId] = useState(null);
   const selected = splits.find((s) => s.id === selectedId) ?? null;
 
   if (selected) {
     const template = mesocycleTemplates.find((t) => t.split?.id === selected.id) ?? null;
-    return <SplitDetail split={selected} template={template} onBack={() => setSelectedId(null)} />;
+    return (
+      <SplitDetail
+        split={selected}
+        template={template}
+        activeProgram={activeProgram}
+        onBack={() => setSelectedId(null)}
+      />
+    );
   }
 
   const sections = groupBySection(splits);
@@ -51,7 +58,7 @@ export default function SplitsBrowser({ splits, mesocycleTemplates = [] }) {
   );
 }
 
-function SplitDetail({ split, template, onBack }) {
+function SplitDetail({ split, template, activeProgram, onBack }) {
   const [mode, setMode] = useState(null); // null | "program" | "free"
 
   return (
@@ -113,16 +120,16 @@ function SplitDetail({ split, template, onBack }) {
           }`}
         >
           <span className="text-sm font-bold text-fg">Log a single session</span>
-          <span className="text-xs text-muted">Pick any day and log it freely</span>
+          <span className="text-xs text-muted">View a day, then log it freely</span>
         </button>
       </div>
 
       {mode === "program" && template ? (
-        <ProgramSetup template={template} onCancel={() => setMode(null)} />
+        <ProgramSetup template={template} activeProgram={activeProgram} onCancel={() => setMode(null)} />
       ) : null}
 
       {mode === "free" ? (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {split.days.map((day, i) => (
             <DayCard key={day.id} day={day} split={split} index={i} single={split.days.length === 1} />
           ))}
@@ -139,11 +146,11 @@ function DayCard({ day, split, index, single }) {
   const list = day.variants[variant] ?? [];
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+    <section className="flex flex-col rounded-card border border-border bg-surface">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-start justify-between gap-2 text-left"
+        className="flex items-center justify-between gap-3 p-4 text-left"
       >
         <span className="flex flex-col gap-0.5">
           <span className="text-xs font-semibold uppercase tracking-wider text-accent">
@@ -151,31 +158,37 @@ function DayCard({ day, split, index, single }) {
           </span>
           <span className="font-display text-lg font-semibold text-fg">{day.template.name}</span>
         </span>
-        <IconChevron className={`mt-1 h-4 w-4 shrink-0 text-dim transition-transform ${open ? "rotate-90" : ""}`} />
+        <span className="flex shrink-0 items-center gap-1 rounded-field border border-border px-2.5 py-1 text-xs font-semibold text-muted">
+          {open ? "Hide" : "View"}
+          <IconChevron className={`h-3 w-3 transition-transform ${open ? "rotate-90" : ""}`} />
+        </span>
       </button>
 
       {open ? (
-        <>
+        <div className="flex flex-col gap-3 border-t border-border p-4">
           {day.template.description ? (
             <p className="text-sm text-muted">{day.template.description}</p>
           ) : null}
 
           {variants.length > 1 ? (
-            <div className="flex flex-wrap gap-2">
-              {variants.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setVariant(v)}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                    v === variant
-                      ? "border-accent bg-accent-soft text-accent"
-                      : "border-border text-muted hover:text-fg"
-                  }`}
-                >
-                  {v}
-                </button>
-              ))}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wider text-dim">Equipment</span>
+              <div className="flex flex-wrap gap-2">
+                {variants.map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setVariant(v)}
+                    className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                      v === variant
+                        ? "border-accent bg-accent text-black"
+                        : "border-border text-muted hover:text-fg"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
 
@@ -195,16 +208,15 @@ function DayCard({ day, split, index, single }) {
               </li>
             ))}
           </ul>
-        </>
-      ) : null}
 
-      <GuardedStartLink
-        href={`/log?split=${split.id}&day=${day.template.id}&variant=${encodeURIComponent(variant)}`}
-        className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2"
-      >
-        Start {day.template.name}
-        {variants.length > 1 ? ` (${variant})` : ""}
-      </GuardedStartLink>
+          <GuardedStartLink
+            href={`/log?split=${split.id}&day=${day.template.id}&variant=${encodeURIComponent(variant)}`}
+            className="self-end rounded-field bg-accent px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+          >
+            Start{variants.length > 1 ? ` (${variant})` : ""}
+          </GuardedStartLink>
+        </div>
+      ) : null}
     </section>
   );
 }
