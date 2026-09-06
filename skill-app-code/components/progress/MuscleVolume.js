@@ -1,11 +1,26 @@
+"use client";
+
+import { useState } from "react";
 import MusclePill from "@/components/MusclePill";
+import { muscleKey } from "@/lib/exercises";
 
 // Hard sets per muscle this week against a reference band. The point is
 // the RP-style read: is each muscle getting enough stimulus, and how
-// does it compare to last week.
+// does it compare to last week. Two levels: the 6 parent groups roll up
+// their specific muscles; tap a group to see the breakdown.
 export default function MuscleVolume({ data }) {
-  const { muscles, target, trainedThisWeek } = data;
-  const scaleMax = Math.max(target.high + 4, ...muscles.map((m) => m.thisWeek));
+  const { groups, target, trainedThisWeek } = data;
+
+  const scaleMax = Math.max(
+    target.high + 4,
+    ...groups.flatMap((g) => g.muscles.map((m) => m.thisWeek)),
+  );
+
+  const [open, setOpen] = useState(() => {
+    const seed = {};
+    for (const g of groups) seed[g.parent] = g.thisWeek > 0;
+    return seed;
+  });
 
   return (
     <div className="flex flex-col gap-3">
@@ -13,17 +28,81 @@ export default function MuscleVolume({ data }) {
         <p className="text-sm text-muted">No sets logged yet this week.</p>
       ) : null}
 
-      <ul className="flex flex-col gap-2.5">
-        {muscles.map((m) => (
-          <MuscleRow key={m.muscle} m={m} target={target} scaleMax={scaleMax} />
+      <ul className="flex flex-col gap-1.5">
+        {groups.map((g) => (
+          <GroupRow
+            key={g.parent}
+            group={g}
+            target={target}
+            scaleMax={scaleMax}
+            open={!!open[g.parent]}
+            onToggle={() => setOpen((s) => ({ ...s, [g.parent]: !s[g.parent] }))}
+          />
         ))}
       </ul>
 
       <p className="text-xs text-dim">
-        The shaded band is {target.low} to {target.high} hard sets, a common weekly range for growth.
-        Your own sweet spot may sit higher or lower.
+        The shaded band is {target.low} to {target.high} hard sets per muscle, a common weekly
+        range for growth. A set counts once for each main muscle and a half for each assisting
+        muscle.
       </p>
     </div>
+  );
+}
+
+function fmt(v) {
+  return Number.isInteger(v) ? String(v) : v.toFixed(1);
+}
+
+function Delta({ value }) {
+  if (!value) return null;
+  const up = value > 0;
+  return (
+    <span className={`tabular text-[10px] ${up ? "text-good" : "text-dim"}`}>
+      {up ? "+" : ""}
+      {fmt(value)}
+    </span>
+  );
+}
+
+function GroupRow({ group, target, scaleMax, open, onToggle }) {
+  const delta = group.thisWeek - group.lastWeek;
+
+  return (
+    <li className="rounded-card border border-border bg-surface">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
+      >
+        <IconChevron className={`h-3.5 w-3.5 shrink-0 text-dim transition-transform ${open ? "rotate-90" : ""}`} />
+        <span className="w-24 shrink-0">
+          <MusclePill muscle={group.parent} />
+        </span>
+        <span className="relative h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
+          <span
+            className="absolute inset-y-0 left-0 rounded-full"
+            style={{
+              width: `${Math.min(100, (group.thisWeek / scaleMax) * 100)}%`,
+              backgroundColor: `var(--muscle-${muscleKey(group.parent)})`,
+            }}
+          />
+        </span>
+        <span className="flex w-12 shrink-0 items-baseline justify-end gap-1">
+          <span className="tabular text-sm font-semibold text-fg">{fmt(group.thisWeek)}</span>
+          <Delta value={delta} />
+        </span>
+      </button>
+
+      {open ? (
+        <ul className="flex flex-col gap-2 border-t border-border px-3 py-2.5">
+          {group.muscles.map((m) => (
+            <MuscleRow key={m.id} m={m} target={target} scaleMax={scaleMax} />
+          ))}
+        </ul>
+      ) : null}
+    </li>
   );
 }
 
@@ -32,33 +111,35 @@ function MuscleRow({ m, target, scaleMax }) {
   const bandLeft = pct(target.low);
   const bandWidth = pct(target.high) - bandLeft;
   const delta = m.thisWeek - m.lastWeek;
+  const low = m.thisWeek > 0 && m.thisWeek < target.low;
 
   return (
-    <li className="flex items-center gap-3">
-      <span className="w-20 shrink-0">
-        <MusclePill muscle={m.muscle} />
-      </span>
+    <li className="flex items-center gap-2.5">
+      <span className="w-24 shrink-0 text-xs leading-tight text-muted">{m.muscle}</span>
 
-      <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+      <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
         <span
           className="absolute inset-y-0 bg-fg/10"
           style={{ left: `${bandLeft}%`, width: `${bandWidth}%` }}
         />
         <span
-          className="absolute inset-y-0 left-0 rounded-full bg-accent"
+          className={`absolute inset-y-0 left-0 rounded-full ${low ? "bg-muted" : "bg-accent"}`}
           style={{ width: `${pct(m.thisWeek)}%` }}
         />
       </div>
 
       <span className="flex w-12 shrink-0 items-baseline justify-end gap-1">
-        <span className="tabular text-sm font-semibold text-fg">{m.thisWeek}</span>
-        {delta !== 0 ? (
-          <span className={`tabular text-[10px] ${delta > 0 ? "text-good" : "text-dim"}`}>
-            {delta > 0 ? "+" : ""}
-            {delta}
-          </span>
-        ) : null}
+        <span className="tabular text-sm font-semibold text-fg">{fmt(m.thisWeek)}</span>
+        <Delta value={delta} />
       </span>
     </li>
+  );
+}
+
+function IconChevron(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m9 6 6 6-6 6" />
+    </svg>
   );
 }
