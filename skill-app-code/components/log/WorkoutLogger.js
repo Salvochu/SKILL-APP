@@ -624,8 +624,8 @@ function ShareCard({ summary, timeLabel, effortLabel, unit = "kg" }) {
         <div className="flex flex-col gap-0.5">
           <h2 className="text-sm font-semibold text-fg">Show it off</h2>
           <p className="text-sm text-muted">
-            Share your stats and tag <span className="text-fg">@salvador_skfitness</span> so he can
-            hold you accountable.
+            Post it to your Instagram story and tag{" "}
+            <span className="text-fg">@salvador_skfitness</span> so he can hold you accountable.
           </p>
         </div>
       </div>
@@ -750,8 +750,8 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
       ) : null}
 
       {meso ? (
-        <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-accent">
+        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
             {meso.templateName}, week {meso.week} of {meso.weeks}
           </h2>
           {meso.totalDays > 0 ? (
