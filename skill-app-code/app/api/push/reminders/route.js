@@ -77,11 +77,11 @@ export async function GET(request) {
     if (ids.length) {
       const { data: sets } = await admin
         .from("workout_sets")
-        .select("session_id, weight, reps, completed")
+        .select("session_id, weight, reps, completed, is_warmup")
         .in("session_id", ids);
       const sessionUser = new Map((sessions ?? []).map((s) => [s.id, s.user_id]));
       for (const row of sets ?? []) {
-        if (row.completed === false) continue;
+        if (row.completed === false || row.is_warmup) continue;
         const uid = sessionUser.get(row.session_id);
         if (!uid) continue;
         const v = (Number(row.weight) || 0) * (Number(row.reps) || 0);

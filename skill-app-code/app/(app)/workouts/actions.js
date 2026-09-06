@@ -107,6 +107,7 @@ export async function updateWorkoutSession(sessionId, patch) {
           weight: Number.isFinite(weightNum) ? Math.max(0, weightNum) : null,
           rir: Number.isFinite(rirNum) ? Math.max(0, Math.min(10, rirNum)) : null,
           completed: s.completed !== false,
+          is_warmup: s.warmup === true,
         })
         .eq("id", s.id)
         .eq("session_id", sessionId);

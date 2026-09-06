@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getProgressData } from "@/lib/data/progress";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getSessionPRs } from "@/lib/data/prs";
+import { getStrengthScoreDelta } from "@/lib/data/strength";
+import { getSessionJourneyDelta } from "@/lib/data/journey";
 
 // Save a logged workout: one workout_sessions row plus its workout_sets.
 // The session is re-authorised here rather than trusting the client.
@@ -58,6 +60,7 @@ export async function saveWorkout(payload) {
         weight: Number.isFinite(weight) ? weight : null,
         rir,
         completed: s.completed !== false,
+        is_warmup: s.warmup === true,
         note: n === 1 && ex.note ? String(ex.note).trim() || null : null,
       });
     }
@@ -119,15 +122,19 @@ export async function saveWorkout(payload) {
 // part of one (the just-saved session already counts, since save
 // happens before this is called).
 export async function getPostSaveSummary(sessionId, userMesocycleId) {
-  const [progress, meso, prs] = await Promise.all([
+  const [progress, meso, prs, strength, journey] = await Promise.all([
     getProgressData(),
     userMesocycleId ? getActiveMesocycle() : Promise.resolve(null),
     sessionId ? getSessionPRs(sessionId) : Promise.resolve([]),
+    sessionId ? getStrengthScoreDelta(sessionId) : Promise.resolve(null),
+    sessionId ? getSessionJourneyDelta(sessionId) : Promise.resolve(null),
   ]);
   return {
     recentVolumes: progress.sessionVolumes.slice(-8),
     meso: meso && meso.id === userMesocycleId ? meso : null,
     newPRs: prs,
+    strength,
+    journey,
   };
 }
 

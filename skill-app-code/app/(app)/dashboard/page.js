@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getWeeklyMuscleVolume } from "@/lib/data/volume";
 import { getProfile, getUnitPreference } from "@/lib/data/profile";
+import { getJourney } from "@/lib/data/journey";
 import { fromKg, unitLabel } from "@/lib/units";
 import TapLink from "@/components/TapLink";
 import MesocycleSection from "@/components/dashboard/MesocycleSection";
@@ -12,9 +13,14 @@ export const metadata = { title: "Dashboard" };
 export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8 py-2">
-      <Suspense fallback={<div className="h-8 w-40 rounded bg-surface" />}>
-        <Greeting />
-      </Suspense>
+      <div className="flex items-center justify-between gap-3">
+        <Suspense fallback={<div className="h-8 w-40 rounded bg-surface" />}>
+          <Greeting />
+        </Suspense>
+        <Suspense fallback={null}>
+          <LevelChip />
+        </Suspense>
+      </div>
 
       <Suspense fallback={<div className="h-40 rounded-card bg-surface" />}>
         <MesocycleSection />
@@ -37,9 +43,24 @@ async function Greeting() {
   const profile = await getProfile();
   const firstName = profile?.fullName?.trim().split(/\s+/)[0] || "";
   return (
-    <h1 className="text-2xl font-bold text-fg">
+    <h1 className="min-w-0 truncate text-2xl font-bold text-fg">
       Welcome{firstName ? `, ${firstName}` : ""}
     </h1>
+  );
+}
+
+async function LevelChip() {
+  const journey = await getJourney();
+  if (!journey) return null;
+  return (
+    <TapLink
+      href="/progress"
+      className="flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors"
+      style={{ color: journey.tierColor, borderColor: `${journey.tierColor}55` }}
+    >
+      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: journey.tierColor }} />
+      Lvl {journey.level}
+    </TapLink>
   );
 }
 

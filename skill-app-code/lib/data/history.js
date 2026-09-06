@@ -10,12 +10,15 @@ import { createClient } from "@/lib/supabase/server";
 // "latest set per exercise" view.
 export async function getRecentPerformance() {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data: raw, error } = await supabase
     .from("workout_sets")
     .select(
-      "exercise_id, set_number, reps, weight, rir, completed, session:workout_sessions!inner(id, started_at)",
+      "exercise_id, set_number, reps, weight, rir, completed, is_warmup, session:workout_sessions!inner(id, started_at)",
     );
   if (error) throw new Error(`Failed to load history: ${error.message}`);
+
+  // The "last time" readout is about working sets, so warm-ups are left out.
+  const data = (raw ?? []).filter((r) => !r.is_warmup);
 
   // Pass 1: find the latest session per exercise.
   const latest = new Map(); // exerciseId -> { sessionId, startedAt }

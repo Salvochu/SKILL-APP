@@ -27,13 +27,16 @@ function notifyRestDone() {
 }
 
 // Rest timer. Mounts when a set is logged; counts down and can be paused,
-// restarted, nudged by 15s, skipped or dismissed. `docked` renders just
-// the panel (the caller places it, e.g. stacked above the save bar);
-// otherwise it floats above the bottom nav.
+// restarted, nudged by 15s, skipped or dismissed. Starts minimised (a
+// single line: time left, +15s, skip); expand for the presets and the
+// pause / restart / -15 controls. `docked` renders just the panel (the
+// caller places it, e.g. stacked above the save bar); otherwise it
+// floats above the bottom nav.
 export default function RestTimer({ startSeconds, onDismiss, docked = false }) {
   const [total, setTotal] = useState(startSeconds);
   const [remaining, setRemaining] = useState(startSeconds);
   const [running, setRunning] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const buzzed = useRef(false);
 
   // The parent remounts this component (via key) to start a fresh rest, so
@@ -64,55 +67,87 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false }) {
   const ss = String(remaining % 60).padStart(2, "0");
   const pct = total > 0 ? (remaining / total) * 100 : 0;
 
+  const done = remaining === 0;
+
   const panel = (
     <div className="overflow-hidden rounded-card border border-border bg-surface shadow-lg shadow-black/40">
-        <div className="h-1 bg-border">
-          <div className="h-full bg-accent transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} />
-        </div>
-        <div className="flex items-center gap-3 p-3">
-          <span className="clock text-xl font-bold text-fg">
+      <div className="h-1 bg-border">
+        <div className="h-full bg-accent transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} />
+      </div>
+
+      {expanded ? (
+        <>
+          <div className="flex items-center gap-3 p-3">
+            <span className="clock text-xl font-bold text-fg">
+              {mm}:{ss}
+            </span>
+            <div className="flex items-center gap-1">
+              <TimerButton label="Subtract 15 seconds" onClick={() => setRemaining((r) => Math.max(0, r - 15))}>
+                -15
+              </TimerButton>
+              <TimerButton label="Add 15 seconds" onClick={() => setRemaining((r) => r + 15)}>
+                +15
+              </TimerButton>
+            </div>
+            <div className="ml-auto flex items-center gap-1">
+              <TimerIcon label={running ? "Pause timer" : "Resume timer"} onClick={() => setRunning((v) => !v)}>
+                {running ? <IconPause /> : <IconPlay />}
+              </TimerIcon>
+              <TimerIcon label="Restart timer" onClick={() => { setRemaining(total); setRunning(true); buzzed.current = false; }}>
+                <IconRestart />
+              </TimerIcon>
+              <TimerIcon label="Collapse rest timer" onClick={() => setExpanded(false)}>
+                <IconChevron className="rotate-90" />
+              </TimerIcon>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 px-3 pb-3">
+            <div className="flex gap-1">
+              {PRESETS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => { setTotal(p); setRemaining(p); setRunning(true); buzzed.current = false; }}
+                  className={`rounded-field px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                    total === p ? "bg-accent-soft text-accent" : "text-muted hover:text-fg"
+                  }`}
+                >
+                  {p}s
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="ml-auto rounded-field bg-surface-2 px-4 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-border active:bg-accent-soft"
+            >
+              {done ? "Done" : "Skip rest"}
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="flex items-center gap-2 py-2 pl-3 pr-2">
+          <span className="clock text-lg font-bold text-fg">
             {mm}:{ss}
           </span>
-          <div className="flex items-center gap-1">
-            <TimerButton label="Subtract 15 seconds" onClick={() => setRemaining((r) => Math.max(0, r - 15))}>
-              -15
-            </TimerButton>
-            <TimerButton label="Add 15 seconds" onClick={() => setRemaining((r) => r + 15)}>
-              +15
-            </TimerButton>
-          </div>
+          <span className="text-xs text-dim">{done ? "rest over" : "rest"}</span>
+          <TimerButton label="Add 15 seconds" onClick={() => setRemaining((r) => r + 15)}>
+            +15
+          </TimerButton>
           <div className="ml-auto flex items-center gap-1">
-            <TimerIcon label={running ? "Pause timer" : "Resume timer"} onClick={() => setRunning((v) => !v)}>
-              {running ? <IconPause /> : <IconPlay />}
-            </TimerIcon>
-            <TimerIcon label="Restart timer" onClick={() => { setRemaining(total); setRunning(true); buzzed.current = false; }}>
-              <IconRestart />
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="rounded-field bg-surface-2 px-3.5 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-border active:bg-accent-soft"
+            >
+              {done ? "Done" : "Skip"}
+            </button>
+            <TimerIcon label="Expand rest timer" onClick={() => setExpanded(true)}>
+              <IconChevron className="-rotate-90" />
             </TimerIcon>
           </div>
         </div>
-        <div className="flex items-center gap-2 px-3 pb-3">
-          <div className="flex gap-1">
-            {PRESETS.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => { setTotal(p); setRemaining(p); setRunning(true); buzzed.current = false; }}
-                className={`rounded-field px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                  total === p ? "bg-accent-soft text-accent" : "text-muted hover:text-fg"
-                }`}
-              >
-                {p}s
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="ml-auto rounded-field bg-surface-2 px-4 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-border active:bg-accent-soft"
-          >
-            {remaining === 0 ? "Done" : "Skip rest"}
-          </button>
-        </div>
+      )}
     </div>
   );
 
@@ -147,4 +182,7 @@ function IconPlay() {
 }
 function IconRestart() {
   return <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>;
+}
+function IconChevron({ className = "" }) {
+  return <svg viewBox="0 0 24 24" className={`h-4 w-4 ${className}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>;
 }

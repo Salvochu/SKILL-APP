@@ -132,7 +132,7 @@ export function computeStreak(sessionDates, today = new Date()) {
 }
 
 // Monday of the ISO week containing d, as a date-key.
-function weekKeyOf(d) {
+export function weekKeyOf(d) {
   const date = new Date(`${dayKeyOf(d)}T00:00:00Z`);
   const sinceMonday = (date.getUTCDay() + 6) % 7; // Mon 0, Tue 1 ... Sun 6
   date.setUTCDate(date.getUTCDate() - sinceMonday);

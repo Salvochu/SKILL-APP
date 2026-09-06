@@ -37,7 +37,7 @@ export async function getWeeklyMuscleVolume() {
     supabase.from("workout_sessions").select("id, started_at"),
     supabase
       .from("workout_sets")
-      .select("session_id, completed, exercise:exercises(exercise_muscles(role, muscle:muscles(id)))"),
+      .select("session_id, completed, is_warmup, exercise:exercises(exercise_muscles(role, muscle:muscles(id)))"),
   ]);
   for (const r of [sessionsRes, setsRes]) {
     if (r.error) throw new Error(`Failed to load volume: ${r.error.message}`);
@@ -51,7 +51,7 @@ export async function getWeeklyMuscleVolume() {
   const totals = new Map(MUSCLE_LIST.map((m) => [m.id, { thisWeek: 0, lastWeek: 0 }]));
 
   for (const s of setsRes.data ?? []) {
-    if (s.completed === false) continue;
+    if (s.completed === false || s.is_warmup) continue;
     const at = startedAt.get(s.session_id);
     if (!at) continue;
     const wk = weekKey(at);

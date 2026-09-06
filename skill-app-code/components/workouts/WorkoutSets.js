@@ -28,6 +28,7 @@ export default function WorkoutSets({ sessionId, title, dateOnly, exercises, uni
           reps: s.reps == null ? "" : String(s.reps),
           rir: s.rir == null ? "" : String(s.rir),
           completed: s.completed !== false,
+          warmup: s.isWarmup === true,
         };
       }
     }
@@ -52,6 +53,7 @@ export default function WorkoutSets({ sessionId, title, dateOnly, exercises, uni
         reps: s.reps,
         rir: s.rir,
         completed: s.completed,
+        warmup: s.warmup === true,
       })),
     };
     const res = await updateWorkoutSession(sessionId, payload);
@@ -84,16 +86,24 @@ export default function WorkoutSets({ sessionId, title, dateOnly, exercises, uni
                 {ex.exercise?.muscle ? <MusclePill muscle={ex.exercise.muscle} /> : null}
               </div>
               <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
-                {ex.sets.map((s) => (
+                {ex.sets.map((s, idx) => (
                   <li
                     key={s.id}
                     className={`flex items-center justify-between gap-3 px-3 py-2 text-sm ${
-                      s.completed ? "bg-accent-soft text-fg" : "bg-bg/40 text-dim"
+                      s.isWarmup
+                        ? "bg-bg/40 text-dim opacity-60"
+                        : s.completed
+                          ? "bg-accent-soft text-fg"
+                          : "bg-bg/40 text-dim"
                     }`}
                   >
-                    <span className="text-dim">Set {s.setNumber}</span>
+                    <span className="text-dim">
+                      {s.isWarmup
+                        ? "Warm-up"
+                        : `Set ${ex.sets.slice(0, idx + 1).filter((x) => !x.isWarmup).length}`}
+                    </span>
                     <span className="tabular">{formatSet(s, unit)}</span>
-                    {!s.completed ? <span className="text-xs">not completed</span> : null}
+                    {!s.isWarmup && !s.completed ? <span className="text-xs">not completed</span> : null}
                   </li>
                 ))}
               </ul>
@@ -160,14 +170,27 @@ export default function WorkoutSets({ sessionId, title, dateOnly, exercises, uni
             <span className="text-center">RIR</span>
             <span className="text-center">Done</span>
           </div>
-          {ex.sets.map((s) => {
-            const v = form.sets[s.id] ?? { weight: "", reps: "", rir: "", completed: true };
+          {ex.sets.map((s, idx) => {
+            const v = form.sets[s.id] ?? { weight: "", reps: "", rir: "", completed: true, warmup: false };
+            const workNo = ex.sets
+              .slice(0, idx + 1)
+              .filter((x) => !(form.sets[x.id]?.warmup ?? x.isWarmup)).length;
             return (
               <div
                 key={s.id}
-                className="grid grid-cols-[1.25rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2rem] items-center gap-1.5"
+                className={`grid grid-cols-[1.25rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2rem] items-center gap-1.5 ${
+                  v.warmup ? "opacity-60" : ""
+                }`}
               >
-                <span className="tabular text-sm text-dim">{s.setNumber}</span>
+                <button
+                  type="button"
+                  onClick={() => patchSet(s.id, { warmup: !v.warmup })}
+                  aria-pressed={v.warmup}
+                  aria-label={v.warmup ? "Warm-up set. Make it a working set" : "Working set. Mark as warm-up"}
+                  className={`tabular text-sm font-semibold ${v.warmup ? "text-accent" : "text-dim hover:text-fg"}`}
+                >
+                  {v.warmup ? "W" : workNo}
+                </button>
                 <input
                   type="number"
                   inputMode="decimal"

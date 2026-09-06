@@ -27,12 +27,12 @@ function loadImage(src) {
 }
 
 function drawStat(ctx, cx, y, label, value) {
-  ctx.font = `600 30px ${SYS_FONT}`;
+  ctx.font = `600 32px ${SYS_FONT}`;
   ctx.fillStyle = COLORS.muted;
   ctx.fillText(label.toUpperCase(), cx, y);
-  ctx.font = `800 86px ${SYS_FONT}`;
+  ctx.font = `800 92px ${SYS_FONT}`;
   ctx.fillStyle = COLORS.fg;
-  ctx.fillText(value, cx, y + 96);
+  ctx.fillText(value, cx, y + 100);
 }
 
 export async function buildShareImageBlob({ volumeLabel, timeLabel, effortLabel }) {
@@ -68,16 +68,17 @@ export async function buildShareImageBlob({ volumeLabel, timeLabel, effortLabel 
   ];
   if (effortLabel) stats.push(["Effort", effortLabel]);
 
-  const startY = 840;
-  const gap = 230;
+  const startY = 860;
+  const gap = 250;
   stats.forEach(([label, value], i) => drawStat(ctx, WIDTH / 2, startY + i * gap, label, value));
 
-  ctx.font = `700 46px ${SYS_FONT}`;
+  // Kept deliberately small: the stats are the hero, this is just the credit.
+  ctx.font = `600 30px ${SYS_FONT}`;
   ctx.fillStyle = COLORS.accent;
-  ctx.fillText("@salvador_skfitness", WIDTH / 2, HEIGHT - 150);
-  ctx.font = `400 30px ${SYS_FONT}`;
+  ctx.fillText("@salvador_skfitness", WIDTH / 2, HEIGHT - 130);
+  ctx.font = `400 26px ${SYS_FONT}`;
   ctx.fillStyle = COLORS.muted;
-  ctx.fillText("Train. Track. Improve.", WIDTH / 2, HEIGHT - 100);
+  ctx.fillText("Train. Track. Improve.", WIDTH / 2, HEIGHT - 88);
 
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }

@@ -15,7 +15,7 @@ import { formatSet, formatElapsed, EFFORT_LABELS } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
 import { buildShareImageBlob } from "@/lib/shareCard";
-import { toKg, formatWeight } from "@/lib/units";
+import { toKg, fromKg, formatWeight } from "@/lib/units";
 
 // Time-seeded so a resumed draft's saved keys (from a previous page
 // load) can never collide with new ones generated after a reload.
@@ -47,6 +47,7 @@ function makeExercise(exercise, targetSets = 3, targetReps = "", last = null) {
         reps: prev?.reps != null ? String(prev.reps) : "",
         rir: prev?.rir != null ? String(prev.rir) : "",
         completed: false,
+        warmup: false,
       };
     }),
     targetReps,
@@ -164,7 +165,11 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         (sum, r) =>
           sum +
           r.sets.reduce(
-            (s, set) => s + (set.completed ? (Number(set.weight) || 0) * (Number(set.reps) || 0) : 0),
+            (s, set) =>
+              s +
+              (set.completed && !set.warmup
+                ? (Number(set.weight) || 0) * (Number(set.reps) || 0)
+                : 0),
             0,
           ),
         0,
@@ -188,7 +193,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     const row = rows.find((r) => r.key === key);
     const next = !row.sets[i].completed;
     patchSet(key, i, { completed: next });
-    if (next && restTimerOn) {
+    // Warm-ups do not kick off the rest timer.
+    if (next && restTimerOn && !row.sets[i].warmup) {
       setRestKey((k) => k + 1);
       setShowRest(true);
     }
@@ -206,6 +212,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
                   reps: "",
                   rir: r.sets.at(-1)?.rir ?? "",
                   completed: false,
+                  warmup: false,
                 },
               ],
             }
@@ -265,6 +272,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
           reps: s.reps,
           rir: s.rir,
           completed: s.completed,
+          warmup: s.warmup === true,
         })),
       })),
     };
@@ -553,7 +561,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               disabled={saving || savedOffline}
               className="ml-auto rounded-field bg-accent px-5 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
             >
-              {savedOffline ? "Saved on this device" : saving ? "Saving..." : "Save Workout"}
+              {savedOffline ? "Saved on this device" : saving ? "Finishing..." : "Finish"}
             </button>
           </div>
         </div>
@@ -676,6 +684,10 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
   const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
   const meso = extras?.meso;
   const prs = extras?.newPRs ?? [];
+  const j = extras?.journey ?? null;
+  const s = extras?.strength ?? null;
+  const scoreU = (kg) => Math.round(fromKg(kg, unit));
+  const showProgress = j || (s && s.covered > 0);
 
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -717,6 +729,63 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
           <span className="tabular text-2xl font-bold text-fg">{Math.round(summary.totalVolume)} {unit}</span>
         </div>
       </div>
+
+      {showProgress ? (
+        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Progress</h2>
+            {j?.xpGained > 0 ? (
+              <span className="tabular text-sm font-bold text-good">+{j.xpGained} XP</span>
+            ) : null}
+          </div>
+
+          {s && s.covered > 0 ? (
+            <div className="flex items-baseline gap-2">
+              <span className="text-sm text-muted">Strength score</span>
+              <span className="tabular text-lg font-bold text-fg">
+                {scoreU(s.after)} <span className="text-xs font-semibold text-dim">{unit}</span>
+              </span>
+              {s.delta > 0 ? (
+                <span className="tabular text-xs font-semibold text-good">+{scoreU(s.delta)}</span>
+              ) : null}
+            </div>
+          ) : null}
+
+          {j ? (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold" style={{ color: j.tierColor }}>
+                  {j.tier} · Level {j.level}
+                </span>
+                <span className="text-dim">
+                  {j.xpToNextLevel > 0 ? `${j.xpToNextLevel} XP to Level ${j.level + 1}` : "Max level"}
+                </span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${j.pctToNextLevel}%`, backgroundColor: j.tierColor }}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {j?.leveledUp ? (
+            <p className="flex items-center gap-1.5 rounded-field bg-good/10 px-3 py-2 text-sm font-semibold text-good">
+              <IconLevelUp className="h-4 w-4" />
+              Level up. You reached Level {j.level}.
+            </p>
+          ) : null}
+          {j?.rankedUp ? (
+            <p
+              className="rounded-field px-3 py-2 text-sm font-semibold"
+              style={{ backgroundColor: `${j.tierColor}1f`, color: j.tierColor }}
+            >
+              New rank unlocked: {j.tier}.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">How hard was this workout?</h2>
@@ -801,6 +870,13 @@ function IconTrophy(props) {
     </svg>
   );
 }
+function IconLevelUp(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 19V5M6 11l6-6 6 6" />
+    </svg>
+  );
+}
 function IconClock(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -812,8 +888,12 @@ function IconClock(props) {
 
 function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
-  const best1rm = Math.max(0, ...sets.map((s) => epley1rm(s.weight, s.reps)));
-  const volume = sets.reduce((v, s) => v + (s.completed ? (Number(s.weight) || 0) * (Number(s.reps) || 0) : 0), 0);
+  const workSets = sets.filter((s) => !s.warmup);
+  const best1rm = Math.max(0, ...workSets.map((s) => epley1rm(s.weight, s.reps)));
+  const volume = workSets.reduce(
+    (v, s) => v + (s.completed ? (Number(s.weight) || 0) * (Number(s.reps) || 0) : 0),
+    0,
+  );
   const [showHistory, setShowHistory] = useState(false);
 
   const lastLine =
@@ -886,17 +966,29 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
         <span />
       </div>
       {sets.map((set, i) => {
-        const fieldCls = set.completed
-          ? "border-accent/50 bg-accent-soft"
-          : "border-border bg-bg";
+        const fieldCls = set.warmup
+          ? "border-border bg-bg text-muted"
+          : set.completed
+            ? "border-accent/50 bg-accent-soft"
+            : "border-border bg-bg";
         return (
         <div
           key={i}
           className={`grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 rounded-field -mx-1.5 px-1.5 py-1 transition-colors ${
-            set.completed ? "bg-accent-soft" : ""
+            set.warmup ? "opacity-60" : set.completed ? "bg-accent-soft" : ""
           }`}
         >
-          <span className="tabular text-sm text-dim">{i + 1}</span>
+          <button
+            type="button"
+            onClick={() => onPatchSet(i, { warmup: !set.warmup })}
+            aria-label={set.warmup ? "Warm-up set. Make it a working set" : "Working set. Mark as warm-up"}
+            aria-pressed={set.warmup}
+            className={`tabular flex h-6 items-center justify-center rounded text-sm font-semibold transition-colors ${
+              set.warmup ? "text-accent" : "text-dim hover:text-fg"
+            }`}
+          >
+            {set.warmup ? "W" : sets.slice(0, i + 1).filter((x) => !x.warmup).length}
+          </button>
           <input
             type="number"
             inputMode="decimal"
@@ -947,6 +1039,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
           </span>
         ) : null}
       </div>
+      <p className="text-[11px] text-dim">Tap a set number to mark it a warm-up. Warm-ups are not counted.</p>
 
       {row.showNote ? (
         <div className="rounded-field border border-border bg-bg/40 p-2">

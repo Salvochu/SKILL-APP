@@ -20,7 +20,7 @@ export async function GET() {
     supabase
       .from("workout_sets")
       .select(
-        "session_id, set_number, reps, weight, rir, completed, exercise:exercises(name, muscle, exercise_muscles(role, muscle:muscles(name, position)))",
+        "session_id, set_number, reps, weight, rir, completed, is_warmup, exercise:exercises(name, muscle, exercise_muscles(role, muscle:muscles(name, position)))",
       ),
   ]);
   if (sessionsRes.error || setsRes.error) {
@@ -45,6 +45,7 @@ export async function GET() {
     "Primary muscles",
     "Assisting muscles",
     "Set",
+    "Warm-up",
     "Weight (kg)",
     "Reps",
     "RIR",
@@ -76,6 +77,7 @@ export async function GET() {
           muscleNames(set, "primary"),
           muscleNames(set, "secondary"),
           set?.set_number ?? "",
+          set == null ? "" : set.is_warmup ? "yes" : "no",
           set?.weight ?? "",
           set?.reps ?? "",
           set?.rir ?? "",
