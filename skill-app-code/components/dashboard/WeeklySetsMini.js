@@ -4,8 +4,9 @@ import { muscleKey } from "@/lib/exercises";
 
 const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 
-// Dashboard teaser: this week's hard sets per muscle group, linking to
-// the full breakdown on Progress.
+// Dashboard teaser: this week's hard sets per muscle group. Folded away
+// by default so the dashboard stays calm; the full breakdown is on
+// Progress.
 export default function WeeklySetsMini({ data }) {
   const { groups, trainedThisWeek } = data;
 
@@ -14,18 +15,20 @@ export default function WeeklySetsMini({ data }) {
   if (!trainedThisWeek) return null;
 
   const groupMax = Math.max(1, ...groups.map((g) => g.thisWeek));
+  const total = groups.reduce((a, g) => a + g.thisWeek, 0);
 
   return (
-    <TapLink
-      href="/progress"
-      className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 transition-colors hover:border-border-strong"
-    >
-      <div className="flex items-center justify-between">
+    <details className="group flex flex-col rounded-card border border-border bg-surface [&_summary::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Sets by muscle, this week</h2>
-        <IconChevron className="h-3.5 w-3.5 text-dim" />
-      </div>
+        <span className="flex items-center gap-2">
+          <span className="tabular text-xs font-semibold text-fg">{fmt(total)} sets</span>
+          <IconChevron className="h-3.5 w-3.5 shrink-0 text-dim transition-transform group-open:rotate-90" />
+        </span>
+      </summary>
 
-      <ul className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-3 border-t border-border p-4">
+        <ul className="flex flex-col gap-1.5">
           {groups.map((g) => (
             <li key={g.parent} className="flex items-center gap-3">
               <span className="w-20 shrink-0">
@@ -45,8 +48,12 @@ export default function WeeklySetsMini({ data }) {
               </span>
             </li>
           ))}
-      </ul>
-    </TapLink>
+        </ul>
+        <TapLink href="/progress" className="self-start text-xs font-medium text-accent hover:underline">
+          See full breakdown
+        </TapLink>
+      </div>
+    </details>
   );
 }
 

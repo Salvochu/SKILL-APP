@@ -1,20 +1,18 @@
 import LevelBadge from "@/components/dashboard/LevelBadge";
 
-// The Journey level on its own: a distinct axis from strength (this one
-// only ever goes up). Just the level, its tier, and how far to the next.
+// The Journey level: a distinct axis from strength (this one only ever
+// goes up). Body only - the page wraps it in a CollapsibleCard titled
+// "Level".
 export default function LevelCard({ journey }) {
   if (!journey) return null;
 
   return (
-    <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5">
+    <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-xs font-semibold uppercase tracking-wider text-dim">Level</span>
-          <span className="text-3xl font-bold text-fg">
-            {journey.level}
-            <span className="ml-1 text-base font-semibold text-dim">/ {journey.maxLevel}</span>
-          </span>
-        </div>
+        <span className="text-3xl font-bold text-fg">
+          {journey.level}
+          <span className="ml-1 text-base font-semibold text-dim">/ {journey.maxLevel}</span>
+        </span>
         <div className="mt-1">
           <LevelBadge journey={journey} compact />
         </div>
@@ -45,6 +43,6 @@ export default function LevelCard({ journey }) {
           </p>
         ) : null}
       </div>
-    </section>
+    </div>
   );
 }

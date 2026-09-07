@@ -51,12 +51,9 @@ export default function StrengthCard({ strength, records = [], unit = "kg", last
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="font-display text-base font-semibold text-fg">Your lifts</h2>
-          <span className="text-xs text-dim">{checkLine}</span>
-        </div>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-dim">{checkLine}</span>
         <Link
           href="/splits?view=strength-check"
           className="shrink-0 rounded-field border border-border px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:border-border-strong"
@@ -142,6 +139,6 @@ export default function StrengthCard({ strength, records = [], unit = "kg", last
           ) : null}
         </>
       ) : null}
-    </section>
+    </div>
   );
 }
