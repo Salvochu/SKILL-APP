@@ -8,6 +8,11 @@ const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 // the full breakdown on Progress.
 export default function WeeklySetsMini({ data }) {
   const { groups, trainedThisWeek } = data;
+
+  // Nothing logged this week yet: the card has nothing to say, so it
+  // stays off the dashboard until there is a session to summarise.
+  if (!trainedThisWeek) return null;
+
   const groupMax = Math.max(1, ...groups.map((g) => g.thisWeek));
 
   return (
@@ -20,10 +25,7 @@ export default function WeeklySetsMini({ data }) {
         <IconChevron className="h-3.5 w-3.5 text-dim" />
       </div>
 
-      {!trainedThisWeek ? (
-        <p className="text-sm text-muted">No sets logged yet this week.</p>
-      ) : (
-        <ul className="flex flex-col gap-1.5">
+      <ul className="flex flex-col gap-1.5">
           {groups.map((g) => (
             <li key={g.parent} className="flex items-center gap-3">
               <span className="w-20 shrink-0">
@@ -43,8 +45,7 @@ export default function WeeklySetsMini({ data }) {
               </span>
             </li>
           ))}
-        </ul>
-      )}
+      </ul>
     </TapLink>
   );
 }

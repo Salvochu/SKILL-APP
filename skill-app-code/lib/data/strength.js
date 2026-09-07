@@ -92,6 +92,7 @@ export async function getStrengthScoreDelta(sessionId) {
     delta: after.score - before.score,
     covered: after.covered,
     patterns: after.patterns,
+    beforePatterns: before.patterns,
   };
 }
 

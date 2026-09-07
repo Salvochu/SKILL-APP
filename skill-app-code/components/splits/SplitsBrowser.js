@@ -8,9 +8,15 @@ import { sortVariants } from "@/lib/exercises";
 
 const SECTION_LABEL = { primary: "Choose your split", coached: "Coached programs" };
 
-export default function SplitsBrowser({ splits, mesocycleTemplates = [], activeProgram = null }) {
+export default function SplitsBrowser({
+  splits,
+  strengthCheck = null,
+  mesocycleTemplates = [],
+  activeProgram = null,
+}) {
   const [selectedId, setSelectedId] = useState(null);
-  const selected = splits.find((s) => s.id === selectedId) ?? null;
+  const all = strengthCheck ? [...splits, strengthCheck] : splits;
+  const selected = all.find((s) => s.id === selectedId) ?? null;
 
   if (selected) {
     const template = mesocycleTemplates.find((t) => t.split?.id === selected.id) ?? null;
@@ -27,6 +33,43 @@ export default function SplitsBrowser({ splits, mesocycleTemplates = [], activeP
   const sections = groupBySection(splits);
   return (
     <div className="flex flex-col gap-8">
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Quick start</h2>
+        <div className="flex flex-col gap-2.5">
+          <GuardedStartLink
+            href="/log"
+            className="flex w-full items-center gap-4 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-field bg-accent-soft text-accent">
+              <IconPlus className="h-5 w-5" />
+            </span>
+            <span className="flex-1">
+              <span className="block font-display text-base font-semibold text-fg">Log a workout</span>
+              <span className="block text-sm text-muted">A free session, add any lifts you want</span>
+            </span>
+          </GuardedStartLink>
+
+          {strengthCheck ? (
+            <button
+              type="button"
+              onClick={() => setSelectedId("strength-check")}
+              className="flex w-full items-center gap-4 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2 active:bg-accent-soft"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-field bg-accent-soft text-accent">
+                <IconGauge className="h-5 w-5" />
+              </span>
+              <span className="flex-1">
+                <span className="block font-display text-base font-semibold text-fg">Strength Check</span>
+                <span className="block text-sm text-muted">
+                  Benchmark your main lifts, every 4 to 6 weeks
+                </span>
+              </span>
+              <IconChevron className="h-4 w-4 shrink-0 text-dim" />
+            </button>
+          ) : null}
+        </div>
+      </section>
+
       {sections.map(({ section, items }) => (
         <section key={section} className="flex flex-col gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
@@ -69,7 +112,7 @@ function SplitDetail({ split, template, activeProgram, onBack }) {
         className="flex items-center gap-1.5 self-start text-sm font-medium text-muted transition-colors hover:text-fg"
       >
         <IconChevron className="h-4 w-4 rotate-180" />
-        All splits
+        Back
       </button>
 
       <header className="flex flex-col gap-1.5">
@@ -248,6 +291,21 @@ function SplitGlyph() {
         <path d="m3 13 9 5 9-5" />
       </svg>
     </span>
+  );
+}
+function IconPlus(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+function IconGauge(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 14a2 2 0 0 0 2-2c0-1.5-2-5-2-5s-2 3.5-2 5a2 2 0 0 0 2 2z" />
+      <path d="M4.2 17a9 9 0 1 1 15.6 0" />
+    </svg>
   );
 }
 function IconChevron(props) {
