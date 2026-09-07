@@ -51,7 +51,7 @@ export default function StrengthCard({
           One hard top set on six main lifts. See where each one stands, then re-test every 4 to 6 weeks.
         </p>
         <Link
-          href="/splits?view=strength-check"
+          href="/splits/strength-check"
           className="rounded-field bg-accent px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
         >
           Start Strength Check
@@ -66,7 +66,7 @@ export default function StrengthCard({
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-dim">{checkLine}</span>
           <Link
-            href="/splits?view=strength-check"
+            href="/splits/strength-check"
             className="shrink-0 rounded-field border border-border px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:border-border-strong"
           >
             {lastCheck ? "Re-test" : "Start"}
