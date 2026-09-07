@@ -16,7 +16,7 @@ export default function ProgressBar({ label, value, max, tone = "accent" }) {
         </span>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-        <div className={`h-full rounded-full transition-[width] ${fill}`} style={{ width: `${pct}%` }} />
+        <div className={`bar-fill h-full rounded-full ${fill}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );

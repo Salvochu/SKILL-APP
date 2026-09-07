@@ -13,16 +13,25 @@ const TIER_STYLE = {
   Elite: "bg-accent-soft text-accent",
 };
 
-// The six movement patterns with where you stand on each, and the full
-// personal-record list a tap away. Merges what used to be two cards.
-export default function LiftsCard({ patterns, records, unit = "kg" }) {
+// How strong you are: the Strength Score, then the six movement patterns
+// that make it up, then the full personal-record list a tap away.
+export default function StrengthCard({ strength, records, unit = "kg" }) {
   const [showAll, setShowAll] = useState(false);
   const U = unitLabel(unit);
   const conv = (kg) => Math.round(fromKg(kg, unit));
+  const score = strength && strength.covered > 0 ? conv(strength.score) : null;
+  const patterns = strength?.patterns ?? [];
 
   return (
-    <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
-      <h2 className="font-display text-base font-semibold text-fg">Your lifts</h2>
+    <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-xs font-semibold uppercase tracking-wider text-dim">Strength score</span>
+        <span className="tabular text-4xl font-bold text-fg">
+          {score != null ? score : "—"}
+          {score != null ? <span className="ml-1.5 text-lg font-semibold text-dim">{U}</span> : null}
+        </span>
+        <span className="text-xs text-dim">Best estimated 1RM across six lifts, last 6 weeks</span>
+      </div>
 
       <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
         {patterns.map((p) => (
