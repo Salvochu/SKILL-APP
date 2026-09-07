@@ -23,7 +23,7 @@ const DIR = {
   up: { sym: "↑", cls: "text-good" },
   down: { sym: "↓", cls: "text-danger" },
   flat: { sym: "→", cls: "text-dim" },
-  none: { sym: "–", cls: "text-dim" },
+  none: { sym: "·", cls: "text-dim" },
 };
 
 export default function ClientList({ data }) {
