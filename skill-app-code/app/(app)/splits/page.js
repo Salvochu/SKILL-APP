@@ -1,12 +1,11 @@
 import { Suspense } from "react";
 import { getSplits } from "@/lib/data/splits";
-import { getMesocycleTemplates, getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getBeginnerContext } from "@/lib/data/profile";
-import SplitsBrowser from "@/components/splits/SplitsBrowser";
+import SplitsList from "@/components/splits/SplitsList";
 
 export const metadata = { title: "Train" };
 
-export default function SplitsPage({ searchParams }) {
+export default function SplitsPage() {
   return (
     <div className="flex flex-col gap-5 py-2">
       <header className="flex flex-col gap-1">
@@ -15,46 +14,30 @@ export default function SplitsPage({ searchParams }) {
       </header>
 
       <Suspense fallback={<SplitsSkeleton />}>
-        <SplitsList searchParams={searchParams} />
+        <Body />
       </Suspense>
     </div>
   );
 }
 
-async function SplitsList({ searchParams }) {
-  const sp = (await searchParams) ?? {};
-  const initialView = typeof sp.view === "string" ? sp.view : null;
-  const [splits, mesocycleTemplates, active, beginner] = await Promise.all([
-    getSplits(),
-    getMesocycleTemplates(),
-    getActiveMesocycle(),
-    getBeginnerContext(),
-  ]);
-  // The Strength Check stays hidden for a new beginner - working up to a
-  // heavy top set is not a week-one exercise.
+async function Body() {
+  const [splits, beginner] = await Promise.all([getSplits(), getBeginnerContext()]);
+
   const strengthCheck = beginner.showStrengthCheck
     ? splits.find((s) => s.id === "strength-check") ?? null
     : null;
   const browsable = splits.filter(
     (s) => s.section !== "benchmark" && s.section !== "foundations",
   );
-  const activeProgram =
-    active && !active.isComplete ? { splitName: active.splitName, week: active.week, weeks: active.weeks } : null;
-
-  // Foundations: a beginner's first month. Shown as its own card, and
-  // only while they have not already got a program running.
   const foundationsSplit = splits.find((s) => s.id === "foundations") ?? null;
-  const foundations = beginner.isBeginner && !active && foundationsSplit ? foundationsSplit : null;
+  const foundations = beginner.isBeginner && foundationsSplit ? foundationsSplit : null;
 
   return (
-    <SplitsBrowser
+    <SplitsList
       splits={browsable}
       strengthCheck={strengthCheck}
-      mesocycleTemplates={mesocycleTemplates}
-      activeProgram={activeProgram}
-      initialView={initialView}
-      isBeginner={beginner.isBeginner}
       foundations={foundations}
+      isBeginner={beginner.isBeginner}
     />
   );
 }

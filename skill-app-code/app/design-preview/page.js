@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import NavBar from "@/components/NavBar";
 import LibraryBrowser from "@/components/library/LibraryBrowser";
-import SplitsBrowser from "@/components/splits/SplitsBrowser";
+import SplitsList from "@/components/splits/SplitsList";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
@@ -89,7 +89,7 @@ export default function DesignPreviewPage() {
           <LibraryBrowser exercises={EX} />
         </Section>
         <Section title="/splits">
-          <SplitsBrowser splits={SPLITS} />
+          <SplitsList splits={SPLITS} />
         </Section>
         <Section title="/progress">
           <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
