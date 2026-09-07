@@ -326,6 +326,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       <WorkoutSummary
         summary={completedSummary}
         extras={summaryExtras}
+        isBenchmark={initial.splitId === "strength-check"}
         effort={effort}
         unit={U}
         savingEffort={savingEffort}
@@ -684,7 +685,7 @@ function IconShare(props) {
   );
 }
 
-function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, onSelectEffort, onDone }) {
+function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "kg", savingEffort, onSelectEffort, onDone }) {
   const mins = summary.durationMin;
   const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
   const meso = extras?.meso;
@@ -695,7 +696,8 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
   // Level progress and the strength score only appear once there is a
   // track record; a first workout's finish screen stays minimal.
   const established = (extras?.workoutCount ?? 1) >= 2;
-  const hasScore = established && s && s.covered > 0;
+  const benchmarkRecap = isBenchmark && s && s.covered > 0;
+  const hasScore = established && s && s.covered > 0 && !benchmarkRecap;
 
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -724,6 +726,52 @@ function WorkoutSummary({ summary, extras, effort, unit = "kg", savingEffort, on
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {benchmarkRecap ? (
+        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Strength Check</h2>
+            <span className="tabular text-sm font-semibold text-fg">
+              {scoreU(s.after)} {unit}
+              {s.delta > 0 ? <span className="ml-1.5 text-good">+{scoreU(s.delta)}</span> : null}
+            </span>
+          </div>
+          <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
+            {s.patterns
+              .filter((p) => p.e1rm > 0)
+              .map((p) => {
+                const prev = (s.beforePatterns ?? []).find((b) => b.key === p.key) ?? null;
+                const gain = prev ? p.e1rm - prev.e1rm : 0;
+                const moved = prev && prev.tier && prev.tierIndex !== p.tierIndex;
+                return (
+                  <li key={p.key} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-fg">{p.lift}</span>
+                      {moved ? (
+                        <span className="text-xs font-semibold text-good">
+                          {prev.tier} to {p.tier}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-dim">{p.tier}</span>
+                      )}
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="tabular block text-sm font-semibold text-fg">
+                        {scoreU(p.e1rm)} {unit}
+                      </span>
+                      {gain > 0 ? (
+                        <span className="tabular block text-xs font-semibold text-good">+{scoreU(gain)}</span>
+                      ) : null}
+                    </span>
+                  </li>
+                );
+              })}
+          </ul>
+          <p className="text-xs text-dim">
+            Estimated 1RM from your top set on each lift. Come back for another check in 4 to 6 weeks.
+          </p>
         </section>
       ) : null}
 

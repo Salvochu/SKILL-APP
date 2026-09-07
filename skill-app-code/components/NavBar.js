@@ -11,7 +11,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 // stays uncrowded and desktop matches it.
 const TABS = [
   { href: "/dashboard", label: "Dashboard", icon: IconHome },
-  { href: "/splits", label: "Splits", icon: IconSplits },
+  { href: "/splits", label: "Train", icon: IconSplits },
   { href: "/menu", label: "Menu", icon: IconMenu },
 ];
 
@@ -110,9 +110,7 @@ function IconHome(props) {
 function IconSplits(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m12 3 9 5-9 5-9-5 9-5z" />
-      <path d="m3 13 9 5 9-5" />
-      <path d="m3 18 9 5 9-5" opacity="0.5" />
+      <path d="M4 9v6M7 6.5v11M17 6.5v11M20 9v6M7 12h10" />
     </svg>
   );
 }
