@@ -38,9 +38,11 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
     router.refresh();
   }
 
-  // No program running (or brand-new). Beginners get pointed straight at
-  // Foundations; everyone else picks a program or just logs a session.
-  if (isNew || !active) {
+  // No program running. Beginners get pointed straight at Foundations;
+  // everyone else picks a program or just logs a session. (Once a
+  // program IS running - even with no workouts logged yet - the active
+  // panel below takes over.)
+  if (!active) {
     const programLabel = isBeginner ? "Start Foundations" : "Pick a training program";
     const programBlurb = isBeginner
       ? "Your first month: two full-body days, three times a week"
