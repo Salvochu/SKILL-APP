@@ -8,13 +8,15 @@ import VideoModal from "@/components/log/VideoModal";
 import WeekGrid from "@/components/splits/WeekGrid";
 import { sortVariants } from "@/lib/exercises";
 
-// The body of a split's own page: an example week, the choice between a
-// guided program and a one-off session, and the day breakdowns. The
-// page header (name, description, back link) lives in the route.
+// The body of a split's own page: an example week, the day breakdowns,
+// and (for splits that have a guided program) a button that opens the
+// program setup in a sheet. The page header (name, description, back
+// link) lives in the route.
 export default function SplitDetail({ split, template, activeProgram }) {
   const canProgram = Boolean(template);
-  const [mode, setMode] = useState(canProgram ? null : "free");
+  const [setupOpen, setSetupOpen] = useState(false);
   const isBenchmark = split.section === "benchmark";
+  const oneDay = split.days.length === 1;
 
   return (
     <div className="flex flex-col gap-6">
@@ -38,54 +40,40 @@ export default function SplitDetail({ split, template, activeProgram }) {
       ) : null}
 
       {canProgram ? (
-        <div className="flex flex-col gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-dim">How do you want to run this?</span>
-          <div className="grid gap-2.5 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => setMode(mode === "program" ? null : "program")}
-              aria-pressed={mode === "program"}
-              className={`flex flex-col gap-0.5 rounded-card border p-4 text-left transition-colors ${
-                mode === "program"
-                  ? "border-accent bg-accent-soft"
-                  : "border-accent/40 bg-accent-soft/40 hover:bg-accent-soft"
-              }`}
-            >
-              <span className="font-display text-sm font-semibold text-fg">
-                {template.weeks}-week program
-              </span>
-              <span className="text-xs text-muted">Guided, effort builds every week</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode(mode === "free" ? null : "free")}
-              aria-pressed={mode === "free"}
-              className={`flex flex-col gap-0.5 rounded-card border p-4 text-left transition-colors ${
-                mode === "free"
-                  ? "border-accent bg-accent-soft"
-                  : "border-border bg-surface hover:bg-surface-2"
-              }`}
-            >
-              <span className="font-display text-sm font-semibold text-fg">Single session</span>
-              <span className="text-xs text-muted">View a day, then log it freely</span>
-            </button>
+        <button
+          type="button"
+          onClick={() => setSetupOpen(true)}
+          className="btn-shine flex w-full items-center justify-center gap-2 rounded-field bg-accent px-4 py-4 text-base font-semibold text-black transition-colors hover:bg-accent-2"
+        >
+          Start the {template.weeks}-week program
+          <IconArrow className="h-4 w-4" />
+        </button>
+      ) : null}
+
+      <div className="flex flex-col gap-3">
+        {split.days.length > 0 ? (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-dim">
+              {oneDay ? "The session" : "The days"}
+            </span>
+            {canProgram ? (
+              <p className="text-xs text-dim">
+                Prefer to freestyle? Open a day and log it on its own, no program needed.
+              </p>
+            ) : null}
           </div>
-        </div>
-      ) : null}
+        ) : null}
+        {split.days.map((day, i) => (
+          <DayCard key={day.id} day={day} split={split} index={i} single={oneDay} />
+        ))}
+      </div>
 
-      {mode === "program" && template ? (
-        <ProgramSetup template={template} activeProgram={activeProgram} onCancel={() => setMode(null)} />
-      ) : null}
-
-      {mode === "free" ? (
-        <div className="flex flex-col gap-3">
-          {canProgram ? (
-            <span className="text-xs font-semibold uppercase tracking-wider text-dim">The days</span>
-          ) : null}
-          {split.days.map((day, i) => (
-            <DayCard key={day.id} day={day} split={split} index={i} single={split.days.length === 1} />
-          ))}
-        </div>
+      {setupOpen && template ? (
+        <ProgramSetup
+          template={template}
+          activeProgram={activeProgram}
+          onCancel={() => setSetupOpen(false)}
+        />
       ) : null}
     </div>
   );
@@ -214,6 +202,13 @@ function IconChevron(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+function IconArrow(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M5 12h14M13 6l6 6-6 6" />
     </svg>
   );
 }
