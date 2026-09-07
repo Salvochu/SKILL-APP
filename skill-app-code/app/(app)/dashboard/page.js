@@ -5,6 +5,7 @@ import { getProfile, getUnitPreference } from "@/lib/data/profile";
 import { getJourney } from "@/lib/data/journey";
 import { fromKg, unitLabel } from "@/lib/units";
 import TapLink from "@/components/TapLink";
+import LevelBadge from "@/components/dashboard/LevelBadge";
 import MesocycleSection from "@/components/dashboard/MesocycleSection";
 import WeeklySetsMini from "@/components/dashboard/WeeklySetsMini";
 
@@ -56,27 +57,22 @@ async function HeaderStats() {
   const volK = (fromKg(s.volumeKg, unit) / 1000).toFixed(1);
 
   return (
-    <TapLink
-      href="/progress"
-      className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-muted transition-colors hover:text-fg"
-    >
-      {journey ? (
-        <>
-          <span className="font-semibold" style={{ color: journey.tierColor }}>
-            Level {journey.level}
-          </span>
-          <span className="text-dim" aria-hidden="true">·</span>
-        </>
-      ) : null}
-      <span>
-        <span className="tabular font-semibold text-fg">{s.workouts}</span> workout
-        {s.workouts === 1 ? "" : "s"}
-      </span>
-      <span className="text-dim" aria-hidden="true">·</span>
-      <span>
-        <span className="tabular font-semibold text-fg">{volK}k</span> {unitLabel(unit)} lifted
-      </span>
-    </TapLink>
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm text-muted">
+      {journey ? <LevelBadge journey={journey} /> : null}
+      <TapLink
+        href="/progress"
+        className="flex flex-wrap items-center gap-x-2.5 transition-colors hover:text-fg"
+      >
+        <span>
+          <span className="tabular font-semibold text-fg">{s.workouts}</span> workout
+          {s.workouts === 1 ? "" : "s"}
+        </span>
+        <span className="text-dim" aria-hidden="true">·</span>
+        <span>
+          <span className="tabular font-semibold text-fg">{volK}k</span> {unitLabel(unit)} lifted
+        </span>
+      </TapLink>
+    </div>
   );
 }
 

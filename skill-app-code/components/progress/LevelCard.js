@@ -1,3 +1,5 @@
+import LevelBadge from "@/components/dashboard/LevelBadge";
+
 // The Journey level on its own: a distinct axis from the Strength Score
 // (this one only ever goes up). Kept slim - the level, its tier, how far
 // to the next one, and the lifetime totals that feed it.
@@ -14,13 +16,9 @@ export default function LevelCard({ journey, workouts, volumeLabel, timeLabel })
             <span className="ml-1 text-base font-semibold text-dim">/ {journey.maxLevel}</span>
           </span>
         </div>
-        <span
-          className="mt-1 flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
-          style={{ color: journey.tierColor, borderColor: `${journey.tierColor}66` }}
-        >
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: journey.tierColor }} />
-          {journey.tier}
-        </span>
+        <div className="mt-1">
+          <LevelBadge journey={journey} compact />
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
