@@ -7,10 +7,11 @@ import { rirForWeek, isDeloadWeek } from "@/lib/mesocycle";
 import ConfirmModal from "@/components/ConfirmModal";
 import Explain from "@/components/Explain";
 
-// Everything needed to start the guided program for one split: equipment,
-// sessions per week (only for range-cadence splits), a look at how effort
-// steps down across the weeks, then Start. `activeProgram` (if any) means
-// another run is going, so starting is confirmed first.
+// Everything needed to start the guided program for one split, shown in a
+// sheet: equipment, sessions per week (only for range-cadence splits), a
+// look at how effort steps down across the weeks, then Start.
+// `activeProgram` (if any) means another run is going, so starting is
+// confirmed first.
 export default function ProgramSetup({ template, activeProgram = null, onCancel }) {
   const router = useRouter();
   const [overview, setOverview] = useState(null);
@@ -20,6 +21,14 @@ export default function ProgramSetup({ template, activeProgram = null, onCancel 
   const [starting, setStarting] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") onCancel?.();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onCancel]);
 
   useEffect(() => {
     let alive = true;
@@ -68,7 +77,19 @@ export default function ProgramSetup({ template, activeProgram = null, onCancel 
   const startingRir = overview?.startingRir ?? 3;
 
   return (
-    <section className="flex flex-col gap-4 rounded-card border border-accent/40 bg-accent-soft p-4">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${weeks}-week guided program`}
+    >
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onCancel}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+      />
+      <section className="relative flex max-h-[90vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 sm:rounded-2xl">
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col">
           <h3 className="flex items-center gap-1 text-sm font-bold text-fg">
@@ -163,6 +184,8 @@ export default function ProgramSetup({ template, activeProgram = null, onCancel 
         <p className="text-sm text-danger">{error}</p>
       )}
 
+      </section>
+
       {confirming ? (
         <ConfirmModal
           title="A program is already running"
@@ -174,6 +197,6 @@ export default function ProgramSetup({ template, activeProgram = null, onCancel 
           onCancel={() => setConfirming(false)}
         />
       ) : null}
-    </section>
+    </div>
   );
 }

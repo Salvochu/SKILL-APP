@@ -1,13 +1,11 @@
 import { Suspense } from "react";
 import { getWorkoutSummary } from "@/lib/data/workouts";
-import { getWeeklyMuscleVolume } from "@/lib/data/volume";
 import { getProfile, getUnitPreference } from "@/lib/data/profile";
 import { getJourney } from "@/lib/data/journey";
 import { fromKg, unitLabel } from "@/lib/units";
 import TapLink from "@/components/TapLink";
 import LevelBadge from "@/components/dashboard/LevelBadge";
 import MesocycleSection from "@/components/dashboard/MesocycleSection";
-import WeeklySetsMini from "@/components/dashboard/WeeklySetsMini";
 
 export const metadata = { title: "Dashboard" };
 
@@ -27,22 +25,18 @@ export default function DashboardPage() {
         <MesocycleSection />
       </Suspense>
 
-      <Suspense fallback={<div className="h-44 rounded-card bg-surface" />}>
-        <WeeklySets />
-      </Suspense>
-
       <div className="grid grid-cols-2 gap-3">
-        <QuickLink
-          href="/progress"
-          title="Progress"
-          body="Level, lifts, trends"
-          icon={<IconChart className="h-5 w-5" />}
-        />
         <QuickLink
           href="/body"
           title="Body measurements"
           body="Weight, body fat, photos"
           icon={<IconBody className="h-5 w-5" />}
+        />
+        <QuickLink
+          href="/progress"
+          title="Progress"
+          body="Level, lifts, trends"
+          icon={<IconChart className="h-5 w-5" />}
         />
       </div>
     </div>
@@ -87,11 +81,6 @@ async function HeaderStats() {
       </TapLink>
     </div>
   );
-}
-
-async function WeeklySets() {
-  const data = await getWeeklyMuscleVolume();
-  return <WeeklySetsMini data={data} />;
 }
 
 function QuickLink({ href, title, body, icon }) {
