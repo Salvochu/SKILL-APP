@@ -1,9 +1,8 @@
 import LevelBadge from "@/components/dashboard/LevelBadge";
 
-// The Journey level on its own: a distinct axis from the Strength Score
-// (this one only ever goes up). Kept slim - the level, its tier, how far
-// to the next one, and the lifetime totals that feed it.
-export default function LevelCard({ journey, workouts, volumeLabel, timeLabel }) {
+// The Journey level on its own: a distinct axis from strength (this one
+// only ever goes up). Just the level, its tier, and how far to the next.
+export default function LevelCard({ journey }) {
   if (!journey) return null;
 
   return (
@@ -46,21 +45,6 @@ export default function LevelCard({ journey, workouts, volumeLabel, timeLabel })
           </p>
         ) : null}
       </div>
-
-      <div className="grid grid-cols-3 gap-3 border-t border-border pt-4">
-        <Stat label="Workouts" value={workouts} />
-        <Stat label="Volume" value={volumeLabel} />
-        <Stat label="Time" value={timeLabel} />
-      </div>
     </section>
-  );
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="flex min-w-0 flex-col">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">{label}</span>
-      <span className="tabular truncate text-base font-bold text-fg">{value}</span>
-    </div>
   );
 }

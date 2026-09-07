@@ -114,6 +114,14 @@ function nextThresholdFor(pattern, tierIndex, bodyweightKg, lift) {
   return pattern.thresholds[tierIndex] ?? null;
 }
 
+function prevThresholdFor(pattern, tierIndex, bodyweightKg, lift) {
+  if (tierIndex <= 0) return 0;
+  if (pattern.key === "vpull" && BODYWEIGHT_LOADED.has(lc(lift)) && bodyweightKg > 0) {
+    return bodyweightKg + PULLUP_SCALE[tierIndex - 1];
+  }
+  return pattern.thresholds[tierIndex - 1] ?? 0;
+}
+
 // patternBests: { [patternKey]: { lift, exId, e1rm } } (best per pattern).
 export function computeStrengthScore(patternBests = {}, bodyweightKg = 0) {
   const patterns = MOVEMENT_PATTERNS.map((p) => {
@@ -126,6 +134,8 @@ export function computeStrengthScore(patternBests = {}, bodyweightKg = 0) {
     }
     const ti = tierIndexFor(p, b.e1rm, bodyweightKg, b.lift);
     const nt = nextThresholdFor(p, ti, bodyweightKg, b.lift);
+    const pt = prevThresholdFor(p, ti, bodyweightKg, b.lift);
+    const within = nt != null && nt > pt ? Math.min(1, Math.max(0, (b.e1rm - pt) / (nt - pt))) : 1;
     return {
       key: p.key,
       label: p.label,
@@ -136,6 +146,8 @@ export function computeStrengthScore(patternBests = {}, bodyweightKg = 0) {
       tier: TIER_NAMES[ti],
       nextTier: ti < 4 ? TIER_NAMES[ti + 1] : null,
       toNext: nt != null ? Math.max(0, Math.round(nt - b.e1rm)) : null,
+      // 0 to 1 across the whole Beginner -> Elite scale, for a progress bar.
+      barFrac: Math.min(1, Math.max(0, (ti + within) / TIER_NAMES.length)),
     };
   });
   const score = Math.round(patterns.reduce((a, p) => a + p.e1rm, 0));
