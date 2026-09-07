@@ -53,7 +53,7 @@ export default function OnboardingQuiz({ show = false }) {
         aria-label="You're all set"
       >
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-        <div className="relative flex w-full max-w-md flex-col gap-4 rounded-t-2xl border border-border bg-surface p-6 sm:rounded-2xl">
+        <div className="relative flex w-full max-w-md flex-col gap-4 rounded-t-2xl border border-border bg-surface p-6 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-6">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 13l4 4L19 7" />
@@ -170,7 +170,7 @@ export default function OnboardingQuiz({ show = false }) {
         onClick={skipAll}
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
       />
-      <div className="relative flex max-h-[90vh] w-full max-w-md flex-col gap-5 overflow-y-auto rounded-t-2xl border border-border bg-surface p-6 sm:rounded-2xl">
+      <div className="relative flex max-h-[90vh] w-full max-w-md flex-col gap-5 overflow-y-auto rounded-t-2xl border border-border bg-surface p-6 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex gap-1">
             {STEPS.map((s, i) => (

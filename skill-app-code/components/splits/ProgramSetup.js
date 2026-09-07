@@ -89,7 +89,7 @@ export default function ProgramSetup({ template, activeProgram = null, onCancel 
         onClick={onCancel}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
-      <section className="relative flex max-h-[90vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 sm:rounded-2xl">
+      <section className="relative flex max-h-[90vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 pb-[calc(1.75rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col">
           <h3 className="flex items-center gap-1 text-sm font-bold text-fg">

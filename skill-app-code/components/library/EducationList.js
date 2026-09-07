@@ -53,7 +53,7 @@ function LessonModal({ video, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={video.title}>
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 sm:rounded-2xl">
+      <div className="relative max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 pb-[calc(1.75rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-xl font-bold text-fg">{video.title}</h2>
           <button type="button" onClick={onClose} aria-label="Close" className="-mr-1 -mt-1 rounded-field p-1.5 text-dim transition-colors hover:text-fg">
