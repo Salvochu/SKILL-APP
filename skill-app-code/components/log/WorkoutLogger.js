@@ -10,7 +10,7 @@ import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
 import Explain from "@/components/Explain";
 import ConfirmModal from "@/components/ConfirmModal";
-import { formatSet, formatElapsed, EFFORT_LABELS } from "@/lib/training";
+import { formatSet, formatElapsed, EFFORT_LABELS, startingWeightHint } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
 import { buildShareImageBlob } from "@/lib/shareCard";
@@ -485,6 +485,11 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               onRemove={() => removeExercise(row.key)}
               onVideo={() => setVideoFor(row.exercise)}
               inlineVideo={inlineVideos}
+              startHint={
+                mesoContext?.kind === "foundations"
+                  ? startingWeightHint(row.exercise.equipment)
+                  : null
+              }
               rirTarget={mesoContext?.rirTarget ?? null}
               beatLabel={
                 mesoContext?.kind === "foundations"
@@ -866,7 +871,10 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
       </section>
 
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">How hard was this workout?</h2>
+        <h2 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-dim">
+          How hard was this workout?
+          <Explain k="effort" />
+        </h2>
         <div className="flex gap-2">
           {[1, 2, 3, 4, 5].map((n) => (
             <button
@@ -933,7 +941,7 @@ function IconClock(props) {
   );
 }
 
-function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
   const embedUrl = inlineVideo && exercise.video_url ? loomEmbedUrl(exercise.video_url) : null;
   const workSets = sets.filter((s) => !s.warmup);
@@ -1027,6 +1035,10 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
           </span>
           <IconClock className="h-3.5 w-3.5 shrink-0 text-dim" />
         </button>
+      ) : startHint ? (
+        <p className="rounded-field border border-accent/20 bg-accent-soft/40 px-3 py-2 text-xs text-muted">
+          {startHint}
+        </p>
       ) : null}
 
       {showHistory ? (

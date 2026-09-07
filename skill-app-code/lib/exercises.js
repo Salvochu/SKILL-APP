@@ -4,6 +4,22 @@
 // Muscle groups, in the order the library and pickers show them.
 export const MUSCLE_ORDER = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core"];
 
+// The lifts a beginner should learn first (the Foundations movements).
+// Surfaced as a shortlist at the top of the exercise library for anyone
+// who picked "Beginner", matched to the library by exact name.
+export const BEGINNER_STAPLE_NAMES = [
+  "Back Squat",
+  "Bench Press",
+  "Deadlift",
+  "Overhead Press",
+  "Barbell Row",
+  "Lat Pulldown",
+  "Goblet Squat",
+  "DB Bench Press",
+  "DB Row (one arm)",
+  "Plank",
+];
+
 // The specific muscles under each parent group, in display order. Mirrors
 // the `muscles` table (migration 0017). One source of truth: the taxonomy
 // maps and the volume model both read this list.

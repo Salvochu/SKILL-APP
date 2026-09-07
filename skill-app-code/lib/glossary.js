@@ -32,4 +32,8 @@ export const GLOSSARY = {
     term: "Strength Score",
     body: "Your best estimated 1RM across six main movement patterns, added up. One number that goes up as you get stronger. The per-lift bars show where each one sits from Beginner to Elite.",
   },
+  effort: {
+    term: "How hard was this?",
+    body: "A quick gut-check of how hard the whole session felt, from 1 (very easy) to 5 (very hard). Be honest - over time it shows whether your training is too easy, about right, or wearing you down.",
+  },
 };

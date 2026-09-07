@@ -132,7 +132,11 @@ async function ProgressBody({ searchParams }) {
     .slice(0, 6)
     .map((m) => ({ name: m.muscle.replace(/\s*\(.*\)$/, ""), value: m.thisWeek }));
 
-  const hasTrends = strongExercises.length > 0 || data.sessionVolumes.length > 0;
+  // The trend charts (per-session volume, estimated 1RM over time,
+  // compare-two-lifts) need a few weeks of data to be worth reading and
+  // lean on concepts a new beginner has not met yet.
+  const hasTrends =
+    !beginner.simplified && (strongExercises.length > 0 || data.sessionVolumes.length > 0);
 
   return (
     <>
