@@ -92,6 +92,31 @@ export function weekGuidance(week, weeks, startingRir = 3) {
   };
 }
 
+// Foundations (kind = 'foundations') has no RIR ramp and no deload -
+// just linear progression. Guidance is phased by how many sessions are
+// already done rather than by week number.
+export function foundationsGuidance(sessionsLogged = 0, targetSessions = 12) {
+  if (sessionsLogged < 3) {
+    return {
+      headline: "Learn the lifts",
+      detail:
+        "Keep the weight light and easy for now. Watch the form video for each lift and get the movement right. You have plenty of time to add weight.",
+    };
+  }
+  if (sessionsLogged >= targetSessions - 2) {
+    return {
+      headline: "Almost there",
+      detail:
+        "Keep adding weight when you hit your reps. After this you will be ready for a structured program.",
+    };
+  }
+  return {
+    headline: "Add a little",
+    detail:
+      "Hit all your target reps on a lift last time? Add the smallest jump you can this time. Missed some? Stay at the same weight and get them.",
+  };
+}
+
 // Weekly-session options implied by a split's cadence string. A range
 // ("2-3x per week") returns [2, 3] so the user is asked to pick; a fixed
 // count ("5 days") returns [] and the split's own day count is used.

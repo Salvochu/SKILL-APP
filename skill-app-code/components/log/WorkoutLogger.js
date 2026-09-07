@@ -434,14 +434,22 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       {mesoContext ? (
         <div className="flex flex-col gap-1.5 rounded-card border border-accent/40 bg-accent-soft px-4 py-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="flex items-center gap-1 text-sm font-semibold text-accent">
-              Week {mesoContext.week} of {mesoContext.weeks}
-              <Explain k={mesoContext.isDeload ? "deload" : "mesocycle"} />
-            </span>
-            <span className="text-sm text-accent">
-              {mesoContext.guidance?.headline ??
-                (mesoContext.isDeload ? "Deload week" : `Target effort: RIR ${mesoContext.rirTarget}`)}
-            </span>
+            {mesoContext.kind === "foundations" ? (
+              <span className="text-sm font-semibold text-accent">
+                {mesoContext.guidance?.headline ?? "Foundations"}
+              </span>
+            ) : (
+              <>
+                <span className="flex items-center gap-1 text-sm font-semibold text-accent">
+                  Week {mesoContext.week} of {mesoContext.weeks}
+                  <Explain k={mesoContext.isDeload ? "deload" : "mesocycle"} />
+                </span>
+                <span className="text-sm text-accent">
+                  {mesoContext.guidance?.headline ??
+                    (mesoContext.isDeload ? "Deload week" : `Target effort: RIR ${mesoContext.rirTarget}`)}
+                </span>
+              </>
+            )}
           </div>
           {mesoContext.guidance?.detail ? (
             <p className="text-sm text-fg">{mesoContext.guidance.detail}</p>
@@ -476,7 +484,13 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               onRemove={() => removeExercise(row.key)}
               onVideo={() => setVideoFor(row.exercise)}
               rirTarget={mesoContext?.rirTarget ?? null}
-              beatLastWeek={Boolean(mesoContext && mesoContext.week > 1 && !mesoContext.isDeload)}
+              beatLabel={
+                mesoContext?.kind === "foundations"
+                  ? "Beat last time"
+                  : mesoContext && mesoContext.week > 1 && !mesoContext.isDeload
+                    ? "Beat last week"
+                    : null
+              }
             />
           ))}
           <button
@@ -917,7 +931,7 @@ function IconClock(props) {
   );
 }
 
-function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
   const workSets = sets.filter((s) => !s.warmup);
   const best1rm = Math.max(0, ...workSets.map((s) => epley1rm(s.weight, s.reps)));
@@ -971,8 +985,8 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
           className="flex items-center gap-2 rounded-field border border-border bg-bg/40 px-3 py-2 text-left transition-colors hover:border-border-strong active:bg-accent-soft"
         >
           <span className="tabular flex-1 text-xs text-muted">
-            <span className={beatLastWeek ? "font-semibold text-accent" : "text-dim"}>
-              {beatLastWeek ? "Beat last week" : `Last${last?.date ? ` (${last.date})` : ""}`}:
+            <span className={beatLabel ? "font-semibold text-accent" : "text-dim"}>
+              {beatLabel ?? `Last${last?.date ? ` (${last.date})` : ""}`}:
             </span>{" "}
             {lastLine}
           </span>

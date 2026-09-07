@@ -35,9 +35,17 @@ async function SplitsList({ searchParams }) {
   const strengthCheck = beginner.showStrengthCheck
     ? splits.find((s) => s.id === "strength-check") ?? null
     : null;
-  const browsable = splits.filter((s) => s.section !== "benchmark");
+  const browsable = splits.filter(
+    (s) => s.section !== "benchmark" && s.section !== "foundations",
+  );
   const activeProgram =
     active && !active.isComplete ? { splitName: active.splitName, week: active.week, weeks: active.weeks } : null;
+
+  // Foundations: a beginner's first month. Shown as its own card, and
+  // only while they have not already got a program running.
+  const foundationsSplit = splits.find((s) => s.id === "foundations") ?? null;
+  const foundations = beginner.isBeginner && !active && foundationsSplit ? foundationsSplit : null;
+
   return (
     <SplitsBrowser
       splits={browsable}
@@ -45,6 +53,8 @@ async function SplitsList({ searchParams }) {
       mesocycleTemplates={mesocycleTemplates}
       activeProgram={activeProgram}
       initialView={initialView}
+      isBeginner={beginner.isBeginner}
+      foundations={foundations}
     />
   );
 }

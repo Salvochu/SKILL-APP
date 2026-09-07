@@ -9,7 +9,7 @@ import ProgressBar from "@/components/ProgressBar";
 import Explain from "@/components/Explain";
 import MesocycleComplete from "@/components/dashboard/MesocycleComplete";
 
-export default function MesocyclePanel({ active, summary, isNew = false }) {
+export default function MesocyclePanel({ active, summary, isNew = false, isBeginner = false }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -38,31 +38,32 @@ export default function MesocyclePanel({ active, summary, isNew = false }) {
     router.refresh();
   }
 
-  // Brand-new: no workouts logged yet. Lead hard with picking a program,
-  // keep a quiet way to just log something.
-  if (isNew) {
-    return (
-      <div className="flex flex-col gap-3">
-        <TapLink
-          href="/splits"
-          className="btn-shine flex w-full items-center justify-center gap-2 rounded-field bg-accent px-4 py-4 text-base font-semibold text-black transition-colors hover:bg-accent-2"
-        >
-          Pick a training program
-          <IconArrow className="h-4 w-4" />
-        </TapLink>
-        <GuardedStartLink
-          href="/log"
-          className="self-center text-sm font-medium text-muted transition-colors hover:text-fg"
-        >
-          or log a one-off workout
-        </GuardedStartLink>
-      </div>
-    );
-  }
-
-  // No program running: start one, or just log a session. The full split
-  // picker lives on the Splits page.
-  if (!active) {
+  // No program running (or brand-new). Beginners get pointed straight at
+  // Foundations; everyone else picks a program or just logs a session.
+  if (isNew || !active) {
+    const programLabel = isBeginner ? "Start Foundations" : "Pick a training program";
+    const programBlurb = isBeginner
+      ? "Your first month: two full-body days, three times a week"
+      : "Turn a split into a week-by-week block";
+    if (isNew) {
+      return (
+        <div className="flex flex-col gap-3">
+          <TapLink
+            href="/splits"
+            className="btn-shine flex w-full items-center justify-center gap-2 rounded-field bg-accent px-4 py-4 text-base font-semibold text-black transition-colors hover:bg-accent-2"
+          >
+            {programLabel}
+            <IconArrow className="h-4 w-4" />
+          </TapLink>
+          <GuardedStartLink
+            href="/log"
+            className="self-center text-sm font-medium text-muted transition-colors hover:text-fg"
+          >
+            or log a one-off workout
+          </GuardedStartLink>
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col gap-2.5">
         <GuardedStartLink
@@ -79,8 +80,8 @@ export default function MesocyclePanel({ active, summary, isNew = false }) {
             <IconFlag className="h-[18px] w-[18px]" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-sm font-medium text-fg">Run a guided program</span>
-            <span className="truncate text-xs text-dim">Turn a split into a week-by-week block</span>
+            <span className="text-sm font-medium text-fg">{programLabel}</span>
+            <span className="truncate text-xs text-dim">{programBlurb}</span>
           </span>
           <IconChevron className="h-3.5 w-3.5 shrink-0 text-dim" />
         </TapLink>
@@ -88,7 +89,12 @@ export default function MesocyclePanel({ active, summary, isNew = false }) {
     );
   }
 
-  if (active.isComplete) {
+  const isFoundations = active.kind === "foundations";
+
+  // A finished mesocycle swaps to its end-of-block readout. Foundations
+  // never hard-stops - it just adds a "ready to graduate" nudge to the
+  // normal panel once the month is done (below).
+  if (active.isComplete && !isFoundations) {
     return <MesocycleComplete active={active} summary={summary} />;
   }
 
@@ -97,9 +103,15 @@ export default function MesocyclePanel({ active, summary, isNew = false }) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-accent">
-            Week {active.week} of {active.weeks}
-            {active.isDeload ? " . Deload" : ""}
-            <Explain k={active.isDeload ? "deload" : "mesocycle"} />
+            {isFoundations ? (
+              `Session ${Math.min(active.sessionsLogged + 1, active.targetSessions)} of ${active.targetSessions}`
+            ) : (
+              <>
+                Week {active.week} of {active.weeks}
+                {active.isDeload ? " . Deload" : ""}
+                <Explain k={active.isDeload ? "deload" : "mesocycle"} />
+              </>
+            )}
           </span>
           <h2 className="font-display text-xl font-semibold text-fg">{active.splitName}</h2>
         </div>
@@ -135,7 +147,17 @@ export default function MesocyclePanel({ active, summary, isNew = false }) {
         </div>
       </div>
 
-      {active.guidance ? (
+      {isFoundations && active.isComplete ? (
+        <div className="flex flex-col gap-2 rounded-field border border-accent/30 bg-surface p-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-accent">Month done</p>
+          <p className="text-sm text-fg">
+            You have the lifts down. Ready for a structured program where effort builds week to week?
+          </p>
+          <TapLink href="/splits" className="self-start text-sm font-semibold text-accent hover:underline">
+            Pick your next program
+          </TapLink>
+        </div>
+      ) : active.guidance ? (
         <div className="rounded-field border border-accent/30 bg-surface p-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-accent">
             {active.guidance.headline}
@@ -153,9 +175,12 @@ export default function MesocyclePanel({ active, summary, isNew = false }) {
             tone="sky"
           />
           <ProgressBar
-            label="Whole program"
-            value={Math.min(active.sessionsLogged, active.weeks * active.sessionsPerWeek)}
-            max={active.weeks * active.sessionsPerWeek}
+            label={isFoundations ? "Foundations" : "Whole program"}
+            value={Math.min(
+              active.sessionsLogged,
+              isFoundations ? active.targetSessions : active.weeks * active.sessionsPerWeek,
+            )}
+            max={isFoundations ? active.targetSessions : active.weeks * active.sessionsPerWeek}
             tone="good"
           />
         </div>
