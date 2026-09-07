@@ -5,6 +5,7 @@ import Link from "next/link";
 import MusclePill from "@/components/MusclePill";
 import { shortDate } from "@/components/progress/chartkit";
 import { formatWeight, fromKg, unitLabel } from "@/lib/units";
+import { tierColorFor } from "@/lib/strength";
 
 function agoLabel(iso) {
   const days = Math.floor((Date.now() - new Date(iso)) / 86400000);
@@ -65,35 +66,38 @@ export default function StrengthCard({ strength, records = [], unit = "kg", last
       </div>
 
       <ul className="flex flex-col gap-3.5">
-        {tested.map((p) => (
-          <li key={p.key}>
-            <Link
-              href={p.exId ? `/library/exercises/${p.exId}` : "/progress"}
-              className="group flex flex-col gap-1.5"
-            >
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="truncate text-sm font-medium text-fg group-hover:text-accent">
-                  {p.lift}
-                </span>
-                <span className="tabular shrink-0 text-xs text-muted">
-                  <span className="font-semibold text-fg">{conv(p.e1rm)} {U}</span>
-                  <span className="mx-1 text-dim">·</span>
-                  {p.tier}
-                </span>
-              </div>
-              <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-2">
-                <div
-                  className="bar-fill absolute inset-y-0 left-0 rounded-full bg-accent"
-                  style={{ width: `${Math.round((p.barFrac ?? 0) * 100)}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] uppercase tracking-wide text-dim">
-                <span>Beginner</span>
-                <span>Elite</span>
-              </div>
-            </Link>
-          </li>
-        ))}
+        {tested.map((p) => {
+          const color = tierColorFor(p.tierIndex);
+          return (
+            <li key={p.key}>
+              <Link
+                href={p.exId ? `/library/exercises/${p.exId}` : "/progress"}
+                className="group flex flex-col gap-1.5"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="truncate text-sm font-medium text-fg group-hover:text-accent">
+                    {p.lift}
+                  </span>
+                  <span className="tabular shrink-0 text-xs text-muted">
+                    <span className="font-semibold text-fg">{conv(p.e1rm)} {U}</span>
+                    <span className="mx-1 text-dim">·</span>
+                    <span className="font-semibold" style={{ color }}>{p.tier}</span>
+                  </span>
+                </div>
+                <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-2">
+                  <div
+                    className="bar-fill absolute inset-y-0 left-0 rounded-full"
+                    style={{ width: `${Math.round((p.barFrac ?? 0) * 100)}%`, backgroundColor: color }}
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] uppercase tracking-wide text-dim">
+                  <span>Beginner</span>
+                  <span>Elite</span>
+                </div>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
 
       <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-xs">

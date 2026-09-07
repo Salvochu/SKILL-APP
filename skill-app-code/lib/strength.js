@@ -15,6 +15,13 @@ export const BODYWEIGHT_LOADED = new Set(["pull up", "chin up", "dips", "dips (t
 
 export const TIER_NAMES = ["Beginner", "Novice", "Intermediate", "Advanced", "Elite"];
 
+// Colour per tier, cheap to rich (grey, green, blue, purple, gold). Used
+// for the tier label and the strength bar on the Progress page. Indexed
+// like TIER_NAMES; works on both light and dark surfaces.
+export const TIER_COLORS = ["#8b909a", "#43a047", "#3f86d9", "#9b6dd6", "#f0a021"];
+
+export const tierColorFor = (tierIndex) => TIER_COLORS[Math.max(0, Math.min(4, tierIndex ?? 0))];
+
 // thresholds: [novice, intermediate, advanced, elite] estimated-1RM in kg.
 // Ballpark for a general adult trainee; tune against real users. `lifts`
 // is an ordered preference list, matched to the library by exact name.

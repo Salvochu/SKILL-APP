@@ -9,12 +9,12 @@ import LastNumbers from "@/components/log/LastNumbers";
 import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
 import ConfirmModal from "@/components/ConfirmModal";
-import ProgressBar from "@/components/ProgressBar";
 import { formatSet, formatElapsed, EFFORT_LABELS } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
 import { buildShareImageBlob } from "@/lib/shareCard";
 import { toKg, fromKg, formatWeight } from "@/lib/units";
+import { tierColorFor } from "@/lib/strength";
 
 // Time-seeded so a resumed draft's saved keys (from a previous page
 // load) can never collide with new ones generated after a reload.
@@ -560,16 +560,16 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               </button>
             </div>
           </div>
-          <div className="flex items-center gap-3 border-t border-accent/20 pt-2">
-            <span className="flex flex-col">
+          <div className="flex flex-col gap-2 border-t border-accent/20 pt-2">
+            <div className="flex items-baseline justify-between">
               <span className="text-xs text-muted">Total volume</span>
               <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} {U}</span>
-            </span>
+            </div>
             <button
               type="button"
               onClick={onSave}
               disabled={saving || savedOffline}
-              className="ml-auto rounded-field bg-accent px-5 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+              className="w-full rounded-field bg-accent py-3 text-center font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
             >
               {savedOffline ? "Saved on this device" : saving ? "Finishing..." : "Finish"}
             </button>
@@ -692,7 +692,6 @@ function IconShare(props) {
 function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "kg", savingEffort, onSelectEffort, onDone }) {
   const mins = summary.durationMin;
   const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
-  const meso = extras?.meso;
   const prs = extras?.newPRs ?? [];
   const j = extras?.journey ?? null;
   const s = extras?.strength ?? null;
@@ -701,7 +700,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
   // track record; a first workout's finish screen stays minimal.
   const established = (extras?.workoutCount ?? 1) >= 2;
   const benchmarkRecap = isBenchmark && s && s.covered > 0;
-  const hasScore = established && s && s.covered > 0 && !benchmarkRecap;
+  const showLevel = established && j;
 
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -767,11 +766,18 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-fg">{p.lift}</span>
                       {moved ? (
-                        <span className="text-xs font-semibold text-good">
-                          {prev.tier} to {p.tier}
+                        <span className="text-xs font-semibold">
+                          <span className="text-dim">{prev.tier}</span>
+                          <span className="text-dim"> to </span>
+                          <span style={{ color: tierColorFor(p.tierIndex) }}>{p.tier}</span>
                         </span>
                       ) : (
-                        <span className="text-xs text-dim">{p.tier}</span>
+                        <span
+                          className="text-xs font-semibold"
+                          style={{ color: tierColorFor(p.tierIndex) }}
+                        >
+                          {p.tier}
+                        </span>
                       )}
                     </span>
                     <span className="shrink-0 text-right">
@@ -791,31 +797,33 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
       ) : null}
 
       <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
-        <div className={`grid gap-3 ${hasScore ? "grid-cols-3" : "grid-cols-2"}`}>
+        <div className={`grid gap-3 ${showLevel ? "grid-cols-3" : "grid-cols-2"}`}>
           <Metric label="Volume" value={`${Math.round(summary.totalVolume)} ${unit}`} />
           <Metric label="Time" value={timeLabel} />
-          {hasScore ? (
+          {showLevel ? (
             <Metric
-              label="Strength"
-              value={`${scoreU(s.after)} ${unit}`}
-              delta={s.delta > 0 ? `+${scoreU(s.delta)}` : null}
+              label="Level"
+              value={j.level}
+              delta={j.xpGained > 0 ? `+${j.xpGained} XP` : null}
             />
           ) : null}
         </div>
 
-        {established && j ? (
+        {showLevel ? (
           <div className="flex flex-col gap-1.5 border-t border-border pt-3">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold" style={{ color: j.tierColor }}>
-                {j.tier} · Level {j.level}
+                {j.tier}
               </span>
-              {j.xpGained > 0 ? (
-                <span className="tabular font-semibold text-good">+{j.xpGained} XP</span>
-              ) : null}
+              <span className="tabular text-dim">
+                {j.level >= 100
+                  ? "Max level"
+                  : `${j.xpToNextLevel.toLocaleString()} XP to Level ${j.level + 1}`}
+              </span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
               <div
-                className="h-full rounded-full"
+                className="bar-fill h-full rounded-full"
                 style={{ width: `${j.pctToNextLevel}%`, backgroundColor: j.tierColor }}
               />
             </div>
@@ -862,30 +870,6 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
         </div>
         {effort ? <p className="text-center text-xs text-accent">{EFFORT_LABELS[effort]}</p> : null}
       </section>
-
-      {meso ? (
-        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
-            {meso.templateName}, week {meso.week} of {meso.weeks}
-          </h2>
-          {meso.totalDays > 0 ? (
-            <>
-              <ProgressBar
-                label="This week"
-                value={Math.min(meso.sessionsThisWeek, meso.totalDays)}
-                max={meso.totalDays}
-                tone="sky"
-              />
-              <ProgressBar
-                label="Whole program"
-                value={Math.min(meso.sessionsLogged, meso.weeks * meso.totalDays)}
-                max={meso.weeks * meso.totalDays}
-                tone="good"
-              />
-            </>
-          ) : null}
-        </section>
-      ) : null}
 
       <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} />
 
