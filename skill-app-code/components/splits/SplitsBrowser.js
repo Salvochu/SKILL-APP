@@ -4,6 +4,8 @@ import { useState } from "react";
 import MusclePill from "@/components/MusclePill";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 import ProgramSetup from "@/components/splits/ProgramSetup";
+import VideoModal from "@/components/log/VideoModal";
+import WeekGrid from "@/components/splits/WeekGrid";
 import { sortVariants } from "@/lib/exercises";
 
 const SECTION_LABEL = { primary: "Choose your split", coached: "Coached programs" };
@@ -13,8 +15,9 @@ export default function SplitsBrowser({
   strengthCheck = null,
   mesocycleTemplates = [],
   activeProgram = null,
+  initialView = null,
 }) {
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedId] = useState(initialView);
   const all = strengthCheck ? [...splits, strengthCheck] : splits;
   const selected = all.find((s) => s.id === selectedId) ?? null;
 
@@ -123,10 +126,12 @@ function SplitDetail({ split, template, activeProgram, onBack }) {
         </span>
       </header>
 
-      {split.days.length > 0 ? (
+      {split.days.length > 0 && split.section !== "benchmark" ? (
+        <WeekGrid split={split} />
+      ) : split.days.length > 0 ? (
         <div className="flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-dim">Your week</span>
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+          <div className="flex flex-wrap gap-2">
             {split.days.map((day, i) => (
               <span
                 key={day.id}
@@ -186,6 +191,7 @@ function DayCard({ day, split, index, single }) {
   const variants = sortVariants(Object.keys(day.variants));
   const [variant, setVariant] = useState(variants[0]);
   const [open, setOpen] = useState(false);
+  const [videoFor, setVideoFor] = useState(null);
   const list = day.variants[variant] ?? [];
 
   return (
@@ -236,21 +242,48 @@ function DayCard({ day, split, index, single }) {
           ) : null}
 
           <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
-            {list.map((item) => (
-              <li key={`${item.variant}-${item.position}`} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">
-                <span className="flex-1">
-                  <span className="block text-sm font-medium text-fg">{item.exercise.name}</span>
-                  <span className="mt-1 flex flex-wrap items-center gap-2">
-                    <MusclePill muscle={item.exercise.muscle} />
-                    <span className="text-xs text-dim">{item.exercise.equipment}</span>
+            {list.map((item) => {
+              const hasVideo = Boolean(item.exercise.video_url);
+              return (
+                <li key={`${item.variant}-${item.position}`} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">
+                  {hasVideo ? (
+                    <button
+                      type="button"
+                      onClick={() => setVideoFor(item.exercise)}
+                      className="group flex flex-1 items-center gap-2.5 text-left"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent transition-colors group-hover:bg-accent group-hover:text-black">
+                        <IconPlay className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-fg group-hover:text-accent">
+                          {item.exercise.name}
+                        </span>
+                        <span className="mt-1 flex flex-wrap items-center gap-2">
+                          <MusclePill muscle={item.exercise.muscle} />
+                          <span className="text-xs text-dim">{item.exercise.equipment}</span>
+                        </span>
+                      </span>
+                    </button>
+                  ) : (
+                    <span className="flex-1">
+                      <span className="block text-sm font-medium text-fg">{item.exercise.name}</span>
+                      <span className="mt-1 flex flex-wrap items-center gap-2">
+                        <MusclePill muscle={item.exercise.muscle} />
+                        <span className="text-xs text-dim">{item.exercise.equipment}</span>
+                      </span>
+                    </span>
+                  )}
+                  <span className="tabular shrink-0 text-xs text-muted">
+                    {item.sets} x {item.reps}
                   </span>
-                </span>
-                <span className="tabular shrink-0 text-xs text-muted">
-                  {item.sets} x {item.reps}
-                </span>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
+          {list.some((i) => i.exercise.video_url) ? (
+            <p className="text-xs text-dim">Tap a lift to watch the form video.</p>
+          ) : null}
 
           <GuardedStartLink
             href={`/log?split=${split.id}&day=${day.template.id}&variant=${encodeURIComponent(variant)}`}
@@ -260,6 +293,8 @@ function DayCard({ day, split, index, single }) {
           </GuardedStartLink>
         </div>
       ) : null}
+
+      {videoFor ? <VideoModal exercise={videoFor} onClose={() => setVideoFor(null)} /> : null}
     </section>
   );
 }
@@ -312,6 +347,13 @@ function IconChevron(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+function IconPlay(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M8 5v14l11-7z" />
     </svg>
   );
 }

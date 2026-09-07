@@ -21,9 +21,9 @@ import { toKg, fromKg, formatWeight } from "@/lib/units";
 let keySeq = 0;
 const nextKey = () => `x${Date.now().toString(36)}${++keySeq}`;
 
-// The movement patterns the Strength Check actually tests, so its finish
-// recap does not pull in unrelated lifts from the 6-week score window.
-const BENCHMARK_PATTERNS = ["squat", "hinge", "hpush", "vpull"];
+// The movement patterns the Strength Check tests (all six), so its finish
+// recap does not pull in unrelated lift variants from the score window.
+const BENCHMARK_PATTERNS = ["squat", "hinge", "hpush", "vpush", "hpull", "vpull"];
 
 function epley1rm(weight, reps) {
   const w = Number(weight);

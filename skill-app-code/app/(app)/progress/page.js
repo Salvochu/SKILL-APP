@@ -1,13 +1,15 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { getProgressData } from "@/lib/data/progress";
 import { getWeeklyMuscleVolume } from "@/lib/data/volume";
 import { getPersonalRecords } from "@/lib/data/prs";
-import { getStrengthScore } from "@/lib/data/strength";
+import { getStrengthScore, getLastStrengthCheck } from "@/lib/data/strength";
 import { getJourney } from "@/lib/data/journey";
 import { getWorkoutSummary } from "@/lib/data/workouts";
+import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getUnitPreference } from "@/lib/data/profile";
 import { fromKg, unitLabel } from "@/lib/units";
-import { parseRange } from "@/lib/dateRange";
+import { parseRange, resolveMesoRange, MESO_TOKEN } from "@/lib/dateRange";
 import { compact, shortDate } from "@/components/progress/chartkit";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
@@ -36,17 +38,22 @@ export default function ProgressPage({ searchParams }) {
 
 async function ProgressBody({ searchParams }) {
   const sp = (await searchParams) ?? {};
-  const range = parseRange(sp.range);
 
-  const [rawData, muscleVolume, records, strength, journey, summary, unit] = await Promise.all([
-    getProgressData(range),
-    getWeeklyMuscleVolume(),
-    getPersonalRecords(),
-    getStrengthScore(),
-    getJourney(),
-    getWorkoutSummary(),
-    getUnitPreference(),
-  ]);
+  const activeMeso = await getActiveMesocycle();
+  const mesoRange = resolveMesoRange(activeMeso?.startDate);
+  const range = sp.range === MESO_TOKEN && mesoRange ? mesoRange : parseRange(sp.range);
+
+  const [rawData, muscleVolume, records, strength, journey, summary, lastCheck, unit] =
+    await Promise.all([
+      getProgressData(range),
+      getWeeklyMuscleVolume(),
+      getPersonalRecords(),
+      getStrengthScore(),
+      getJourney(),
+      getWorkoutSummary(),
+      getLastStrengthCheck(),
+      getUnitPreference(),
+    ]);
 
   if (rawData.workouts === 0) {
     return (
@@ -100,14 +107,14 @@ async function ProgressBody({ searchParams }) {
         <ShareProgress stats={shareStats} muscles={shareMuscles} />
       </div>
 
-      <StrengthCard strength={strength} records={records} unit={unit} />
-
       <LevelCard
         journey={journey}
         workouts={data.workouts}
         volumeLabel={`${compact(data.totalVolumeKg)} ${U}`}
         timeLabel={`${Math.floor(summary.minutes / 60)}h ${summary.minutes % 60}m`}
       />
+
+      <StrengthCard strength={strength} records={records} unit={unit} lastCheck={lastCheck} />
 
       <Card title="Weekly sets by muscle" subtitle="Hard sets this week. Tap a group to see each muscle">
         <MuscleVolume data={muscleVolume} />
@@ -126,7 +133,7 @@ async function ProgressBody({ searchParams }) {
           <div className="flex flex-col gap-4 border-t border-border p-4">
           <div className="flex flex-col gap-2">
             <Suspense fallback={<div className="h-8" />}>
-              <RangeFilter />
+              <RangeFilter mesoAvailable={Boolean(mesoRange)} />
             </Suspense>
             <p className="text-xs text-dim">
               Showing {range.sinceISO ? range.label : "all time"}
@@ -139,7 +146,10 @@ async function ProgressBody({ searchParams }) {
             <BarChart data={data.sessionVolumes} unit={U} />
             <DataTable
               headers={["Session", "Date", "Volume"]}
-              rows={data.sessionVolumes.slice(-16).map((s) => [s.label, shortDate(s.date), `${compact(s.volumeKg)} ${U}`])}
+              rows={data.sessionVolumes.slice(-16).map((s) => ({
+                href: `/workouts/${s.id}`,
+                cells: [s.label, shortDate(s.date), `${compact(s.volumeKg)} ${U}`],
+              }))}
             />
           </div>
 
@@ -150,11 +160,10 @@ async function ProgressBody({ searchParams }) {
               <StrengthChart exercises={data.exercises} unit={U} />
               <DataTable
                 headers={["Exercise", "Sessions", "Latest est. 1RM"]}
-                rows={strongExercises.map((e) => [
-                  e.name,
-                  String(e.points.length),
-                  `${compact(e.points.at(-1).best1rm)} ${U}`,
-                ])}
+                rows={strongExercises.map((e) => ({
+                  href: `/library/exercises/${e.id}`,
+                  cells: [e.name, String(e.points.length), `${compact(e.points.at(-1).best1rm)} ${U}`],
+                }))}
               />
             </div>
           ) : null}
@@ -193,7 +202,11 @@ function Card({ title, subtitle, children }) {
   );
 }
 
+// `rows` items are either a plain array of cells, or { href, cells } to
+// make the whole row a link (first cell renders as the anchor).
 function DataTable({ headers, rows }) {
+  const norm = rows.map((r) => (Array.isArray(r) ? { href: null, cells: r } : r));
+  const linked = norm.some((r) => r.href);
   return (
     <details className="text-sm">
       <summary className="cursor-pointer text-xs font-medium text-dim hover:text-fg">Show data</summary>
@@ -207,15 +220,26 @@ function DataTable({ headers, rows }) {
             </tr>
           </thead>
           <tbody className="text-muted">
-            {rows.map((r, i) => (
-              <tr key={i} className="border-t border-border">
-                {r.map((c, j) => (
-                  <td key={j} className="py-1.5 pr-4">{c}</td>
+            {norm.map((r, i) => (
+              <tr key={i} className="border-t border-border transition-colors hover:bg-surface-2">
+                {r.cells.map((c, j) => (
+                  <td key={j} className="py-1.5 pr-4">
+                    {j === 0 && r.href ? (
+                      <Link href={r.href} className="font-medium text-fg hover:text-accent hover:underline">
+                        {c}
+                      </Link>
+                    ) : (
+                      c
+                    )}
+                  </td>
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
+        {linked ? (
+          <p className="mt-1.5 text-[11px] text-dim">Tap a row to open it.</p>
+        ) : null}
       </div>
     </details>
   );

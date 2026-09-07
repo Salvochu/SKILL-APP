@@ -5,7 +5,7 @@ import SplitsBrowser from "@/components/splits/SplitsBrowser";
 
 export const metadata = { title: "Train" };
 
-export default function SplitsPage() {
+export default function SplitsPage({ searchParams }) {
   return (
     <div className="flex flex-col gap-5 py-2">
       <header className="flex flex-col gap-1">
@@ -14,13 +14,15 @@ export default function SplitsPage() {
       </header>
 
       <Suspense fallback={<SplitsSkeleton />}>
-        <SplitsList />
+        <SplitsList searchParams={searchParams} />
       </Suspense>
     </div>
   );
 }
 
-async function SplitsList() {
+async function SplitsList({ searchParams }) {
+  const sp = (await searchParams) ?? {};
+  const initialView = typeof sp.view === "string" ? sp.view : null;
   const [splits, mesocycleTemplates, active] = await Promise.all([
     getSplits(),
     getMesocycleTemplates(),
@@ -36,6 +38,7 @@ async function SplitsList() {
       strengthCheck={strengthCheck}
       mesocycleTemplates={mesocycleTemplates}
       activeProgram={activeProgram}
+      initialView={initialView}
     />
   );
 }

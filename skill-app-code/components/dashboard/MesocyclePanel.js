@@ -8,7 +8,7 @@ import GuardedStartLink from "@/components/log/GuardedStartLink";
 import ProgressBar from "@/components/ProgressBar";
 import MesocycleComplete from "@/components/dashboard/MesocycleComplete";
 
-export default function MesocyclePanel({ active, summary }) {
+export default function MesocyclePanel({ active, summary, isNew = false }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -35,6 +35,28 @@ export default function MesocyclePanel({ active, summary }) {
       return;
     }
     router.refresh();
+  }
+
+  // Brand-new: no workouts logged yet. Lead hard with picking a program,
+  // keep a quiet way to just log something.
+  if (isNew) {
+    return (
+      <div className="flex flex-col gap-3">
+        <TapLink
+          href="/splits"
+          className="btn-shine flex w-full items-center justify-center gap-2 rounded-field bg-accent px-4 py-4 text-base font-semibold text-black transition-colors hover:bg-accent-2"
+        >
+          Pick a training program
+          <IconArrow className="h-4 w-4" />
+        </TapLink>
+        <GuardedStartLink
+          href="/log"
+          className="self-center text-sm font-medium text-muted transition-colors hover:text-fg"
+        >
+          or log a one-off workout
+        </GuardedStartLink>
+      </div>
+    );
   }
 
   // No program running: start one, or just log a session. The full split
@@ -158,6 +180,13 @@ function IconDots(props) {
       <circle cx="5" cy="12" r="1.6" />
       <circle cx="12" cy="12" r="1.6" />
       <circle cx="19" cy="12" r="1.6" />
+    </svg>
+  );
+}
+function IconArrow(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M5 12h14M13 6l6 6-6 6" />
     </svg>
   );
 }
