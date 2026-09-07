@@ -46,7 +46,7 @@ export default function ExercisePicker({ exercises, onPick, onClose }) {
             className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
           />
         </div>
-        <ul className="flex flex-col gap-2 overflow-y-auto p-4">
+        <ul className="flex flex-col gap-2 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4">
           {filtered.map((e) => (
             <li key={e.id}>
               <button

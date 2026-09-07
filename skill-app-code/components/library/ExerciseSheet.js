@@ -35,7 +35,7 @@ export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
         onClick={onClose}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
-      <div className="relative max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 sm:rounded-2xl">
+      <div className="relative max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 pb-[calc(1.75rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-xl font-bold text-fg">{exercise.name}</h2>
           <button

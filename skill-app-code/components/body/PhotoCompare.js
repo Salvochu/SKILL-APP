@@ -205,7 +205,7 @@ export default function PhotoCompare({ dates, bodyByDate, unit, onClose }) {
         ) : null}
       </div>
 
-      <div className="border-t border-border p-4">
+      <div className="border-t border-border p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <button
           type="button"
           onClick={onShare}

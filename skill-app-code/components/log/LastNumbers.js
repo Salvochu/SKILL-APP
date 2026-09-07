@@ -61,7 +61,7 @@ export default function LastNumbers({ exerciseId, exerciseName, onClose }) {
           )}
         </div>
 
-        <div className="border-t border-border p-4">
+        <div className="border-t border-border p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4">
           <Link
             href={`/library/exercises/${exerciseId}`}
             onClick={onClose}
