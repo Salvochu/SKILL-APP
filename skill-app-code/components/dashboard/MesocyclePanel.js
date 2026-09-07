@@ -213,7 +213,7 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
       ) : null}
 
       {railWeeks > 1 ? (
-        <div className="flex flex-col gap-3 rounded-field border border-border bg-bg/40 p-3">
+        <div className="flex flex-col gap-3 rounded-field border border-border bg-surface p-3">
           <WeekRail
             weeks={railWeeks}
             currentWeek={currentRailWeek}
@@ -277,16 +277,18 @@ function WeekRail({ weeks, currentWeek, weekFill, startingRir, isFoundations }) 
         return (
           <div key={w} className="flex flex-1 flex-col items-center gap-1.5">
             <div
-              className={`h-9 w-full overflow-hidden rounded-field bg-surface ${
-                deload ? "border border-dashed border-accent/40" : ""
-              } ${isCurrent ? "ring-2 ring-accent" : ""}`}
+              className={`h-9 w-full overflow-hidden rounded-field border bg-bg ${
+                deload ? "border-dashed border-accent/50" : "border-border-strong"
+              } ${isCurrent ? "ring-2 ring-accent ring-offset-1 ring-offset-surface" : ""}`}
             >
               <div
                 className="h-full rounded-field bg-accent transition-[width] duration-700"
                 style={{ width: `${fillPct}%` }}
               />
             </div>
-            <span className={`text-[10px] font-medium ${isCurrent ? "text-accent" : "text-dim"}`}>
+            <span
+              className={`text-[10px] font-medium ${isCurrent ? "text-accent" : "text-muted"}`}
+            >
               {label}
             </span>
           </div>

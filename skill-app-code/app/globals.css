@@ -9,13 +9,13 @@
   /* dark is the default palette (see :root below); these @theme entries
      just register the utility names and fonts. */
   --color-bg: #000000;
-  --color-surface: #0e0e0e;
-  --color-surface-2: #161616;
-  --color-border: #262624;
-  --color-border-strong: #3a3836;
+  --color-surface: #171614;
+  --color-surface-2: #221f1c;
+  --color-border: #35322d;
+  --color-border-strong: #4a4640;
   --color-fg: #ffffff;
-  --color-muted: #9a938c;
-  --color-dim: #6f6a65;
+  --color-muted: #a49d95;
+  --color-dim: #7b756e;
 
   --color-accent: #fc7605;
   --color-accent-2: #ff9600;
@@ -40,13 +40,16 @@
 :root {
   color-scheme: dark;
   --color-bg: #000000;
-  --color-surface: #0e0e0e;
-  --color-surface-2: #161616;
-  --color-border: #262624;
-  --color-border-strong: #3a3836;
+  /* Surfaces sit clearly above the black page, and borders are visible
+     hairlines - the near-black-on-black version made cards (the Log
+     screen especially) hard to make out. */
+  --color-surface: #171614;
+  --color-surface-2: #221f1c;
+  --color-border: #35322d;
+  --color-border-strong: #4a4640;
   --color-fg: #ffffff;
-  --color-muted: #9a938c;
-  --color-dim: #6f6a65;
+  --color-muted: #a49d95;
+  --color-dim: #7b756e;
   --color-accent-soft: rgba(252, 118, 5, 0.13);
 
   /* One hue per muscle group. Validated as a categorical set (CVD-safe,
