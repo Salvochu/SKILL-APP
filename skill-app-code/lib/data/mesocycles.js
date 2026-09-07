@@ -155,6 +155,7 @@ export async function getActiveMesocycle() {
     splitName: run.template.split.name,
     weeks,
     week,
+    startingRir,
     isDeload: deload,
     rirTarget: rir,
     guidance: isFoundations
@@ -174,6 +175,13 @@ export async function getActiveMesocycle() {
           focus: nextDay.day_template?.focus ?? null,
         }
       : null,
+    days: (days ?? []).map((d) => ({
+      position: d.position,
+      dayTemplateId: d.day_template_id,
+      name: d.day_template?.name ?? d.label ?? "Day",
+      focus: d.day_template?.focus ?? null,
+      isNext: d.day_template_id === nextDay?.day_template_id,
+    })),
   };
 }
 

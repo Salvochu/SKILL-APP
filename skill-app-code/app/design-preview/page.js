@@ -9,6 +9,7 @@ import StrengthChart from "@/components/progress/StrengthChart";
 import CompareExercises from "@/components/progress/CompareExercises";
 import ShareCardPreview from "@/components/dev/ShareCardPreview";
 import WorkoutHistoryModal from "@/components/dashboard/WorkoutHistoryModal";
+import MesocyclePanel from "@/components/dashboard/MesocyclePanel";
 
 // Dev-only gallery for reviewing the theme and shared components without a
 // login. 404s in production; proxy.js lets it through unauthenticated.
@@ -83,6 +84,24 @@ const MULTI_SPLIT = {
   ],
 };
 
+const MESO_ACTIVE = {
+  id: "m1", kind: "mesocycle", variant: "Full Gym",
+  splitId: "ppl-x2", splitName: "Push Pull Legs x2",
+  weeks: 5, week: 2, startingRir: 3, isDeload: false,
+  sessionsThisWeek: 2, sessionsPerWeek: 6, sessionsLogged: 8,
+  totalDays: 6, targetSessions: null, isComplete: false,
+  guidance: { headline: "Add a little", detail: "Push one more rep or a small jump on your top set." },
+  nextDay: { position: 2, dayTemplateId: "legs", name: "Legs Day", focus: "Quads, Hamstrings, Glutes" },
+  days: [
+    { position: 0, dayTemplateId: "push", name: "Push Day", focus: "Chest, Shoulders, Triceps", isNext: false },
+    { position: 1, dayTemplateId: "pull", name: "Pull Day", focus: "Back, Biceps", isNext: false },
+    { position: 2, dayTemplateId: "legs", name: "Legs Day", focus: "Quads, Hamstrings, Glutes", isNext: true },
+    { position: 3, dayTemplateId: "push", name: "Push Day", focus: "Chest, Shoulders, Triceps", isNext: false },
+    { position: 4, dayTemplateId: "pull", name: "Pull Day", focus: "Back, Biceps", isNext: false },
+    { position: 5, dayTemplateId: "legs", name: "Legs Day", focus: "Quads, Hamstrings, Glutes", isNext: false },
+  ],
+};
+
 const VOL = [
   ["2026-08-04", "Full Body", 3800], ["2026-08-07", "Upper", 4200], ["2026-08-10", "Lower", 5100],
   ["2026-08-14", "Full Body", 4050], ["2026-08-18", "Upper", 4600], ["2026-08-21", "Lower", 5400],
@@ -118,6 +137,9 @@ export default function DesignPreviewPage() {
       <main className="mx-auto flex w-full max-w-2xl flex-col gap-12 px-4 pt-14 pb-28 md:max-w-5xl md:px-6 md:pt-16">
         <Section title="/library">
           <LibraryBrowser exercises={EX} />
+        </Section>
+        <Section title="dashboard / mesocycle panel">
+          <MesocyclePanel active={MESO_ACTIVE} summary={null} />
         </Section>
         <Section title="/splits">
           <SplitsList splits={SPLITS} />

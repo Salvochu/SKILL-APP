@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { abandonMesocycle } from "@/app/(app)/dashboard/actions";
 import TapLink from "@/components/TapLink";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
-import ProgressBar from "@/components/ProgressBar";
 import Explain from "@/components/Explain";
 import MesocycleComplete from "@/components/dashboard/MesocycleComplete";
+import { rirForWeek, isDeloadWeek } from "@/lib/mesocycle";
 
 export default function MesocyclePanel({ active, summary, isNew = false, isBeginner = false }) {
   const router = useRouter();
@@ -93,6 +93,28 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
 
   const isFoundations = active.kind === "foundations";
 
+  // The days you can jump to from the menu, each distinct day once (a
+  // twice-a-week split lists "Push" once, not twice).
+  const pickableDays = [];
+  const seenDays = new Set();
+  for (const d of active.days ?? []) {
+    if (seenDays.has(d.dayTemplateId)) continue;
+    seenDays.add(d.dayTemplateId);
+    pickableDays.push(d);
+  }
+
+  // Where the block stands, for the week rail. For a mesocycle that is
+  // the calendar week; Foundations follows session count so a beginner
+  // running behind still sees themselves on the right week.
+  const railWeeks = active.weeks;
+  const currentRailWeek = isFoundations
+    ? Math.min(railWeeks, Math.floor(active.sessionsLogged / 3) + 1)
+    : active.week;
+  const weekFill =
+    active.sessionsPerWeek > 0
+      ? Math.max(0, Math.min(1, active.sessionsThisWeek / active.sessionsPerWeek))
+      : 0;
+
   // A finished mesocycle swaps to its end-of-block readout. Foundations
   // never hard-stops - it just adds a "ready to graduate" nudge to the
   // normal panel once the month is done (below).
@@ -129,10 +151,32 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
             <IconDots className="h-5 w-5" />
           </button>
           {menuOpen ? (
-            <div className="absolute right-0 top-full z-10 mt-1 flex w-40 flex-col overflow-hidden rounded-card border border-border bg-surface shadow-lg">
+            <div className="absolute right-0 top-full z-10 mt-1 flex w-56 flex-col overflow-hidden rounded-card border border-border bg-surface py-1 shadow-lg">
+              {pickableDays.length > 1 ? (
+                <>
+                  <span className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-dim">
+                    Start a day
+                  </span>
+                  {pickableDays.map((d) => (
+                    <GuardedStartLink
+                      key={d.dayTemplateId}
+                      href={`/log?meso=${active.id}&split=${active.splitId}&day=${d.dayTemplateId}&variant=${encodeURIComponent(active.variant)}`}
+                      className="flex items-center justify-between gap-2 px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2"
+                    >
+                      <span className="truncate">{d.name}</span>
+                      {d.isNext ? (
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-accent">
+                          Next
+                        </span>
+                      ) : null}
+                    </GuardedStartLink>
+                  ))}
+                  <div className="my-1 border-t border-border" />
+                </>
+              ) : null}
               <TapLink
                 href="/splits"
-                className="px-3 py-2.5 text-left text-sm text-fg transition-colors hover:bg-surface-2"
+                className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2"
               >
                 Switch program
               </TapLink>
@@ -140,7 +184,7 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
                 type="button"
                 onClick={onAbandon}
                 disabled={busy}
-                className="px-3 py-2.5 text-left text-sm text-danger transition-colors hover:bg-danger/10 disabled:opacity-60"
+                className="px-3 py-2 text-left text-sm text-danger transition-colors hover:bg-danger/10 disabled:opacity-60"
               >
                 Stop program
               </button>
@@ -168,23 +212,35 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
         </div>
       ) : null}
 
-      {active.sessionsPerWeek > 0 ? (
-        <div className="flex flex-col gap-2 rounded-field border border-border bg-surface p-3">
-          <ProgressBar
-            label="This week"
-            value={Math.min(active.sessionsThisWeek, active.sessionsPerWeek)}
-            max={active.sessionsPerWeek}
-            tone="sky"
+      {railWeeks > 1 ? (
+        <div className="flex flex-col gap-3 rounded-field border border-border bg-bg/40 p-3">
+          <WeekRail
+            weeks={railWeeks}
+            currentWeek={currentRailWeek}
+            weekFill={weekFill}
+            startingRir={active.startingRir}
+            isFoundations={isFoundations}
           />
-          <ProgressBar
-            label={isFoundations ? "Foundations" : "Whole program"}
-            value={Math.min(
-              active.sessionsLogged,
-              isFoundations ? active.targetSessions : active.weeks * active.sessionsPerWeek,
-            )}
-            max={isFoundations ? active.targetSessions : active.weeks * active.sessionsPerWeek}
-            tone="good"
-          />
+          {active.sessionsPerWeek > 0 ? (
+            <div className="flex items-center gap-2 text-xs">
+              {active.sessionsPerWeek <= 5 ? (
+                <span className="flex gap-1">
+                  {Array.from({ length: active.sessionsPerWeek }, (_, i) => (
+                    <span
+                      key={i}
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        i < active.sessionsThisWeek ? "bg-accent" : "bg-border-strong"
+                      }`}
+                    />
+                  ))}
+                </span>
+              ) : null}
+              <span className="text-muted">
+                {Math.min(active.sessionsThisWeek, active.sessionsPerWeek)} of {active.sessionsPerWeek}{" "}
+                sessions this week
+              </span>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -192,7 +248,7 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
       {active.nextDay ? (
         <GuardedStartLink
           href={`/log?meso=${active.id}&split=${active.splitId}&day=${active.nextDay.dayTemplateId}&variant=${encodeURIComponent(active.variant)}`}
-          className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-2"
+          className="btn-shine flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-2"
         >
           Start {active.nextDay.name}
         </GuardedStartLink>
@@ -200,6 +256,43 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
         <p className="text-sm text-muted">This program&apos;s split has no days set up yet.</p>
       )}
     </section>
+  );
+}
+
+// The block at a glance: one segment per week, effort ramping down the
+// row (RIR 3 to 0, then a dashed deload). Past weeks are full, the
+// current week fills with this week's sessions, future weeks are empty.
+function WeekRail({ weeks, currentWeek, weekFill, startingRir, isFoundations }) {
+  return (
+    <div className="flex gap-1.5">
+      {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => {
+        const deload = !isFoundations && isDeloadWeek(w, weeks);
+        const isCurrent = w === currentWeek;
+        const fillPct = w < currentWeek ? 100 : isCurrent ? Math.round(weekFill * 100) : 0;
+        const label = deload
+          ? "Deload"
+          : isFoundations
+            ? `Wk ${w}`
+            : `RIR ${rirForWeek(w, weeks, startingRir)}`;
+        return (
+          <div key={w} className="flex flex-1 flex-col items-center gap-1.5">
+            <div
+              className={`h-9 w-full overflow-hidden rounded-field bg-surface ${
+                deload ? "border border-dashed border-accent/40" : ""
+              } ${isCurrent ? "ring-2 ring-accent" : ""}`}
+            >
+              <div
+                className="h-full rounded-field bg-accent transition-[width] duration-700"
+                style={{ width: `${fillPct}%` }}
+              />
+            </div>
+            <span className={`text-[10px] font-medium ${isCurrent ? "text-accent" : "text-dim"}`}>
+              {label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
