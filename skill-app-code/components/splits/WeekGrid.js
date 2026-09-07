@@ -1,17 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { weekLayout, cleanFocus } from "@/lib/splitWeek";
+import { weekLayout } from "@/lib/splitWeek";
 
-// An example training week for a split: seven weekday squares, training
-// days in light orange, rest days plain. Tap a square to see that day's
-// session. The app never enforces which weekday you actually train; this
-// is just a suggested rhythm.
-export default function WeekGrid({ split }) {
+// The example training week for a split: seven weekday squares, training
+// days in light orange, rest days plain. Controlled - the parent owns
+// which slot is selected and renders that day's session below the grid.
+// The app never enforces which weekday you actually train; this is just a
+// suggested rhythm.
+export default function WeekGrid({ split, selectedIndex, onSelect }) {
   const slots = weekLayout(split);
-  const firstTrained = slots.findIndex((s) => s.day);
-  const [selected, setSelected] = useState(firstTrained >= 0 ? firstTrained : 0);
-  const sel = slots[selected];
   const trainingDays = slots.filter((s) => s.day).length;
 
   return (
@@ -26,13 +23,14 @@ export default function WeekGrid({ split }) {
       <div className="grid grid-cols-7 gap-1.5">
         {slots.map((s, i) => {
           const trained = Boolean(s.day);
-          const active = i === selected;
+          const active = i === selectedIndex;
           return (
             <button
               key={s.weekday}
               type="button"
-              onClick={() => setSelected(i)}
+              onClick={() => onSelect(i)}
               aria-pressed={active}
+              aria-label={`${s.weekday}${trained ? `: ${s.day.template.name}` : ": rest day"}`}
               className={`flex flex-col items-center gap-1.5 rounded-field border py-2 text-[11px] font-semibold transition-colors ${
                 trained
                   ? "border-accent/40 bg-accent-soft text-accent hover:bg-accent-soft/70"
@@ -40,28 +38,13 @@ export default function WeekGrid({ split }) {
               } ${active ? "outline outline-2 outline-accent" : ""}`}
             >
               <span>{s.weekday}</span>
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${trained ? "bg-accent" : "bg-border-strong"}`}
-              />
+              <span className={`h-1.5 w-1.5 rounded-full ${trained ? "bg-accent" : "bg-border-strong"}`} />
             </button>
           );
         })}
       </div>
 
-      <div className="rounded-field border border-border bg-surface px-3 py-2.5 text-sm">
-        {sel?.day ? (
-          <span className="flex flex-col gap-0.5">
-            <span className="font-medium text-fg">
-              {sel.weekday}: {sel.day.template.name}
-            </span>
-            {cleanFocus(sel.day.template.focus) ? (
-              <span className="text-xs text-dim">{cleanFocus(sel.day.template.focus)}</span>
-            ) : null}
-          </span>
-        ) : (
-          <span className="text-muted">{sel.weekday}: Rest day</span>
-        )}
-      </div>
+      <p className="text-xs text-dim">Tap a day to see the session.</p>
     </div>
   );
 }

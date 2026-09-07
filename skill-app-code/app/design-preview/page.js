@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import NavBar from "@/components/NavBar";
 import LibraryBrowser from "@/components/library/LibraryBrowser";
 import SplitsList from "@/components/splits/SplitsList";
+import SplitDetail from "@/components/splits/SplitDetail";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
@@ -52,6 +53,36 @@ const SPLITS = [
   },
 ];
 
+const MULTI_SPLIT = {
+  id: "ppl-demo",
+  name: "Push Pull Legs",
+  cadence: "6 days",
+  description: "Push, Pull, Legs run twice across six sessions.",
+  section: "primary",
+  days: [
+    { id: "p1", position: 0, label: "Push", template: { id: "push", name: "Push Day", focus: "Chest, Shoulders, Triceps", description: "All pressing movements." },
+      variants: { "Full Gym": [
+        { variant: "Full Gym", position: 0, sets: 4, reps: "6-8", exercise: EX[1] },
+        { variant: "Full Gym", position: 1, sets: 3, reps: "10-12", exercise: EX[5] },
+      ] } },
+    { id: "p2", position: 1, label: "Pull", template: { id: "pull", name: "Pull Day", focus: "Back, Biceps", description: "All pulling movements." },
+      variants: { "Full Gym": [
+        { variant: "Full Gym", position: 0, sets: 4, reps: "6-8", exercise: EX[4] },
+      ] } },
+    { id: "l1", position: 2, label: "Legs", template: { id: "legs", name: "Legs Day", focus: "Quads, Hamstrings, Glutes", description: "Squat and hinge patterns." },
+      variants: { "Full Gym": [
+        { variant: "Full Gym", position: 0, sets: 4, reps: "6-8", exercise: EX[0] },
+        { variant: "Full Gym", position: 1, sets: 3, reps: "8-10", exercise: EX[3] },
+      ] } },
+    { id: "p3", position: 3, label: "Push", template: { id: "push", name: "Push Day", focus: "Chest, Shoulders, Triceps", description: "All pressing movements." },
+      variants: { "Full Gym": [{ variant: "Full Gym", position: 0, sets: 4, reps: "8-10", exercise: EX[1] }] } },
+    { id: "p4", position: 4, label: "Pull", template: { id: "pull", name: "Pull Day", focus: "Back, Biceps", description: "All pulling movements." },
+      variants: { "Full Gym": [{ variant: "Full Gym", position: 0, sets: 4, reps: "8-10", exercise: EX[4] }] } },
+    { id: "l2", position: 5, label: "Legs", template: { id: "legs", name: "Legs Day", focus: "Quads, Hamstrings, Glutes", description: "Squat and hinge patterns." },
+      variants: { "Full Gym": [{ variant: "Full Gym", position: 0, sets: 4, reps: "8-10", exercise: EX[0] }] } },
+  ],
+};
+
 const VOL = [
   ["2026-08-04", "Full Body", 3800], ["2026-08-07", "Upper", 4200], ["2026-08-10", "Lower", 5100],
   ["2026-08-14", "Full Body", 4050], ["2026-08-18", "Upper", 4600], ["2026-08-21", "Lower", 5400],
@@ -90,6 +121,12 @@ export default function DesignPreviewPage() {
         </Section>
         <Section title="/splits">
           <SplitsList splits={SPLITS} />
+        </Section>
+        <Section title="/splits/[id] (multi-day)">
+          <SplitDetail split={MULTI_SPLIT} template={{ id: "ppl-demo", weeks: 5 }} activeProgram={null} />
+        </Section>
+        <Section title="/splits/[id] (single day)">
+          <SplitDetail split={SPLITS[0]} template={{ id: "full-body", weeks: 5 }} activeProgram={null} />
         </Section>
         <Section title="/progress">
           <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
