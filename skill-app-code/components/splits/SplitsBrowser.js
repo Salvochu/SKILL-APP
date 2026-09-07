@@ -4,6 +4,7 @@ import { useState } from "react";
 import MusclePill from "@/components/MusclePill";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 import ProgramSetup from "@/components/splits/ProgramSetup";
+import FoundationsCard from "@/components/splits/FoundationsCard";
 import VideoModal from "@/components/log/VideoModal";
 import WeekGrid from "@/components/splits/WeekGrid";
 import { sortVariants } from "@/lib/exercises";
@@ -16,6 +17,8 @@ export default function SplitsBrowser({
   mesocycleTemplates = [],
   activeProgram = null,
   initialView = null,
+  isBeginner = false,
+  foundations = null,
 }) {
   const [selectedId, setSelectedId] = useState(initialView);
   const all = strengthCheck ? [...splits, strengthCheck] : splits;
@@ -26,16 +29,22 @@ export default function SplitsBrowser({
     return (
       <SplitDetail
         split={selected}
-        template={template}
+        template={isBeginner ? null : template}
         activeProgram={activeProgram}
         onBack={() => setSelectedId(null)}
       />
     );
   }
 
-  const sections = groupBySection(splits);
+  // Beginners do not see the coached programs (all periodised); everyone
+  // else does.
+  const sections = groupBySection(splits).filter(
+    (s) => !isBeginner || s.section !== "coached",
+  );
   return (
     <div className="flex flex-col gap-8">
+      {foundations ? <FoundationsCard split={foundations} /> : null}
+
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Quick start</h2>
         <div className="flex flex-col gap-2.5">

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getSplits } from "@/lib/data/splits";
 import { getMesocycleTemplates, getActiveMesocycle } from "@/lib/data/mesocycles";
+import { getBeginnerContext } from "@/lib/data/profile";
 import SplitsBrowser from "@/components/splits/SplitsBrowser";
 
 export const metadata = { title: "Train" };
@@ -23,15 +24,28 @@ export default function SplitsPage({ searchParams }) {
 async function SplitsList({ searchParams }) {
   const sp = (await searchParams) ?? {};
   const initialView = typeof sp.view === "string" ? sp.view : null;
-  const [splits, mesocycleTemplates, active] = await Promise.all([
+  const [splits, mesocycleTemplates, active, beginner] = await Promise.all([
     getSplits(),
     getMesocycleTemplates(),
     getActiveMesocycle(),
+    getBeginnerContext(),
   ]);
-  const strengthCheck = splits.find((s) => s.id === "strength-check") ?? null;
-  const browsable = splits.filter((s) => s.section !== "benchmark");
+  // The Strength Check stays hidden for a new beginner - working up to a
+  // heavy top set is not a week-one exercise.
+  const strengthCheck = beginner.showStrengthCheck
+    ? splits.find((s) => s.id === "strength-check") ?? null
+    : null;
+  const browsable = splits.filter(
+    (s) => s.section !== "benchmark" && s.section !== "foundations",
+  );
   const activeProgram =
     active && !active.isComplete ? { splitName: active.splitName, week: active.week, weeks: active.weeks } : null;
+
+  // Foundations: a beginner's first month. Shown as its own card, and
+  // only while they have not already got a program running.
+  const foundationsSplit = splits.find((s) => s.id === "foundations") ?? null;
+  const foundations = beginner.isBeginner && !active && foundationsSplit ? foundationsSplit : null;
+
   return (
     <SplitsBrowser
       splits={browsable}
@@ -39,6 +53,8 @@ async function SplitsList({ searchParams }) {
       mesocycleTemplates={mesocycleTemplates}
       activeProgram={activeProgram}
       initialView={initialView}
+      isBeginner={beginner.isBeginner}
+      foundations={foundations}
     />
   );
 }

@@ -49,6 +49,34 @@ export async function getProfile() {
   };
 }
 
+// Beginner-friendly gating. Someone who picked "Beginner" in the
+// onboarding quiz gets gentler copy, and the Strength Check stays hidden
+// (everywhere, including Progress) until they have 30 days on the app -
+// working up to a heavy top set is not a week-one exercise.
+export const getBeginnerContext = cache(async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { isBeginner: false, daysSinceJoin: null, showStrengthCheck: true };
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("experience_level, role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const isCoach = data?.role === "coach";
+  const isBeginner = !isCoach && (data?.experience_level ?? "") === "Beginner";
+  const daysSinceJoin = user.created_at
+    ? Math.floor((Date.now() - new Date(user.created_at)) / 86400000)
+    : null;
+  const showStrengthCheck =
+    !isBeginner || (daysSinceJoin != null && daysSinceJoin >= 30);
+
+  return { isBeginner, daysSinceJoin, showStrengthCheck };
+});
+
 // Whether the onboarding quiz (components/onboarding) should show. No
 // profile row at all (a brand new account) counts as needing it, same
 // as an explicit false.

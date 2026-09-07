@@ -8,6 +8,7 @@ import {
   nextDayIndex,
   weekDateRange,
   weekGuidance,
+  foundationsGuidance,
   sessionOptionsFromCadence,
 } from "@/lib/mesocycle";
 import { sortVariants } from "@/lib/exercises";
@@ -18,7 +19,7 @@ export async function getMesocycleTemplates() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("mesocycle_templates")
-    .select("id, name, description, weeks, starting_rir, split:splits(id, name, cadence)")
+    .select("id, name, description, weeks, starting_rir, kind, split:splits(id, name, cadence)")
     .order("position");
   if (error) throw new Error(`Failed to load mesocycle templates: ${error.message}`);
   return data ?? [];
@@ -32,7 +33,7 @@ export async function getMesocycleOverview(templateId) {
   const supabase = await createClient();
   const { data: template, error } = await supabase
     .from("mesocycle_templates")
-    .select("id, name, description, weeks, starting_rir, split:splits(id, name, cadence)")
+    .select("id, name, description, weeks, starting_rir, kind, split:splits(id, name, cadence)")
     .eq("id", templateId)
     .maybeSingle();
   if (error) throw new Error(`Failed to load program: ${error.message}`);
@@ -85,7 +86,7 @@ export async function getActiveMesocycle() {
   const { data: run, error } = await supabase
     .from("user_mesocycles")
     .select(
-      "id, start_date, status, variant, sessions_per_week, template:mesocycle_templates(id, name, weeks, starting_rir, split:splits(id, name))",
+      "id, start_date, status, variant, sessions_per_week, template:mesocycle_templates(id, name, weeks, starting_rir, kind, split:splits(id, name))",
     )
     .eq("user_id", user.id)
     .eq("status", "active")
@@ -96,10 +97,11 @@ export async function getActiveMesocycle() {
   if (!run) return null;
 
   const { weeks, starting_rir: startingRir } = run.template;
+  const kind = run.template.kind === "foundations" ? "foundations" : "mesocycle";
+  const isFoundations = kind === "foundations";
   const week = currentWeek(run.start_date, weeks);
-  const deload = isDeloadWeek(week, weeks);
-  const rir = rirForWeek(week, weeks, startingRir);
-  const complete = isMesocycleComplete(run.start_date, weeks);
+  const deload = !isFoundations && isDeloadWeek(week, weeks);
+  const rir = isFoundations ? null : rirForWeek(week, weeks, startingRir);
 
   const { from: weekFrom, to: weekTo } = weekDateRange(run.start_date, week);
 
@@ -129,12 +131,23 @@ export async function getActiveMesocycle() {
   if (weekCountError) throw new Error(`Failed to load mesocycle week progress: ${weekCountError.message}`);
 
   const totalDays = days?.length ?? 0;
-  const dayIdx = nextDayIndex(sessionsLogged ?? 0, totalDays);
+  const logged = sessionsLogged ?? 0;
+  const dayIdx = nextDayIndex(logged, totalDays);
   const nextDay = days?.[dayIdx] ?? null;
+
+  // Foundations aims for 3 sessions a week and finishes on session count,
+  // not the calendar - a beginner running behind should still get their
+  // full month of training.
+  const sessionsPerWeek = isFoundations ? 3 : run.sessions_per_week || totalDays || 1;
+  const targetSessions = isFoundations ? weeks * 3 : null;
+  const complete = isFoundations
+    ? logged >= targetSessions
+    : isMesocycleComplete(run.start_date, weeks);
 
   return {
     id: run.id,
     startDate: run.start_date,
+    kind,
     variant: run.variant || "Standard",
     templateId: run.template.id,
     templateName: run.template.name,
@@ -144,14 +157,15 @@ export async function getActiveMesocycle() {
     week,
     isDeload: deload,
     rirTarget: rir,
-    guidance: weekGuidance(week, weeks, startingRir),
+    guidance: isFoundations
+      ? foundationsGuidance(logged, targetSessions)
+      : weekGuidance(week, weeks, startingRir),
     isComplete: complete,
-    sessionsLogged: sessionsLogged ?? 0,
+    sessionsLogged: logged,
     sessionsThisWeek: sessionsThisWeek ?? 0,
     totalDays,
-    // Sessions the user aims for each week. Chosen at start for
-    // range-cadence splits (Full Body); otherwise the split's day count.
-    sessionsPerWeek: run.sessions_per_week || totalDays || 1,
+    targetSessions,
+    sessionsPerWeek,
     nextDay: nextDay
       ? {
           position: nextDay.position,

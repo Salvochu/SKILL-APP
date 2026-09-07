@@ -8,6 +8,7 @@ import ExercisePicker from "@/components/log/ExercisePicker";
 import LastNumbers from "@/components/log/LastNumbers";
 import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
+import Explain from "@/components/Explain";
 import ConfirmModal from "@/components/ConfirmModal";
 import { formatSet, formatElapsed, EFFORT_LABELS } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
@@ -433,13 +434,22 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       {mesoContext ? (
         <div className="flex flex-col gap-1.5 rounded-card border border-accent/40 bg-accent-soft px-4 py-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-sm font-semibold text-accent">
-              Week {mesoContext.week} of {mesoContext.weeks}
-            </span>
-            <span className="text-sm text-accent">
-              {mesoContext.guidance?.headline ??
-                (mesoContext.isDeload ? "Deload week" : `Target effort: RIR ${mesoContext.rirTarget}`)}
-            </span>
+            {mesoContext.kind === "foundations" ? (
+              <span className="text-sm font-semibold text-accent">
+                {mesoContext.guidance?.headline ?? "Foundations"}
+              </span>
+            ) : (
+              <>
+                <span className="flex items-center gap-1 text-sm font-semibold text-accent">
+                  Week {mesoContext.week} of {mesoContext.weeks}
+                  <Explain k={mesoContext.isDeload ? "deload" : "mesocycle"} />
+                </span>
+                <span className="text-sm text-accent">
+                  {mesoContext.guidance?.headline ??
+                    (mesoContext.isDeload ? "Deload week" : `Target effort: RIR ${mesoContext.rirTarget}`)}
+                </span>
+              </>
+            )}
           </div>
           {mesoContext.guidance?.detail ? (
             <p className="text-sm text-fg">{mesoContext.guidance.detail}</p>
@@ -474,7 +484,13 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               onRemove={() => removeExercise(row.key)}
               onVideo={() => setVideoFor(row.exercise)}
               rirTarget={mesoContext?.rirTarget ?? null}
-              beatLastWeek={Boolean(mesoContext && mesoContext.week > 1 && !mesoContext.isDeload)}
+              beatLabel={
+                mesoContext?.kind === "foundations"
+                  ? "Beat last time"
+                  : mesoContext && mesoContext.week > 1 && !mesoContext.isDeload
+                    ? "Beat last week"
+                    : null
+              }
             />
           ))}
           <button
@@ -915,7 +931,7 @@ function IconClock(props) {
   );
 }
 
-function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
   const workSets = sets.filter((s) => !s.warmup);
   const best1rm = Math.max(0, ...workSets.map((s) => epley1rm(s.weight, s.reps)));
@@ -969,8 +985,8 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
           className="flex items-center gap-2 rounded-field border border-border bg-bg/40 px-3 py-2 text-left transition-colors hover:border-border-strong active:bg-accent-soft"
         >
           <span className="tabular flex-1 text-xs text-muted">
-            <span className={beatLastWeek ? "font-semibold text-accent" : "text-dim"}>
-              {beatLastWeek ? "Beat last week" : `Last${last?.date ? ` (${last.date})` : ""}`}:
+            <span className={beatLabel ? "font-semibold text-accent" : "text-dim"}>
+              {beatLabel ?? `Last${last?.date ? ` (${last.date})` : ""}`}:
             </span>{" "}
             {lastLine}
           </span>
@@ -986,11 +1002,11 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
         />
       ) : null}
 
-      <div className="grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-dim">
+      <div className="grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_3rem_2.25rem_1.5rem] items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-dim">
         <span>Set</span>
         <span>Weight ({unit})</span>
         <span>Reps</span>
-        <span className="text-center">RIR</span>
+        <span className="flex items-center justify-center gap-0.5">RIR <Explain k="rir" label="RIR" /></span>
         <span className="text-center">Log</span>
         <span />
       </div>
@@ -1003,7 +1019,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
         return (
         <div
           key={i}
-          className={`grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.25rem_1.5rem] items-center gap-1.5 rounded-field -mx-1.5 px-1.5 py-1 transition-colors ${
+          className={`grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_3rem_2.25rem_1.5rem] items-center gap-1.5 rounded-field -mx-1.5 px-1.5 py-1 transition-colors ${
             set.warmup ? "opacity-60" : set.completed ? "bg-accent-soft" : ""
           }`}
         >
@@ -1070,7 +1086,10 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLastWeek =
           </span>
         ) : null}
       </div>
-      <p className="text-[11px] text-dim">Tap a set number to mark it a warm-up. Warm-ups are not counted.</p>
+      <p className="flex items-center gap-1 text-[11px] text-dim">
+        Tap a set number to mark it a warm-up. Warm-ups are not counted.
+        <Explain k="warmup" />
+      </p>
 
       {row.showNote ? (
         <div className="rounded-field border border-border bg-bg/40 p-2">

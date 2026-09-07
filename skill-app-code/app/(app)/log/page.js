@@ -61,13 +61,18 @@ export default async function LogPage({ searchParams }) {
       getDayTemplateExercises(dayTemplateId, variant),
     ]);
     if (day) title = variant === "Standard" ? day.name : `${day.name} (${variant})`;
-    if (meso) title = `${title} . Week ${meso.week} of ${meso.weeks}${meso.isDeload ? " (deload)" : ""}`;
+    if (meso && meso.kind !== "foundations") {
+      title = `${title} . Week ${meso.week} of ${meso.weeks}${meso.isDeload ? " (deload)" : ""}`;
+    }
 
+    // Foundations keeps its fixed prescription every session; only a
+    // periodised mesocycle's deload week trims the set count.
+    const applyDeload = meso && meso.kind !== "foundations";
     preload = items
       .filter((it) => it.exercise)
       .map((it) => ({
         exercise: it.exercise,
-        sets: meso ? setsForWeek(it.sets, meso.week, meso.weeks) : it.sets,
+        sets: applyDeload ? setsForWeek(it.sets, meso.week, meso.weeks) : it.sets,
         reps: it.reps,
       }));
   } else if (exerciseId && byId.has(exerciseId)) {
@@ -92,6 +97,7 @@ export default async function LogPage({ searchParams }) {
       mesoContext={
         meso
           ? {
+              kind: meso.kind,
               week: meso.week,
               weeks: meso.weeks,
               isDeload: meso.isDeload,
