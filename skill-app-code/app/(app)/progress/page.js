@@ -17,6 +17,7 @@ import CompareExercises from "@/components/progress/CompareExercises";
 import MuscleVolume from "@/components/progress/MuscleVolume";
 import StrengthCard from "@/components/progress/StrengthCard";
 import LevelCard from "@/components/progress/LevelCard";
+import CollapsibleCard from "@/components/progress/CollapsibleCard";
 import RangeFilter from "@/components/progress/RangeFilter";
 import ShareProgress from "@/components/progress/ShareProgress";
 
@@ -137,25 +138,38 @@ async function ProgressBody({ searchParams }) {
         <ShareProgress stats={shareStats} muscles={shareMuscles} />
       </div>
 
-      <LevelCard journey={journey} />
+      {journey ? (
+        <CollapsibleCard
+          title="Level"
+          defaultOpen
+          aside={
+            <span className="font-semibold" style={{ color: journey.tierColor }}>
+              {journey.tier} · {journey.level}
+            </span>
+          }
+        >
+          <LevelCard journey={journey} />
+        </CollapsibleCard>
+      ) : null}
 
-      <StrengthCard strength={strength} records={records} unit={unit} lastCheck={lastCheck} />
+      {strength && strength.covered > 0 ? (
+        <CollapsibleCard
+          title="Your lifts"
+          aside={<span className="text-xs text-dim">{strength.covered} of 6 tested</span>}
+        >
+          <StrengthCard strength={strength} records={records} unit={unit} lastCheck={lastCheck} />
+        </CollapsibleCard>
+      ) : (
+        <StrengthCard strength={strength} records={records} unit={unit} lastCheck={lastCheck} />
+      )}
 
-      <Card title="Weekly sets by muscle" subtitle="Hard sets this week. Tap a group to see each muscle">
+      <CollapsibleCard title="Weekly sets by muscle">
         <MuscleVolume data={muscleVolume} />
-      </Card>
+      </CollapsibleCard>
 
       {hasTrends ? (
-        <details className="group flex flex-col rounded-card border border-border bg-surface">
-          <summary className="flex cursor-pointer list-none items-center justify-between p-4 [&::-webkit-details-marker]:hidden">
-            <span className="flex flex-col">
-              <span className="font-display text-base font-semibold text-fg">Trends</span>
-              <span className="text-xs text-dim">Volume and strength over time</span>
-            </span>
-            <IconChevron className="h-4 w-4 text-dim transition-transform group-open:rotate-90" />
-          </summary>
-
-          <div className="flex flex-col gap-4 border-t border-border p-4">
+        <CollapsibleCard title="Trends">
+          <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Suspense fallback={<div className="h-8" />}>
               <RangeFilter mesoAvailable={Boolean(mesoRange)} />
@@ -201,29 +215,9 @@ async function ProgressBody({ searchParams }) {
             </div>
           ) : null}
           </div>
-        </details>
+        </CollapsibleCard>
       ) : null}
     </>
-  );
-}
-
-function IconChevron(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m9 6 6 6-6 6" />
-    </svg>
-  );
-}
-
-function Card({ title, subtitle, children }) {
-  return (
-    <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
-      <div className="flex flex-col gap-0.5">
-        <h2 className="font-display text-base font-semibold text-fg">{title}</h2>
-        <p className="text-xs text-dim">{subtitle}</p>
-      </div>
-      {children}
-    </section>
   );
 }
 
