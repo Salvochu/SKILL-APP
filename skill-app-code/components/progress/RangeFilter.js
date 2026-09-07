@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { RANGE_PRESETS, DEFAULT_RANGE, parseRange } from "@/lib/dateRange";
+import { RANGE_PRESETS, DEFAULT_RANGE, MESO_TOKEN, parseRange } from "@/lib/dateRange";
 
 // Time-period control for the Progress page. Writes ?range=<token> and
 // lets the server recompute. Custom picks two dates and stores them as
 // range=custom:YYYY-MM-DD:YYYY-MM-DD.
-export default function RangeFilter() {
+export default function RangeFilter({ mesoAvailable = false }) {
   const router = useRouter();
   const params = useSearchParams();
   const current = params.get("range") || DEFAULT_RANGE;
   const resolved = parseRange(current);
   const isCustom = current.startsWith("custom:");
+  const isMeso = current === MESO_TOKEN;
 
   const [openCustom, setOpenCustom] = useState(isCustom);
   const [from, setFrom] = useState(resolved.custom?.from ?? "");
@@ -35,8 +36,17 @@ export default function RangeFilter() {
   return (
     <div className="flex flex-col gap-2">
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+        {mesoAvailable ? (
+          <Chip active={isMeso} onClick={() => setRange(MESO_TOKEN)}>
+            This mesocycle
+          </Chip>
+        ) : null}
         {RANGE_PRESETS.map((p) => (
-          <Chip key={p.token} active={!isCustom && current === p.token} onClick={() => setRange(p.token)}>
+          <Chip
+            key={p.token}
+            active={!isCustom && !isMeso && current === p.token}
+            onClick={() => setRange(p.token)}
+          >
             {p.label}
           </Chip>
         ))}

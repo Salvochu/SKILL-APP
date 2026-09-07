@@ -114,13 +114,13 @@ function nextThresholdFor(pattern, tierIndex, bodyweightKg, lift) {
   return pattern.thresholds[tierIndex] ?? null;
 }
 
-// patternBests: { [patternKey]: { lift, e1rm } } (already the best per pattern).
+// patternBests: { [patternKey]: { lift, exId, e1rm } } (best per pattern).
 export function computeStrengthScore(patternBests = {}, bodyweightKg = 0) {
   const patterns = MOVEMENT_PATTERNS.map((p) => {
     const b = patternBests[p.key];
     if (!b || !(b.e1rm > 0)) {
       return {
-        key: p.key, label: p.label, lift: null, e1rm: 0,
+        key: p.key, label: p.label, lift: null, exId: null, e1rm: 0,
         tierIndex: 0, tier: null, nextTier: null, toNext: null,
       };
     }
@@ -130,6 +130,7 @@ export function computeStrengthScore(patternBests = {}, bodyweightKg = 0) {
       key: p.key,
       label: p.label,
       lift: b.lift,
+      exId: b.exId ?? null,
       e1rm: Math.round(b.e1rm),
       tierIndex: ti,
       tier: TIER_NAMES[ti],

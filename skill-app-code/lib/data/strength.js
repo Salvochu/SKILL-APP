@@ -33,7 +33,7 @@ async function loadWindow(supabase) {
 
   const { data: sets, error } = await supabase
     .from("workout_sets")
-    .select("session_id, weight, reps, completed, is_warmup, exercise:exercises(name)")
+    .select("session_id, exercise_id, weight, reps, completed, is_warmup, exercise:exercises(name)")
     .in("session_id", sessionIds);
   if (error) throw new Error(`Failed to load strength score: ${error.message}`);
 
@@ -42,7 +42,7 @@ async function loadWindow(supabase) {
     if (s.completed === false || s.is_warmup) continue;
     const name = s.exercise?.name;
     if (!patternForExercise(name)) continue;
-    rows.push({ sessionId: s.session_id, name, weight: s.weight, reps: s.reps });
+    rows.push({ sessionId: s.session_id, exId: s.exercise_id, name, weight: s.weight, reps: s.reps });
   }
   return { rows, bodyweightKg };
 }
@@ -54,7 +54,7 @@ function scoreFrom(rows, bodyweightKg) {
     if (!key) continue;
     const e1 = epley1RM(setLoad(r.name, r.weight, bodyweightKg), r.reps);
     if (!(e1 > 0)) continue;
-    if (!bests[key] || e1 > bests[key].e1rm) bests[key] = { lift: r.name, e1rm: e1 };
+    if (!bests[key] || e1 > bests[key].e1rm) bests[key] = { lift: r.name, exId: r.exId, e1rm: e1 };
   }
   return computeStrengthScore(bests, bodyweightKg);
 }
@@ -70,6 +70,26 @@ export async function getStrengthScore() {
 
   const { rows, bodyweightKg } = await loadWindow(supabase);
   return { ...scoreFrom(rows, bodyweightKg), bodyweightKg, windowWeeks: WINDOW_WEEKS };
+}
+
+// The most recent Strength Check session, if any. Powers the "last
+// checked / re-test" line on the Progress page.
+export async function getLastStrengthCheck() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("workout_sessions")
+    .select("id, started_at")
+    .eq("split_id", "strength-check")
+    .order("started_at", { ascending: false })
+    .limit(1);
+  if (error) throw new Error(`Failed to load Strength Check: ${error.message}`);
+  const row = data?.[0];
+  return row ? { sessionId: row.id, date: row.started_at } : null;
 }
 
 // How the just-saved session moved the score.

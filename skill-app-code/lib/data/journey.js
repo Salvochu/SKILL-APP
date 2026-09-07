@@ -7,11 +7,25 @@ import { XP, journeyProgress } from "@/lib/journey";
 const dayKey = (iso) => new Date(iso).toISOString().slice(0, 10);
 const epley = (w, r) => (w > 0 && r > 0 && r <= 15 ? w * (1 + r / 30) : 0);
 
+// A session only earns "showed up" XP (and counts toward a consistent
+// week) if it is a real session: at least four completed working sets
+// and at least ten minutes on the clock. Stops a stream of ten-second
+// sessions from farming XP without punishing a genuine short heavy day
+// (the set count carries that case).
+const MIN_WORKING_SETS = 4;
+const MIN_DURATION_MS = 10 * 60 * 1000;
+
+function isSubstantial(session, workingSetCount) {
+  if ((workingSetCount ?? 0) < MIN_WORKING_SETS) return false;
+  if (!session?.started_at || !session?.completed_at) return false;
+  return new Date(session.completed_at) - new Date(session.started_at) >= MIN_DURATION_MS;
+}
+
 async function loadJourneyData(supabase) {
   const [sessionsRes, setsRes, mesoRes, bodyRes] = await Promise.all([
     supabase
       .from("workout_sessions")
-      .select("id, started_at, user_mesocycle_id")
+      .select("id, started_at, completed_at, user_mesocycle_id")
       .order("started_at", { ascending: true }),
     supabase
       .from("workout_sets")
@@ -38,15 +52,30 @@ function computeXp({ sessions, sets, mesos, body }, excludeSessionId = null) {
     sessions.filter((s) => s.id !== excludeSessionId).map((s) => [s.id, s]),
   );
 
-  const workoutCount = sessById.size;
+  // Completed working sets per session, so we can tell a real session
+  // from a throwaway one.
+  const workingSets = new Map();
+  for (const s of sets) {
+    if (s.completed === false || s.is_warmup || !sessById.has(s.session_id)) continue;
+    workingSets.set(s.session_id, (workingSets.get(s.session_id) ?? 0) + 1);
+  }
+  const substantialIds = new Set(
+    [...sessById.values()]
+      .filter((s) => isSubstantial(s, workingSets.get(s.id)))
+      .map((s) => s.id),
+  );
+
+  const workoutCount = substantialIds.size;
 
   // Consistent week: hit the active program's weekly target that week, or
-  // at least two sessions when no program was running.
+  // at least two sessions when no program was running. Only real sessions
+  // count toward the tally.
   const mesoTarget = new Map(
     mesos.map((m) => [m.id, m.sessions_per_week > 0 ? m.sessions_per_week : 3]),
   );
   const weeks = new Map();
   for (const s of sessById.values()) {
+    if (!substantialIds.has(s.id)) continue;
     const wk = weekKeyOf(s.started_at);
     const b = weeks.get(wk) ?? { count: 0, target: 2 };
     b.count += 1;

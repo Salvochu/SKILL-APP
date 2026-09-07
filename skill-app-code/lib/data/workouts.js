@@ -1,10 +1,12 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { computeWeekStreak } from "@/lib/training";
 
 // The signed-in user's workout history. RLS scopes every row to auth.uid(),
-// so these queries never need an explicit user filter.
-export async function getWorkoutSummary() {
+// so these queries never need an explicit user filter. Cached per request
+// so the dashboard's header line and mesocycle panel share one query.
+export const getWorkoutSummary = cache(async function getWorkoutSummary() {
   const supabase = await createClient();
 
   const [sessionsRes, setsRes] = await Promise.all([
@@ -40,7 +42,7 @@ export async function getWorkoutSummary() {
     streakWeeks: streak.current,
     longestStreakWeeks: streak.longest,
   };
-}
+});
 
 // Just the session list (id, title, date), for the "show all" history
 // view: no sets query needed, so it is far cheaper than getWorkoutSummary
