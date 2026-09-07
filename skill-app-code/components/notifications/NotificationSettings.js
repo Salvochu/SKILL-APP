@@ -227,6 +227,12 @@ export default function NotificationSettings({ initialPrefs }) {
             onChange={(v) => patch({ restTimerEnabled: v })}
           />
           <Toggle
+            label="Form videos in the logger"
+            body="Keep a small video next to each exercise while you log, instead of tapping to open it. Handy while you are still learning the lifts."
+            checked={prefs.inlineVideos}
+            onChange={(v) => patch({ inlineVideos: v })}
+          />
+          <Toggle
             label="Unfinished workout reminder"
             body="If a workout is still running 90 minutes after you started, prompt to finish or discard it next time you open the app"
             checked={prefs.unfinishedWorkout}

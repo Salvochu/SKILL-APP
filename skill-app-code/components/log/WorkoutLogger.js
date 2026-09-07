@@ -10,12 +10,13 @@ import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
 import Explain from "@/components/Explain";
 import ConfirmModal from "@/components/ConfirmModal";
-import { formatSet, formatElapsed, EFFORT_LABELS } from "@/lib/training";
+import { formatSet, formatElapsed, EFFORT_LABELS, startingWeightHint } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
 import { buildShareImageBlob } from "@/lib/shareCard";
 import { toKg, fromKg, formatWeight } from "@/lib/units";
 import { tierColorFor } from "@/lib/strength";
+import { loomEmbedUrl } from "@/lib/exercises";
 
 // Time-seeded so a resumed draft's saved keys (from a previous page
 // load) can never collide with new ones generated after a reload.
@@ -59,7 +60,7 @@ function makeExercise(exercise, targetSets = 3, targetReps = "", last = null) {
   };
 }
 
-export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial, unit = "kg", restTimer = true }) {
+export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial, unit = "kg", restTimer = true, inlineVideos = false }) {
   const U = unit === "lb" ? "lb" : "kg";
   const router = useRouter();
   const [title, setTitle] = useState(initial.title);
@@ -483,6 +484,12 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               onRemoveSet={(i) => removeSet(row.key, i)}
               onRemove={() => removeExercise(row.key)}
               onVideo={() => setVideoFor(row.exercise)}
+              inlineVideo={inlineVideos}
+              startHint={
+                mesoContext?.kind === "foundations"
+                  ? startingWeightHint(row.exercise.equipment)
+                  : null
+              }
               rirTarget={mesoContext?.rirTarget ?? null}
               beatLabel={
                 mesoContext?.kind === "foundations"
@@ -864,7 +871,10 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
       </section>
 
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">How hard was this workout?</h2>
+        <h2 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-dim">
+          How hard was this workout?
+          <Explain k="effort" />
+        </h2>
         <div className="flex gap-2">
           {[1, 2, 3, 4, 5].map((n) => (
             <button
@@ -931,8 +941,9 @@ function IconClock(props) {
   );
 }
 
-function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
+  const embedUrl = inlineVideo && exercise.video_url ? loomEmbedUrl(exercise.video_url) : null;
   const workSets = sets.filter((s) => !s.warmup);
   const best1rm = Math.max(0, ...workSets.map((s) => epley1rm(s.weight, s.reps)));
   const volume = workSets.reduce(
@@ -968,7 +979,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
             ) : null}
           </span>
         </div>
-        {exercise.video_url ? (
+        {exercise.video_url && !inlineVideo ? (
           <button type="button" onClick={onVideo} aria-label="Watch form video" className="rounded-field p-1.5 text-dim hover:text-fg">
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M8 5.5v13l11-6.5z" /></svg>
           </button>
@@ -977,6 +988,38 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </div>
+
+      {embedUrl ? (
+        <div className="relative w-full max-w-[240px] overflow-hidden rounded-field border border-border bg-black">
+          <div className="aspect-video">
+            <iframe
+              src={embedUrl}
+              title={`${exercise.name} form video`}
+              loading="lazy"
+              allowFullScreen
+              className="h-full w-full"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={onVideo}
+            aria-label="Open video full size"
+            className="absolute right-1 top-1 rounded bg-black/60 p-1 text-white/90 transition-colors hover:bg-black/80"
+          >
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg>
+          </button>
+        </div>
+      ) : exercise.video_url && inlineVideo ? (
+        <button
+          type="button"
+          onClick={onVideo}
+          className="self-start text-xs font-medium text-accent hover:underline"
+        >
+          Watch form video
+        </button>
+      ) : null}
 
       {lastLine ? (
         <button
@@ -992,6 +1035,10 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
           </span>
           <IconClock className="h-3.5 w-3.5 shrink-0 text-dim" />
         </button>
+      ) : startHint ? (
+        <p className="rounded-field border border-accent/20 bg-accent-soft/40 px-3 py-2 text-xs text-muted">
+          {startHint}
+        </p>
       ) : null}
 
       {showHistory ? (

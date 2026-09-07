@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getExercises } from "@/lib/data/exercises";
-import { MUSCLE_ORDER } from "@/lib/exercises";
+import { getBeginnerContext } from "@/lib/data/profile";
+import { MUSCLE_ORDER, BEGINNER_STAPLE_NAMES } from "@/lib/exercises";
 import LibraryBrowser from "@/components/library/LibraryBrowser";
+import BeginnerStaples from "@/components/library/BeginnerStaples";
 
 export const metadata = { title: "Exercise Library" };
 
@@ -25,8 +27,16 @@ export default function ExerciseLibraryPage() {
 }
 
 async function LibraryList() {
-  const exercises = await getExercises();
-  return <LibraryBrowser exercises={exercises} noun="exercise" />;
+  const [exercises, beginner] = await Promise.all([getExercises(), getBeginnerContext()]);
+  const staples = beginner.isBeginner
+    ? BEGINNER_STAPLE_NAMES.map((n) => exercises.find((e) => e.name === n)).filter(Boolean)
+    : [];
+  return (
+    <div className="flex flex-col gap-6">
+      {staples.length > 0 ? <BeginnerStaples exercises={staples} /> : null}
+      <LibraryBrowser exercises={exercises} noun="exercise" />
+    </div>
+  );
 }
 
 function BackLink() {

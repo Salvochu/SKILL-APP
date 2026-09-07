@@ -10,6 +10,7 @@ export const DEFAULT_PREFS = {
   restTimerDone: false,
   unfinishedWorkout: true,
   restTimerEnabled: true,
+  inlineVideos: false,
 };
 
 function fromRow(row) {
@@ -23,6 +24,7 @@ function fromRow(row) {
     restTimerDone: row.rest_timer_done ?? false,
     unfinishedWorkout: row.unfinished_workout ?? true,
     restTimerEnabled: row.rest_timer_enabled ?? true,
+    inlineVideos: row.inline_videos ?? false,
   };
 }
 

@@ -73,8 +73,12 @@ export const getBeginnerContext = cache(async () => {
     : null;
   const showStrengthCheck =
     !isBeginner || (daysSinceJoin != null && daysSinceJoin >= 30);
+  // Whether to trim the more advanced surfaces (volume trends, the
+  // strength benchmark, dense explainers). Same 30-day window as the
+  // Strength Check.
+  const simplified = isBeginner && !(daysSinceJoin != null && daysSinceJoin >= 30);
 
-  return { isBeginner, daysSinceJoin, showStrengthCheck };
+  return { isBeginner, daysSinceJoin, showStrengthCheck, simplified };
 });
 
 // Whether the onboarding quiz (components/onboarding) should show. No

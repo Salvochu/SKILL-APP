@@ -80,6 +80,23 @@ export function formatSet(s, unit) {
 // The 1 to 5 post-workout effort rating (workout_sessions.perceived_effort).
 export const EFFORT_LABELS = { 1: "Very easy", 2: "Easy", 3: "Moderate", 4: "Hard", 5: "Very hard" };
 
+// A concrete "where do I start" cue for someone doing a lift for the
+// first time, keyed on equipment. Deliberately errs light - a beginner
+// gains from almost any load and adds weight quickly.
+export function startingWeightHint(equipment) {
+  switch (String(equipment || "").toLowerCase()) {
+    case "barbell":
+      return "First time? Use just the empty bar and get the movement right. You will add weight fast.";
+    case "bodyweight":
+      return "Hold a straight line from head to heels. Stop the moment your form slips.";
+    case "cable":
+    case "machine":
+      return "Start light - pick a weight where the last rep looks the same as the first.";
+    default:
+      return "Pick a weight you could do for about 15 clean reps. Better too light than too heavy this week.";
+  }
+}
+
 // Seconds -> "12:34" or, past an hour, "1:02:05". Shared by the Log
 // screen's own timer and the floating ActiveWorkoutBar so a resumed
 // workout's clock reads identically in both places.

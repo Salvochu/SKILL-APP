@@ -94,6 +94,7 @@ export default async function LogPage({ searchParams }) {
       history={history}
       unit={unit}
       restTimer={prefs.restTimerEnabled}
+      inlineVideos={prefs.inlineVideos}
       mesoContext={
         meso
           ? {
