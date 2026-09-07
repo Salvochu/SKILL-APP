@@ -127,18 +127,18 @@ export default function OnboardingQuiz({ show = false }) {
     fd.set("fitnessGoal", answers.fitnessGoal);
     fd.set("experienceLevel", answers.experienceLevel);
     fd.set("phone", answers.phone.trim() ? `${dial} ${answers.phone.trim()}`.trim() : "");
-    // Save the profile, but do NOT mark onboarding complete yet - that
-    // flips needsOnboarding() and unmounts this flow before the "you're
-    // all set" handoff is seen. Mark it done when they leave the handoff.
+    // Mark onboarding done now, so closing the app on the handoff screen
+    // does not drop them back at question 1. `latched` keeps this flow
+    // mounted through the re-render that follows.
+    fd.set("completeOnboarding", "1");
     await saveProfile(fd);
     setSaving(false);
     setDone(true);
   }
 
-  // Mark onboarding done and close the flow. Navigation (when there is
-  // any) is a real <Link>, so it survives this component unmounting.
+  // Close the flow. Navigation (when there is any) is a real <Link>, so
+  // it survives this component unmounting.
   function leaveHandoff() {
-    completeOnboarding();
     setDismissed(true);
   }
 

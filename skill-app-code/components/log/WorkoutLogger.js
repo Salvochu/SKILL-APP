@@ -16,7 +16,7 @@ import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
 import { buildShareImageBlob } from "@/lib/shareCard";
 import { toKg, fromKg, formatWeight } from "@/lib/units";
 import { tierColorFor } from "@/lib/strength";
-import { loomEmbedUrl } from "@/lib/exercises";
+import { loomEmbedUrl, isTimeBasedExercise } from "@/lib/exercises";
 
 // Time-seeded so a resumed draft's saved keys (from a previous page
 // load) can never collide with new ones generated after a reload.
@@ -491,6 +491,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
                   : null
               }
               rirTarget={mesoContext?.rirTarget ?? null}
+              showRir={mesoContext?.kind !== "foundations"}
               beatLabel={
                 mesoContext?.kind === "foundations"
                   ? "Beat last time"
@@ -520,7 +521,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </p>
       ) : null}
 
-      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 flex flex-col gap-2 md:bottom-4">
+      <div className="sticky bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-40 flex flex-col gap-2 md:bottom-4">
         {showRest ? (
           <RestTimer
             key={restKey}
@@ -941,9 +942,20 @@ function IconClock(props) {
   );
 }
 
-function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, showRir = true, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
   const embedUrl = inlineVideo && exercise.video_url ? loomEmbedUrl(exercise.video_url) : null;
+  // Isometric holds (planks and the like) are logged in seconds, with no
+  // load: hide the Weight and RIR fields and label the middle column
+  // "Time".
+  const timeBased = isTimeBasedExercise(exercise.name);
+  const showWeight = !timeBased;
+  const withRir = showRir && !timeBased;
+  const gridCls = timeBased
+    ? "grid grid-cols-[2rem_minmax(0,1fr)_2.25rem_1.5rem] items-center gap-1.5"
+    : withRir
+      ? "grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_3rem_2.25rem_1.5rem] items-center gap-1.5"
+      : "grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.25rem_1.5rem] items-center gap-1.5";
   const workSets = sets.filter((s) => !s.warmup);
   const best1rm = Math.max(0, ...workSets.map((s) => epley1rm(s.weight, s.reps)));
   const volume = workSets.reduce(
@@ -962,8 +974,8 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
 
   const targetParts = [];
   if (row.targetSets) targetParts.push(`${row.targetSets} sets`);
-  if (row.targetReps) targetParts.push(`${row.targetReps} reps`);
-  if (rirTarget != null) targetParts.push(`RIR ${rirTarget}`);
+  if (row.targetReps) targetParts.push(timeBased ? `${row.targetReps}` : `${row.targetReps} reps`);
+  if (rirTarget != null && !timeBased) targetParts.push(`RIR ${rirTarget}`);
 
   return (
     <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
@@ -1049,11 +1061,13 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
         />
       ) : null}
 
-      <div className="grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_3rem_2.25rem_1.5rem] items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-dim">
+      <div className={`${gridCls} text-[11px] font-semibold uppercase tracking-wider text-dim`}>
         <span>Set</span>
-        <span>Weight ({unit})</span>
-        <span>Reps</span>
-        <span className="flex items-center justify-center gap-0.5">RIR <Explain k="rir" label="RIR" /></span>
+        {showWeight ? <span>Weight ({unit})</span> : null}
+        <span>{timeBased ? "Time (s)" : "Reps"}</span>
+        {withRir ? (
+          <span className="flex items-center justify-center gap-0.5">RIR <Explain k="rir" label="RIR" /></span>
+        ) : null}
         <span className="text-center">Log</span>
         <span />
       </div>
@@ -1066,7 +1080,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
         return (
         <div
           key={i}
-          className={`grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_3rem_2.25rem_1.5rem] items-center gap-1.5 rounded-field -mx-1.5 px-1.5 py-1 transition-colors ${
+          className={`${gridCls} rounded-field -mx-1.5 px-1.5 py-1 transition-colors ${
             set.warmup ? "opacity-60" : set.completed ? "bg-accent-soft" : ""
           }`}
         >
@@ -1083,28 +1097,34 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
           >
             {set.warmup ? "W" : sets.slice(0, i + 1).filter((x) => !x.warmup).length}
           </button>
-          <input
-            type="number"
-            inputMode="decimal"
-            value={set.weight}
-            onChange={(e) => onPatchSet(i, { weight: e.target.value })}
-            className={`tabular w-full rounded-field border px-2 py-1.5 text-sm text-fg focus:border-accent ${fieldCls}`}
-          />
+          {showWeight ? (
+            <input
+              type="number"
+              inputMode="decimal"
+              value={set.weight}
+              onChange={(e) => onPatchSet(i, { weight: e.target.value })}
+              aria-label={`Set ${i + 1} weight`}
+              className={`tabular w-full rounded-field border px-2 py-1.5 text-sm text-fg focus:border-accent ${fieldCls}`}
+            />
+          ) : null}
           <input
             type="number"
             inputMode="numeric"
             value={set.reps}
             onChange={(e) => onPatchSet(i, { reps: e.target.value })}
+            aria-label={`Set ${i + 1} ${timeBased ? "seconds" : "reps"}`}
             className={`tabular w-full rounded-field border px-2 py-1.5 text-sm text-fg focus:border-accent ${fieldCls}`}
           />
-          <input
-            type="number"
-            inputMode="numeric"
-            value={set.rir}
-            onChange={(e) => onPatchSet(i, { rir: e.target.value })}
-            aria-label={`Set ${i + 1} reps in reserve`}
-            className={`tabular w-full rounded-field border px-1.5 py-1.5 text-center text-sm text-fg focus:border-accent ${fieldCls}`}
-          />
+          {withRir ? (
+            <input
+              type="number"
+              inputMode="numeric"
+              value={set.rir}
+              onChange={(e) => onPatchSet(i, { rir: e.target.value })}
+              aria-label={`Set ${i + 1} reps in reserve`}
+              className={`tabular w-full rounded-field border px-1.5 py-1.5 text-center text-sm text-fg focus:border-accent ${fieldCls}`}
+            />
+          ) : null}
           <button
             type="button"
             onClick={() => onToggleSet(i)}

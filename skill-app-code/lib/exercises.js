@@ -20,6 +20,24 @@ export const BEGINNER_STAPLE_NAMES = [
   "Plank",
 ];
 
+// Isometric holds are timed, not loaded: you log seconds, not weight and
+// reps. They must never feed the 1RM / personal-record maths (a "38 kg
+// plank PR" is nonsense), and the logger shows them a Time field instead
+// of Weight / Reps / RIR. Matched by name so a newly added hold is
+// covered without a migration.
+export function isTimeBasedExercise(name) {
+  const n = String(name || "").toLowerCase();
+  if (!n) return false;
+  return (
+    /\bplank\b/.test(n) ||
+    /\bhold\b/.test(n) ||
+    /\bdead ?hang\b/.test(n) ||
+    /\bwall sit\b/.test(n) ||
+    /\bl-?sit\b/.test(n) ||
+    /\bhollow body\b/.test(n)
+  );
+}
+
 // The specific muscles under each parent group, in display order. Mirrors
 // the `muscles` table (migration 0017). One source of truth: the taxonomy
 // maps and the volume model both read this list.

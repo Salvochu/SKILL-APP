@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { isTimeBasedExercise } from "@/lib/exercises";
 
 // Epley 1RM estimate. Only meaningful in the low-rep range; above ~15
 // reps it balloons and stops reflecting strength, so those sets are not
@@ -21,7 +22,12 @@ async function loadLoadedSets(supabase) {
   const startedAt = new Map((sessionsRes.data ?? []).map((s) => [s.id, s.started_at]));
   return (setsRes.data ?? [])
     .filter(
-      (s) => s.completed !== false && !s.is_warmup && Number(s.weight) > 0 && Number(s.reps) > 0,
+      (s) =>
+        s.completed !== false &&
+        !s.is_warmup &&
+        Number(s.weight) > 0 &&
+        Number(s.reps) > 0 &&
+        !isTimeBasedExercise(s.exercise?.name),
     )
     .map((s) => ({
       sessionId: s.session_id,
@@ -92,7 +98,12 @@ export async function getSessionPRs(sessionId) {
 
   const prs = [];
   for (const [exId, best] of thisSession) {
-    if (best.e1 > (bestBefore.get(exId) ?? 0) + 0.01) {
+    // The first time a lift is ever logged sets a baseline, not a
+    // personal record - you can only beat a number you already have.
+    // Without this, a beginner's very first session shows every lift as
+    // a "new PR".
+    if (!bestBefore.has(exId)) continue;
+    if (best.e1 > bestBefore.get(exId) + 0.01) {
       prs.push({ name: best.name, weight: best.weight, reps: best.reps, e1rm: Math.round(best.e1) });
     }
   }

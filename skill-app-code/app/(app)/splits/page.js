@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getSplits } from "@/lib/data/splits";
+import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getBeginnerContext } from "@/lib/data/profile";
 import SplitsList from "@/components/splits/SplitsList";
 
@@ -21,7 +22,11 @@ export default function SplitsPage() {
 }
 
 async function Body() {
-  const [splits, beginner] = await Promise.all([getSplits(), getBeginnerContext()]);
+  const [splits, beginner, active] = await Promise.all([
+    getSplits(),
+    getBeginnerContext(),
+    getActiveMesocycle(),
+  ]);
 
   const strengthCheck = beginner.showStrengthCheck
     ? splits.find((s) => s.id === "strength-check") ?? null
@@ -29,8 +34,11 @@ async function Body() {
   const browsable = splits.filter(
     (s) => s.section !== "benchmark" && s.section !== "foundations",
   );
+  // Only offer Foundations while a beginner has no program running -
+  // starting it again would abandon the one in progress.
   const foundationsSplit = splits.find((s) => s.id === "foundations") ?? null;
-  const foundations = beginner.isBeginner && foundationsSplit ? foundationsSplit : null;
+  const foundations =
+    beginner.isBeginner && !active && foundationsSplit ? foundationsSplit : null;
 
   return (
     <SplitsList

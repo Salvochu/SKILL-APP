@@ -112,7 +112,11 @@ function computeXp({ sessions, sets, mesos, body }, excludeSessionId = null) {
   let prCount = 0;
   for (const e of entries) {
     const prev = runningBest.get(e.exId) ?? 0;
-    if (e.e1 > prev + 0.01) prCount += 1;
+    // The first day a lift appears is a baseline, not a PR. Only a day
+    // that beats an earlier one earns the XP - otherwise a beginner's
+    // first session alone would bank a PR for every pattern lift and
+    // jump several levels on day one.
+    if (runningBest.has(e.exId) && e.e1 > prev + 0.01) prCount += 1;
     runningBest.set(e.exId, Math.max(prev, e.e1));
   }
 

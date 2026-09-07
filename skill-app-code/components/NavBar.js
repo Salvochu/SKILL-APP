@@ -69,7 +69,7 @@ export default function NavBar({ streak = null }) {
           safe-area inset on purpose: right at that boundary, a tap can
           still land in iOS's own home-indicator gesture strip instead of
           the link under it. */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 pb-[calc(env(safe-area-inset-bottom)+1rem)] backdrop-blur md:hidden">
         <div className="mx-auto grid max-w-2xl grid-cols-3">
           {TABS.map((tab) => {
             const active = isActive(pathname, tab.href);

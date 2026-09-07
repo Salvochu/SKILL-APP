@@ -3,6 +3,8 @@ import MusclePill from "@/components/MusclePill";
 
 // A shortlist of the lifts a beginner should learn first, pinned above
 // the full library so 135 exercises are not the first thing they see.
+// Laid out as a horizontal scroller so it stays one screen tall no
+// matter how many staples there are.
 export default function BeginnerStaples({ exercises }) {
   if (!exercises.length) return null;
   return (
@@ -13,40 +15,32 @@ export default function BeginnerStaples({ exercises }) {
           The core lifts from the Foundations program. Get comfortable here first.
         </p>
       </div>
-      <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
-        {exercises.map((e) => (
-          <li key={e.id}>
-            <Link
-              href={`/library/exercises/${e.id}`}
-              className="flex items-center gap-3 bg-surface px-3 py-2.5 transition-colors hover:bg-surface-2"
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-fg">{e.name}</span>
-                <span className="mt-1 flex flex-wrap items-center gap-2">
-                  <MusclePill muscle={e.muscle} />
-                  <span className="text-xs text-dim">{e.equipment}</span>
-                </span>
-              </span>
-              {e.video_url ? (
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-                  <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </span>
-              ) : null}
-              <IconChevron className="h-3.5 w-3.5 shrink-0 text-dim" />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
 
-function IconChevron(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m9 6 6 6-6 6" />
-    </svg>
+      <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <ul className="flex gap-2.5">
+          {exercises.map((e) => (
+            <li key={e.id} className="shrink-0">
+              <Link
+                href={`/library/exercises/${e.id}`}
+                className="flex h-full w-36 flex-col gap-2 rounded-field border border-border bg-surface p-3 transition-colors hover:border-border-strong hover:bg-surface-2"
+              >
+                <span className="flex items-start justify-between gap-1">
+                  <MusclePill muscle={e.muscle} />
+                  {e.video_url ? (
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                      <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="currentColor">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </span>
+                  ) : null}
+                </span>
+                <span className="text-sm font-medium leading-tight text-fg">{e.name}</span>
+                <span className="mt-auto text-xs text-dim">{e.equipment}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
