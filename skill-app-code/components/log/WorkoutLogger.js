@@ -21,6 +21,10 @@ import { toKg, fromKg, formatWeight } from "@/lib/units";
 let keySeq = 0;
 const nextKey = () => `x${Date.now().toString(36)}${++keySeq}`;
 
+// The movement patterns the Strength Check actually tests, so its finish
+// recap does not pull in unrelated lifts from the 6-week score window.
+const BENCHMARK_PATTERNS = ["squat", "hinge", "hpush", "vpull"];
+
 function epley1rm(weight, reps) {
   const w = Number(weight);
   const r = Number(reps);
@@ -698,6 +702,15 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
   const established = (extras?.workoutCount ?? 1) >= 2;
   const benchmarkRecap = isBenchmark && s && s.covered > 0;
   const hasScore = established && s && s.covered > 0 && !benchmarkRecap;
+  // The headline "+delta" is only meaningful on a repeat check, where every
+  // tested lift already had a score to move from. On the first check the
+  // jump is just lifts entering the window, so hide it.
+  const benchmarkRepeat =
+    benchmarkRecap &&
+    s.before > 0 &&
+    s.patterns
+      .filter((p) => p.e1rm > 0 && BENCHMARK_PATTERNS.includes(p.key))
+      .every((p) => ((s.beforePatterns ?? []).find((b) => b.key === p.key)?.e1rm ?? 0) > 0);
 
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -735,16 +748,21 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
             <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Strength Check</h2>
             <span className="tabular text-sm font-semibold text-fg">
               {scoreU(s.after)} {unit}
-              {s.delta > 0 ? <span className="ml-1.5 text-good">+{scoreU(s.delta)}</span> : null}
+              {benchmarkRepeat && s.delta > 0 ? (
+                <span className="ml-1.5 text-good">+{scoreU(s.delta)}</span>
+              ) : null}
             </span>
           </div>
           <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
             {s.patterns
-              .filter((p) => p.e1rm > 0)
+              .filter((p) => p.e1rm > 0 && BENCHMARK_PATTERNS.includes(p.key))
               .map((p) => {
                 const prev = (s.beforePatterns ?? []).find((b) => b.key === p.key) ?? null;
-                const gain = prev ? p.e1rm - prev.e1rm : 0;
-                const moved = prev && prev.tier && prev.tierIndex !== p.tierIndex;
+                // Only show a change against a real previous check, not the
+                // first time a lift enters the score (prev e1RM of 0).
+                const hadPrev = prev && prev.e1rm > 0;
+                const gain = hadPrev ? p.e1rm - prev.e1rm : 0;
+                const moved = hadPrev && prev.tier && prev.tierIndex !== p.tierIndex;
                 return (
                   <li key={p.key} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">
                     <span className="min-w-0 flex-1">
