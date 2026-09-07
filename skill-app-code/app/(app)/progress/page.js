@@ -7,7 +7,7 @@ import { getStrengthScore, getLastStrengthCheck } from "@/lib/data/strength";
 import { getJourney } from "@/lib/data/journey";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
-import { getUnitPreference } from "@/lib/data/profile";
+import { getUnitPreference, getBeginnerContext } from "@/lib/data/profile";
 import { fromKg, unitLabel } from "@/lib/units";
 import { parseRange, resolveMesoRange, MESO_TOKEN } from "@/lib/dateRange";
 import { compact, shortDate } from "@/components/progress/chartkit";
@@ -75,7 +75,7 @@ async function ProgressBody({ searchParams }) {
   const mesoRange = resolveMesoRange(activeMeso?.startDate);
   const range = sp.range === MESO_TOKEN && mesoRange ? mesoRange : parseRange(sp.range);
 
-  const [rawData, muscleVolume, records, strength, journey, lastCheck, unit] =
+  const [rawData, muscleVolume, records, strength, journey, lastCheck, beginner, unit] =
     await Promise.all([
       getProgressData(range),
       getWeeklyMuscleVolume(),
@@ -83,8 +83,10 @@ async function ProgressBody({ searchParams }) {
       getStrengthScore(),
       getJourney(),
       getLastStrengthCheck(),
+      getBeginnerContext(),
       getUnitPreference(),
     ]);
+  const showStrengthCheck = beginner.showStrengthCheck;
 
   if (rawData.workouts === 0) {
     return (
@@ -155,13 +157,29 @@ async function ProgressBody({ searchParams }) {
       {strength && strength.covered > 0 ? (
         <CollapsibleCard
           title="Your lifts"
-          aside={<span className="text-xs text-dim">{strength.covered} of 6 tested</span>}
+          aside={
+            <span className="text-xs text-dim">
+              {strength.covered} of 6 {showStrengthCheck ? "tested" : "trained"}
+            </span>
+          }
         >
-          <StrengthCard strength={strength} records={records} unit={unit} lastCheck={lastCheck} />
+          <StrengthCard
+            strength={strength}
+            records={records}
+            unit={unit}
+            lastCheck={lastCheck}
+            showStrengthCheck={showStrengthCheck}
+          />
         </CollapsibleCard>
-      ) : (
-        <StrengthCard strength={strength} records={records} unit={unit} lastCheck={lastCheck} />
-      )}
+      ) : showStrengthCheck ? (
+        <StrengthCard
+          strength={strength}
+          records={records}
+          unit={unit}
+          lastCheck={lastCheck}
+          showStrengthCheck
+        />
+      ) : null}
 
       <CollapsibleCard title="Weekly sets by muscle">
         <MuscleVolume data={muscleVolume} />

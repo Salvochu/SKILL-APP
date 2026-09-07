@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import MusclePill from "@/components/MusclePill";
+import Explain from "@/components/Explain";
 import { shortDate } from "@/components/progress/chartkit";
 import { formatWeight, fromKg, unitLabel } from "@/lib/units";
 import { tierColorFor } from "@/lib/strength";
@@ -19,7 +20,13 @@ function agoLabel(iso) {
 // Where your main lifts stand right now, framed around the Strength Check.
 // Tested lifts show as a bar along the Beginner to Elite scale; the rest
 // collapse to one line. The full personal-record list is a tap away.
-export default function StrengthCard({ strength, records = [], unit = "kg", lastCheck = null }) {
+export default function StrengthCard({
+  strength,
+  records = [],
+  unit = "kg",
+  lastCheck = null,
+  showStrengthCheck = true,
+}) {
   const [showAll, setShowAll] = useState(false);
   const U = unitLabel(unit);
   const conv = (kg) => Math.round(fromKg(kg, unit));
@@ -32,8 +39,11 @@ export default function StrengthCard({ strength, records = [], unit = "kg", last
     ? `Strength Check ${agoLabel(lastCheck.date)}`
     : "No Strength Check yet";
 
-  // Nothing tested at all: the card is a single invitation to benchmark.
+  // Nothing tested at all, and the Strength Check is available: the card
+  // is a single invitation to benchmark. (When it is not available - a
+  // brand-new beginner - the page renders nothing here.)
   if (tested.length === 0) {
+    if (!showStrengthCheck) return null;
     return (
       <section className="flex flex-col items-start gap-3 rounded-card border border-border bg-surface p-5">
         <h2 className="font-display text-base font-semibold text-fg">Take your first Strength Check</h2>
@@ -52,15 +62,17 @@ export default function StrengthCard({ strength, records = [], unit = "kg", last
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs text-dim">{checkLine}</span>
-        <Link
-          href="/splits?view=strength-check"
-          className="shrink-0 rounded-field border border-border px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:border-border-strong"
-        >
-          {lastCheck ? "Re-test" : "Start"}
-        </Link>
-      </div>
+      {showStrengthCheck ? (
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-dim">{checkLine}</span>
+          <Link
+            href="/splits?view=strength-check"
+            className="shrink-0 rounded-field border border-border px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:border-border-strong"
+          >
+            {lastCheck ? "Re-test" : "Start"}
+          </Link>
+        </div>
+      ) : null}
 
       <ul className="flex flex-col gap-3.5">
         {tested.map((p) => {
@@ -100,10 +112,19 @@ export default function StrengthCard({ strength, records = [], unit = "kg", last
       <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-xs">
         <span className="text-dim">
           {untested > 0
-            ? `${untested} lift${untested === 1 ? "" : "s"} not tested yet`
-            : "All six patterns tested"}
+            ? `${untested} lift${untested === 1 ? "" : "s"} ${
+                showStrengthCheck ? "not tested yet" : "not trained lately"
+              }`
+            : showStrengthCheck
+              ? "All six patterns tested"
+              : "All six patterns trained"}
         </span>
-        {totalLabel ? <span className="tabular text-dim">total {totalLabel}</span> : null}
+        {totalLabel ? (
+          <span className="tabular flex items-center gap-1 text-dim">
+            total {totalLabel}
+            <Explain k="strengthScore" />
+          </span>
+        ) : null}
       </div>
 
       {records.length > 0 ? (

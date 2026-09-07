@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import MusclePill from "@/components/MusclePill";
+import Explain from "@/components/Explain";
 import { muscleKey } from "@/lib/exercises";
 
 // Hard sets per muscle this week against a reference band. The RP-style
@@ -44,8 +45,9 @@ export default function MuscleVolume({ data }) {
         ))}
       </ul>
 
-      <p className="text-xs text-dim">
+      <p className="flex items-center gap-1 text-xs text-dim">
         Shaded band: {target.low} to {target.high} hard sets, a typical range for growth.
+        <Explain k="hardsets" />
       </p>
     </div>
   );

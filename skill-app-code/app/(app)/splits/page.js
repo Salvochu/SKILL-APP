@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getSplits } from "@/lib/data/splits";
 import { getMesocycleTemplates, getActiveMesocycle } from "@/lib/data/mesocycles";
+import { getBeginnerContext } from "@/lib/data/profile";
 import SplitsBrowser from "@/components/splits/SplitsBrowser";
 
 export const metadata = { title: "Train" };
@@ -23,12 +24,17 @@ export default function SplitsPage({ searchParams }) {
 async function SplitsList({ searchParams }) {
   const sp = (await searchParams) ?? {};
   const initialView = typeof sp.view === "string" ? sp.view : null;
-  const [splits, mesocycleTemplates, active] = await Promise.all([
+  const [splits, mesocycleTemplates, active, beginner] = await Promise.all([
     getSplits(),
     getMesocycleTemplates(),
     getActiveMesocycle(),
+    getBeginnerContext(),
   ]);
-  const strengthCheck = splits.find((s) => s.id === "strength-check") ?? null;
+  // The Strength Check stays hidden for a new beginner - working up to a
+  // heavy top set is not a week-one exercise.
+  const strengthCheck = beginner.showStrengthCheck
+    ? splits.find((s) => s.id === "strength-check") ?? null
+    : null;
   const browsable = splits.filter((s) => s.section !== "benchmark");
   const activeProgram =
     active && !active.isComplete ? { splitName: active.splitName, week: active.week, weeks: active.weeks } : null;

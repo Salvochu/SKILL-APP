@@ -6,6 +6,7 @@ import { abandonMesocycle } from "@/app/(app)/dashboard/actions";
 import TapLink from "@/components/TapLink";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 import ProgressBar from "@/components/ProgressBar";
+import Explain from "@/components/Explain";
 import MesocycleComplete from "@/components/dashboard/MesocycleComplete";
 
 export default function MesocyclePanel({ active, summary, isNew = false }) {
@@ -95,9 +96,10 @@ export default function MesocyclePanel({ active, summary, isNew = false }) {
     <section className="flex flex-col gap-4 rounded-card border border-accent/30 bg-accent-soft p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+          <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-accent">
             Week {active.week} of {active.weeks}
             {active.isDeload ? " . Deload" : ""}
+            <Explain k={active.isDeload ? "deload" : "mesocycle"} />
           </span>
           <h2 className="font-display text-xl font-semibold text-fg">{active.splitName}</h2>
         </div>

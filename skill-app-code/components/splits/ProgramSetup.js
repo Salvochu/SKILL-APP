@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { startMesocycle, loadMesocycleOverview } from "@/app/(app)/dashboard/actions";
 import { rirForWeek, isDeloadWeek } from "@/lib/mesocycle";
 import ConfirmModal from "@/components/ConfirmModal";
+import Explain from "@/components/Explain";
 
 // Everything needed to start the guided program for one split: equipment,
 // sessions per week (only for range-cadence splits), a look at how effort
@@ -70,8 +71,14 @@ export default function ProgramSetup({ template, activeProgram = null, onCancel 
     <section className="flex flex-col gap-4 rounded-card border border-accent/40 bg-accent-soft p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col">
-          <h3 className="text-sm font-bold text-fg">{weeks}-week guided program</h3>
-          <p className="text-xs text-muted">Effort builds week by week, then a deload.</p>
+          <h3 className="flex items-center gap-1 text-sm font-bold text-fg">
+            {weeks}-week guided program
+            <Explain k="mesocycle" />
+          </h3>
+          <p className="flex items-center gap-1 text-xs text-muted">
+            Effort builds week by week, then a deload.
+            <Explain k="deload" />
+          </p>
         </div>
         <button type="button" onClick={onCancel} className="shrink-0 text-xs font-medium text-dim hover:text-fg">
           Close
