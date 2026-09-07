@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { saveProfile, completeOnboarding } from "@/app/(app)/profile/actions";
 import { FITNESS_GOALS, EXPERIENCE_LEVELS } from "@/lib/profileOptions";
 import { COUNTRIES } from "@/lib/countries";
@@ -19,8 +20,13 @@ const STEPS = [
 // once on a new account's first Dashboard visit (OnboardingGate.js).
 // Every question is skippable, individually or all at once: this is
 // meant to make a good profile easy to fill in, not to gate the app.
-export default function OnboardingQuiz() {
-  const [visible, setVisible] = useState(true);
+export default function OnboardingQuiz({ show = false }) {
+  // Latch on the first render where onboarding is needed. Finishing the
+  // quiz flips `show` to false server-side, but the flow (including the
+  // handoff screen) must stay mounted until the user dismisses it.
+  const [latched] = useState(show);
+  const [dismissed, setDismissed] = useState(false);
+  const [done, setDone] = useState(false);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({
     fullName: "",
@@ -33,7 +39,77 @@ export default function OnboardingQuiz() {
   const [dial, setDial] = useState("");
   const [saving, setSaving] = useState(false);
 
-  if (!visible) return null;
+  if (dismissed || (!latched && !show)) return null;
+
+  const firstName = answers.fullName.trim().split(/\s+/)[0] || "";
+  const isBeginner = answers.experienceLevel === "Beginner";
+
+  if (done) {
+    return (
+      <div
+        className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center"
+        role="dialog"
+        aria-modal="true"
+        aria-label="You're all set"
+      >
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className="relative flex w-full max-w-md flex-col gap-4 rounded-t-2xl border border-border bg-surface p-6 sm:rounded-2xl">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          </span>
+          <h2 className="font-display text-xl font-semibold text-fg">
+            You&apos;re all set{firstName ? `, ${firstName}` : ""}
+          </h2>
+
+          {isBeginner ? (
+            <>
+              <p className="text-sm text-muted">
+                New to lifting? Start with <span className="font-semibold text-fg">Foundations</span> - your
+                first month. Two full-body days, three times a week. Learn the main lifts and add a little
+                weight each session. That is the whole plan.
+              </p>
+              <Link
+                href="/splits"
+                onClick={leaveHandoff}
+                className="w-full rounded-field bg-accent px-4 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+              >
+                Start with Foundations
+              </Link>
+              <button
+                type="button"
+                onClick={leaveHandoff}
+                className="self-center text-xs font-medium text-dim hover:text-fg"
+              >
+                I&apos;ll look around first
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-muted">
+                Ready to train? Pick a program to follow, or jump straight into a session.
+              </p>
+              <Link
+                href="/splits"
+                onClick={leaveHandoff}
+                className="w-full rounded-field bg-accent px-4 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+              >
+                Choose a program
+              </Link>
+              <button
+                type="button"
+                onClick={leaveHandoff}
+                className="self-center text-xs font-medium text-dim hover:text-fg"
+              >
+                Explore the app
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
@@ -51,10 +127,19 @@ export default function OnboardingQuiz() {
     fd.set("fitnessGoal", answers.fitnessGoal);
     fd.set("experienceLevel", answers.experienceLevel);
     fd.set("phone", answers.phone.trim() ? `${dial} ${answers.phone.trim()}`.trim() : "");
-    fd.set("completeOnboarding", "1");
+    // Save the profile, but do NOT mark onboarding complete yet - that
+    // flips needsOnboarding() and unmounts this flow before the "you're
+    // all set" handoff is seen. Mark it done when they leave the handoff.
     await saveProfile(fd);
     setSaving(false);
-    setVisible(false);
+    setDone(true);
+  }
+
+  // Mark onboarding done and close the flow. Navigation (when there is
+  // any) is a real <Link>, so it survives this component unmounting.
+  function leaveHandoff() {
+    completeOnboarding();
+    setDismissed(true);
   }
 
   function next() {
@@ -68,7 +153,7 @@ export default function OnboardingQuiz() {
     setStep((s) => Math.max(0, s - 1));
   }
   async function skipAll() {
-    setVisible(false);
+    setDismissed(true);
     await completeOnboarding();
   }
 

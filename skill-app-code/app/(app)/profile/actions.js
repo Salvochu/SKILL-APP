@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncProfileToGHL } from "@/lib/ghl";
@@ -68,6 +69,11 @@ export async function saveProfile(formData) {
   });
   if (error) return { error: error.message };
 
+  // Profile fields feed screens all over the app (the dashboard
+  // greeting, the Train page's Foundations gate for beginners, unit
+  // preference). Clear their cache so a save shows up right away.
+  revalidatePath("/", "layout");
+
   // Best effort: never let a CRM hiccup block someone saving their own
   // profile.
   syncProfileToGHL({ email: user.email, fullName, phone, age, country, fitnessGoal, experienceLevel }).catch(
@@ -91,6 +97,7 @@ export async function completeOnboarding() {
     .upsert({ user_id: user.id, onboarding_completed: true }, { onConflict: "user_id" });
   if (error) return { error: error.message };
 
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
