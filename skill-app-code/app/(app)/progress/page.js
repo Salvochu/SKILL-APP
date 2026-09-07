@@ -141,7 +141,11 @@ async function ProgressBody({ searchParams }) {
   return (
     <>
       <div className="flex justify-end">
-        <ShareProgress stats={shareStats} muscles={shareMuscles} />
+        <ShareProgress
+          rangeLabel={range.sinceISO ? range.label : "All time"}
+          stats={shareStats}
+          muscles={shareMuscles}
+        />
       </div>
 
       {journey ? (
