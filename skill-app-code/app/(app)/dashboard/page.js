@@ -5,6 +5,7 @@ import { getProfile, getUnitPreference } from "@/lib/data/profile";
 import { getJourney } from "@/lib/data/journey";
 import { fromKg, unitLabel } from "@/lib/units";
 import TapLink from "@/components/TapLink";
+import LevelBadge from "@/components/dashboard/LevelBadge";
 import MesocycleSection from "@/components/dashboard/MesocycleSection";
 import WeeklySetsMini from "@/components/dashboard/WeeklySetsMini";
 
@@ -12,25 +13,21 @@ export const metadata = { title: "Dashboard" };
 
 export default function DashboardPage() {
   return (
-    <div className="flex flex-col gap-8 py-2">
-      <div className="flex items-center justify-between gap-3">
-        <Suspense fallback={<div className="h-8 w-40 rounded bg-surface" />}>
+    <div className="flex flex-col gap-7 py-2">
+      <div className="flex flex-col gap-2">
+        <Suspense fallback={<div className="h-8 w-48 rounded bg-surface" />}>
           <Greeting />
         </Suspense>
-        <Suspense fallback={null}>
-          <LevelChip />
+        <Suspense fallback={<div className="h-5 w-56 rounded bg-surface" />}>
+          <HeaderStats />
         </Suspense>
       </div>
 
-      <Suspense fallback={<div className="h-40 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-48 rounded-card bg-surface" />}>
         <MesocycleSection />
       </Suspense>
 
-      <Suspense fallback={<StatsSkeleton />}>
-        <Stats />
-      </Suspense>
-
-      <Suspense fallback={<div className="h-52 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-44 rounded-card bg-surface" />}>
         <WeeklySets />
       </Suspense>
 
@@ -49,37 +46,32 @@ async function Greeting() {
   );
 }
 
-async function LevelChip() {
-  const journey = await getJourney();
-  if (!journey) return null;
-  return (
-    <TapLink
-      href="/progress"
-      className="flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors"
-      style={{ color: journey.tierColor, borderColor: `${journey.tierColor}55` }}
-    >
-      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: journey.tierColor }} />
-      Lvl {journey.level}
-    </TapLink>
-  );
-}
+// One quiet line under the greeting: where you are, and the two lifetime
+// totals worth glancing at. Taps through to the full Progress page.
+async function HeaderStats() {
+  const [s, journey, unit] = await Promise.all([
+    getWorkoutSummary(),
+    getJourney(),
+    getUnitPreference(),
+  ]);
+  const volK = (fromKg(s.volumeKg, unit) / 1000).toFixed(1);
 
-async function Stats() {
-  const [s, unit] = await Promise.all([getWorkoutSummary(), getUnitPreference()]);
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <StatTile label="Workouts" value={s.workouts} sub="all time" accent />
-      <StatTile label="Total Sets" value={s.sets} sub="sets logged" />
-      <StatTile
-        label="Volume"
-        value={`${(fromKg(s.volumeKg, unit) / 1000).toFixed(1)}k`}
-        sub={`${unitLabel(unit)} lifted`}
-      />
-      <StatTile
-        label="Time"
-        value={`${Math.floor(s.minutes / 60)}h ${s.minutes % 60}m`}
-        sub="training time"
-      />
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm text-muted">
+      {journey ? <LevelBadge journey={journey} /> : null}
+      <TapLink
+        href="/progress"
+        className="flex flex-wrap items-center gap-x-2.5 transition-colors hover:text-fg"
+      >
+        <span>
+          <span className="tabular font-semibold text-fg">{s.workouts}</span> workout
+          {s.workouts === 1 ? "" : "s"}
+        </span>
+        <span className="text-dim" aria-hidden="true">·</span>
+        <span>
+          <span className="tabular font-semibold text-fg">{volK}k</span> {unitLabel(unit)} lifted
+        </span>
+      </TapLink>
     </div>
   );
 }
@@ -87,22 +79,6 @@ async function Stats() {
 async function WeeklySets() {
   const data = await getWeeklyMuscleVolume();
   return <WeeklySetsMini data={data} />;
-}
-
-function StatTile({ label, value, sub, accent }) {
-  return (
-    <div
-      className={`flex flex-col gap-1 rounded-card border p-4 ${
-        accent ? "border-accent bg-accent text-black" : "border-border bg-surface"
-      }`}
-    >
-      <span className={`text-xs font-semibold uppercase tracking-wider ${accent ? "text-black/70" : "text-dim"}`}>
-        {label}
-      </span>
-      <span className="tabular text-2xl font-bold">{value}</span>
-      <span className={`text-xs ${accent ? "text-black/60" : "text-dim"}`}>{sub}</span>
-    </div>
-  );
 }
 
 function QuickLink({ href, title, body }) {
@@ -116,14 +92,3 @@ function QuickLink({ href, title, body }) {
     </TapLink>
   );
 }
-
-function StatsSkeleton() {
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-24 rounded-card bg-surface" />
-      ))}
-    </div>
-  );
-}
-

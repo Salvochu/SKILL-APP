@@ -32,7 +32,7 @@ function notifyRestDone() {
 // pause / restart / -15 controls. `docked` renders just the panel (the
 // caller places it, e.g. stacked above the save bar); otherwise it
 // floats above the bottom nav.
-export default function RestTimer({ startSeconds, onDismiss, docked = false }) {
+export default function RestTimer({ startSeconds, onDismiss, docked = false, compact = false }) {
   const [total, setTotal] = useState(startSeconds);
   const [remaining, setRemaining] = useState(startSeconds);
   const [running, setRunning] = useState(true);
@@ -68,13 +68,44 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false }) {
   const pct = total > 0 ? (remaining / total) * 100 : 0;
 
   const done = remaining === 0;
+  const alertBorder = done ? "border-alert blink-alert" : "border-border-strong";
+
+  // Compact + collapsed: a centred pill so it matches the minimised
+  // session bar sitting under it.
+  if (compact && !expanded) {
+    const pill = (
+      <div className={`flex items-center gap-2 self-center rounded-full border bg-surface-2 py-1.5 pl-3.5 pr-1.5 ${alertBorder}`}>
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          aria-label="Expand rest timer"
+          className="flex items-center gap-1.5"
+        >
+          <span className={`clock text-sm font-bold ${done ? "text-alert" : "text-fg"}`}>
+            {mm}:{ss}
+          </span>
+          <span className={`text-xs ${done ? "text-alert" : "text-dim"}`}>{done ? "over" : "rest"}</span>
+          <IconChevron className={`-rotate-90 ${done ? "text-alert" : "text-dim"}`} />
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="rounded-full bg-surface px-3 py-1 text-xs font-semibold text-fg transition-colors hover:bg-border active:bg-accent-soft"
+        >
+          {done ? "Done" : "Skip"}
+        </button>
+      </div>
+    );
+    if (docked) return pill;
+    return (
+      <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 md:bottom-6">
+        {pill}
+      </div>
+    );
+  }
 
   const panel = (
-    <div
-      className={`overflow-hidden rounded-card border bg-surface shadow-lg shadow-black/40 ${
-        done ? "border-alert blink-alert" : "border-border"
-      }`}
-    >
+    <div className={`overflow-hidden rounded-card border bg-surface-2 ${alertBorder}`}>
       <div className="h-1 bg-border">
         <div
           className={`h-full transition-[width] duration-1000 ease-linear ${done ? "bg-alert" : "bg-accent"}`}

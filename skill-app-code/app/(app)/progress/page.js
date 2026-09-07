@@ -13,8 +13,8 @@ import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
 import CompareExercises from "@/components/progress/CompareExercises";
 import MuscleVolume from "@/components/progress/MuscleVolume";
-import IdentityHero from "@/components/progress/IdentityHero";
-import LiftsCard from "@/components/progress/LiftsCard";
+import StrengthCard from "@/components/progress/StrengthCard";
+import LevelCard from "@/components/progress/LevelCard";
 import RangeFilter from "@/components/progress/RangeFilter";
 import ShareProgress from "@/components/progress/ShareProgress";
 
@@ -100,16 +100,14 @@ async function ProgressBody({ searchParams }) {
         <ShareProgress stats={shareStats} muscles={shareMuscles} />
       </div>
 
-      <IdentityHero
-        strength={strength}
+      <StrengthCard strength={strength} records={records} unit={unit} />
+
+      <LevelCard
         journey={journey}
         workouts={data.workouts}
         volumeLabel={`${compact(data.totalVolumeKg)} ${U}`}
         timeLabel={`${Math.floor(summary.minutes / 60)}h ${summary.minutes % 60}m`}
-        unit={unit}
       />
-
-      {strength ? <LiftsCard patterns={strength.patterns} records={records} unit={unit} /> : null}
 
       <Card title="Weekly sets by muscle" subtitle="Hard sets this week. Tap a group to see each muscle">
         <MuscleVolume data={muscleVolume} />

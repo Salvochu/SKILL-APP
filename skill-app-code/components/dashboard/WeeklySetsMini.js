@@ -23,15 +23,15 @@ export default function WeeklySetsMini({ data }) {
       {!trainedThisWeek ? (
         <p className="text-sm text-muted">No sets logged yet this week.</p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-1.5">
           {groups.map((g) => (
             <li key={g.parent} className="flex items-center gap-3">
               <span className="w-20 shrink-0">
                 <MusclePill muscle={g.parent} />
               </span>
-              <span className="relative h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-2">
+              <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-2">
                 <span
-                  className="absolute inset-y-0 left-0 rounded-full"
+                  className="absolute inset-y-0 left-0 rounded-full transition-[width]"
                   style={{
                     width: `${Math.min(100, (g.thisWeek / groupMax) * 100)}%`,
                     backgroundColor: `var(--muscle-${muscleKey(g.parent)})`,

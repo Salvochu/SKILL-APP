@@ -37,23 +37,31 @@ export default function MesocyclePanel({ active, summary }) {
     router.refresh();
   }
 
-  // No program running: a slim prompt, nothing more. The full picker
-  // lives on the Splits page.
+  // No program running: start one, or just log a session. The full split
+  // picker lives on the Splits page.
   if (!active) {
     return (
-      <TapLink
-        href="/splits"
-        className="flex items-center gap-3 rounded-card border border-border bg-surface px-4 py-3 transition-colors hover:border-border-strong"
-      >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-          <IconFlag className="h-[18px] w-[18px]" />
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="text-sm font-medium text-fg">Run a guided program</span>
-          <span className="truncate text-xs text-dim">Turn a split into a week-by-week block</span>
-        </span>
-        <IconChevron className="h-3.5 w-3.5 shrink-0 text-dim" />
-      </TapLink>
+      <div className="flex flex-col gap-2.5">
+        <GuardedStartLink
+          href="/log"
+          className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-2"
+        >
+          Log a workout
+        </GuardedStartLink>
+        <TapLink
+          href="/splits"
+          className="flex items-center gap-3 rounded-card border border-border bg-surface px-4 py-3 transition-colors hover:border-border-strong"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+            <IconFlag className="h-[18px] w-[18px]" />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-sm font-medium text-fg">Run a guided program</span>
+            <span className="truncate text-xs text-dim">Turn a split into a week-by-week block</span>
+          </span>
+          <IconChevron className="h-3.5 w-3.5 shrink-0 text-dim" />
+        </TapLink>
+      </div>
     );
   }
 
@@ -62,14 +70,14 @@ export default function MesocyclePanel({ active, summary }) {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-accent/30 bg-accent-soft p-4">
+    <section className="flex flex-col gap-4 rounded-card border border-accent/30 bg-accent-soft p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="text-xs font-semibold uppercase tracking-wider text-accent">
             Week {active.week} of {active.weeks}
             {active.isDeload ? " . Deload" : ""}
           </span>
-          <h2 className="font-display text-lg font-semibold text-fg">{active.splitName}</h2>
+          <h2 className="font-display text-xl font-semibold text-fg">{active.splitName}</h2>
         </div>
 
         <div ref={menuRef} className="relative shrink-0">
@@ -133,7 +141,7 @@ export default function MesocyclePanel({ active, summary }) {
       {active.nextDay ? (
         <GuardedStartLink
           href={`/log?meso=${active.id}&split=${active.splitId}&day=${active.nextDay.dayTemplateId}&variant=${encodeURIComponent(active.variant)}`}
-          className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2"
+          className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-2"
         >
           Start {active.nextDay.name}
         </GuardedStartLink>
