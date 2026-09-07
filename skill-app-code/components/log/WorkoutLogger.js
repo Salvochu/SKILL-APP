@@ -702,15 +702,6 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
   const established = (extras?.workoutCount ?? 1) >= 2;
   const benchmarkRecap = isBenchmark && s && s.covered > 0;
   const hasScore = established && s && s.covered > 0 && !benchmarkRecap;
-  // The headline "+delta" is only meaningful on a repeat check, where every
-  // tested lift already had a score to move from. On the first check the
-  // jump is just lifts entering the window, so hide it.
-  const benchmarkRepeat =
-    benchmarkRecap &&
-    s.before > 0 &&
-    s.patterns
-      .filter((p) => p.e1rm > 0 && BENCHMARK_PATTERNS.includes(p.key))
-      .every((p) => ((s.beforePatterns ?? []).find((b) => b.key === p.key)?.e1rm ?? 0) > 0);
 
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -743,27 +734,35 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
       ) : null}
 
       {benchmarkRecap ? (
-        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Strength Check</h2>
-            <span className="tabular text-sm font-semibold text-fg">
-              {scoreU(s.after)} {unit}
-              {benchmarkRepeat && s.delta > 0 ? (
-                <span className="ml-1.5 text-good">+{scoreU(s.delta)}</span>
-              ) : null}
-            </span>
-          </div>
-          <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
-            {s.patterns
-              .filter((p) => p.e1rm > 0 && BENCHMARK_PATTERNS.includes(p.key))
-              .map((p) => {
-                const prev = (s.beforePatterns ?? []).find((b) => b.key === p.key) ?? null;
-                // Only show a change against a real previous check, not the
-                // first time a lift enters the score (prev e1RM of 0).
-                const hadPrev = prev && prev.e1rm > 0;
-                const gain = hadPrev ? p.e1rm - prev.e1rm : 0;
-                const moved = hadPrev && prev.tier && prev.tierIndex !== p.tierIndex;
-                return (
+        (() => {
+          const rows = s.patterns
+            .filter((p) => p.e1rm > 0 && BENCHMARK_PATTERNS.includes(p.key))
+            .map((p) => {
+              const prev = (s.beforePatterns ?? []).find((b) => b.key === p.key) ?? null;
+              // Only compare against a real previous check, not the first
+              // time a lift enters the score (prev e1RM of 0).
+              const hadPrev = prev && prev.e1rm > 0;
+              return {
+                p,
+                prev,
+                gain: hadPrev ? p.e1rm - prev.e1rm : 0,
+                moved: hadPrev && prev.tier && prev.tierIndex !== p.tierIndex,
+              };
+            });
+          const comparable = rows.filter((r) => r.prev && r.prev.e1rm > 0).length;
+          const up = rows.filter((r) => r.gain > 0).length;
+          return (
+            <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+              <div className="flex flex-col gap-0.5">
+                <h2 className="font-display text-base font-semibold text-fg">Strength Check</h2>
+                <span className="text-xs text-dim">
+                  {comparable > 0
+                    ? `${up} of ${comparable} lift${comparable === 1 ? "" : "s"} up since your last check`
+                    : "Your baseline. Re-test in 4 to 6 weeks to see it move."}
+                </span>
+              </div>
+              <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
+                {rows.map(({ p, prev, gain, moved }) => (
                   <li key={p.key} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-fg">{p.lift}</span>
@@ -784,13 +783,11 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
                       ) : null}
                     </span>
                   </li>
-                );
-              })}
-          </ul>
-          <p className="text-xs text-dim">
-            Estimated 1RM from your top set on each lift. Come back for another check in 4 to 6 weeks.
-          </p>
-        </section>
+                ))}
+              </ul>
+            </section>
+          );
+        })()
       ) : null}
 
       <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">

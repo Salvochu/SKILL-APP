@@ -15,88 +15,95 @@ function agoLabel(iso) {
   return `${Math.round(days / 30)} months ago`;
 }
 
-const TIER_STYLE = {
-  Beginner: "bg-surface-2 text-dim",
-  Novice: "bg-surface-2 text-muted",
-  Intermediate: "bg-sky/15 text-sky",
-  Advanced: "bg-good/15 text-good",
-  Elite: "bg-accent-soft text-accent",
-};
-
-// How strong you are: the Strength Score, then the six movement patterns
-// that make it up, then the full personal-record list a tap away.
-export default function StrengthCard({ strength, records, unit = "kg", lastCheck = null }) {
+// Where your main lifts stand right now, framed around the Strength Check.
+// Tested lifts show as a bar along the Beginner to Elite scale; the rest
+// collapse to one line. The full personal-record list is a tap away.
+export default function StrengthCard({ strength, records = [], unit = "kg", lastCheck = null }) {
   const [showAll, setShowAll] = useState(false);
   const U = unitLabel(unit);
   const conv = (kg) => Math.round(fromKg(kg, unit));
-  const score = strength && strength.covered > 0 ? conv(strength.score) : null;
   const patterns = strength?.patterns ?? [];
+  const tested = patterns.filter((p) => p.e1rm > 0);
+  const untested = patterns.length - tested.length;
+  const totalLabel = tested.length > 0 ? `${conv(strength.score)} ${U}` : null;
+
+  const checkLine = lastCheck
+    ? `Strength Check ${agoLabel(lastCheck.date)}`
+    : "No Strength Check yet";
+
+  // Nothing tested at all: the card is a single invitation to benchmark.
+  if (tested.length === 0) {
+    return (
+      <section className="flex flex-col items-start gap-3 rounded-card border border-border bg-surface p-5">
+        <h2 className="font-display text-base font-semibold text-fg">Take your first Strength Check</h2>
+        <p className="text-sm text-muted">
+          One hard top set on six main lifts. See where each one stands, then re-test every 4 to 6 weeks.
+        </p>
+        <Link
+          href="/splits?view=strength-check"
+          className="rounded-field bg-accent px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+        >
+          Start Strength Check
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-xs font-semibold uppercase tracking-wider text-dim">Strength score</span>
-        <span className="tabular text-4xl font-bold text-fg">
-          {score != null ? score : "—"}
-          {score != null ? <span className="ml-1.5 text-lg font-semibold text-dim">{U}</span> : null}
-        </span>
-        <span className="text-xs text-dim">Best estimated 1RM across six lifts, last 6 weeks</span>
-      </div>
-
-      <div className="flex items-center justify-between gap-3 rounded-field border border-border bg-bg/40 px-3 py-2 text-xs">
-        <span className="text-dim">
-          {lastCheck ? `Last Strength Check ${agoLabel(lastCheck.date)}` : "No Strength Check logged yet"}
-        </span>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="font-display text-base font-semibold text-fg">Your lifts</h2>
+          <span className="text-xs text-dim">{checkLine}</span>
+        </div>
         <Link
           href="/splits?view=strength-check"
-          className="shrink-0 font-semibold text-accent hover:underline"
+          className="shrink-0 rounded-field border border-border px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:border-border-strong"
         >
-          {lastCheck ? "Re-test" : "Run it"}
+          {lastCheck ? "Re-test" : "Start"}
         </Link>
       </div>
 
-      <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
-        {patterns.map((p) => {
-          const row = (
-            <>
-              <span className="w-[4.75rem] shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted">
-                {p.label}
-              </span>
-              {p.e1rm > 0 ? (
-                <>
-                  <span className="min-w-0 flex-1 truncate text-sm text-fg">{p.lift}</span>
-                  <span className="tabular shrink-0 text-sm font-semibold text-fg">
-                    {conv(p.e1rm)} {U}
-                  </span>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                      TIER_STYLE[p.tier] ?? "bg-surface-2 text-dim"
-                    }`}
-                  >
-                    {p.tier}
-                  </span>
-                </>
-              ) : (
-                <span className="flex-1 text-sm text-dim">Not trained yet</span>
-              )}
-            </>
-          );
-          return (
-            <li key={p.key}>
-              {p.exId ? (
-                <Link
-                  href={`/library/exercises/${p.exId}`}
-                  className="flex items-center gap-3 bg-bg/40 px-3 py-2.5 transition-colors hover:bg-surface-2"
-                >
-                  {row}
-                </Link>
-              ) : (
-                <div className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">{row}</div>
-              )}
-            </li>
-          );
-        })}
+      <ul className="flex flex-col gap-3.5">
+        {tested.map((p) => (
+          <li key={p.key}>
+            <Link
+              href={p.exId ? `/library/exercises/${p.exId}` : "/progress"}
+              className="group flex flex-col gap-1.5"
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="truncate text-sm font-medium text-fg group-hover:text-accent">
+                  {p.lift}
+                </span>
+                <span className="tabular shrink-0 text-xs text-muted">
+                  <span className="font-semibold text-fg">{conv(p.e1rm)} {U}</span>
+                  <span className="mx-1 text-dim">·</span>
+                  {p.tier}
+                </span>
+              </div>
+              <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-2">
+                <div
+                  className="bar-fill absolute inset-y-0 left-0 rounded-full bg-accent"
+                  style={{ width: `${Math.round((p.barFrac ?? 0) * 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] uppercase tracking-wide text-dim">
+                <span>Beginner</span>
+                <span>Elite</span>
+              </div>
+            </Link>
+          </li>
+        ))}
       </ul>
+
+      <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-xs">
+        <span className="text-dim">
+          {untested > 0
+            ? `${untested} lift${untested === 1 ? "" : "s"} not tested yet`
+            : "All six patterns tested"}
+        </span>
+        {totalLabel ? <span className="tabular text-dim">total {totalLabel}</span> : null}
+      </div>
 
       {records.length > 0 ? (
         <>

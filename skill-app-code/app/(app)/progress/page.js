@@ -25,13 +25,44 @@ export const metadata = { title: "Progress" };
 export default function ProgressPage({ searchParams }) {
   return (
     <div className="flex flex-col gap-6 py-2">
-      <header className="flex flex-col gap-1">
+      <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold text-fg">Progress</h1>
-        <p className="text-sm text-muted">Strength and volume over time.</p>
-      </header>
+        <Suspense fallback={<div className="h-5 w-52 rounded bg-surface" />}>
+          <LifetimeStrip />
+        </Suspense>
+      </div>
       <Suspense fallback={<div className="h-64 rounded-card bg-surface" />}>
         <ProgressBody searchParams={searchParams} />
       </Suspense>
+    </div>
+  );
+}
+
+// Lifetime totals that feed the level, kept as one quiet line under the
+// page title (they used to sit inside the Level card).
+async function LifetimeStrip() {
+  const [summary, unit] = await Promise.all([getWorkoutSummary(), getUnitPreference()]);
+  const volK = (fromKg(summary.volumeKg, unit) / 1000).toFixed(1);
+  const h = Math.floor(summary.minutes / 60);
+  const m = summary.minutes % 60;
+  return (
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-muted">
+      <span>
+        <span className="tabular font-semibold text-fg">{summary.workouts}</span> workout
+        {summary.workouts === 1 ? "" : "s"}
+      </span>
+      <span className="text-dim" aria-hidden="true">·</span>
+      <span>
+        <span className="tabular font-semibold text-fg">{volK}k</span> {unitLabel(unit)} lifted
+      </span>
+      <span className="text-dim" aria-hidden="true">·</span>
+      <span>
+        <span className="tabular font-semibold text-fg">
+          {h > 0 ? `${h}h ` : ""}
+          {m}m
+        </span>{" "}
+        trained
+      </span>
     </div>
   );
 }
@@ -43,14 +74,13 @@ async function ProgressBody({ searchParams }) {
   const mesoRange = resolveMesoRange(activeMeso?.startDate);
   const range = sp.range === MESO_TOKEN && mesoRange ? mesoRange : parseRange(sp.range);
 
-  const [rawData, muscleVolume, records, strength, journey, summary, lastCheck, unit] =
+  const [rawData, muscleVolume, records, strength, journey, lastCheck, unit] =
     await Promise.all([
       getProgressData(range),
       getWeeklyMuscleVolume(),
       getPersonalRecords(),
       getStrengthScore(),
       getJourney(),
-      getWorkoutSummary(),
       getLastStrengthCheck(),
       getUnitPreference(),
     ]);
@@ -107,12 +137,7 @@ async function ProgressBody({ searchParams }) {
         <ShareProgress stats={shareStats} muscles={shareMuscles} />
       </div>
 
-      <LevelCard
-        journey={journey}
-        workouts={data.workouts}
-        volumeLabel={`${compact(data.totalVolumeKg)} ${U}`}
-        timeLabel={`${Math.floor(summary.minutes / 60)}h ${summary.minutes % 60}m`}
-      />
+      <LevelCard journey={journey} />
 
       <StrengthCard strength={strength} records={records} unit={unit} lastCheck={lastCheck} />
 
