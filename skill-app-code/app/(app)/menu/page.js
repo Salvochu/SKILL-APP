@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import TapLink from "@/components/TapLink";
 import ExportRow from "@/components/menu/ExportRow";
+import { getIsCoach } from "@/lib/data/coach";
 
 export const metadata = { title: "Menu" };
 
@@ -26,6 +28,10 @@ export default function MenuPage() {
         <h1 className="text-2xl font-bold text-fg">Menu</h1>
       </header>
 
+      <Suspense fallback={null}>
+        <CoachEntry />
+      </Suspense>
+
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
         {ITEMS.map((it) => (
           <TapLink key={it.href} href={it.href} className="block transition-colors hover:bg-surface-2">
@@ -38,6 +44,32 @@ export default function MenuPage() {
         </TapLink>
       </div>
     </div>
+  );
+}
+
+async function CoachEntry() {
+  if (!(await getIsCoach())) return null;
+  return (
+    <div className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-accent/40">
+      <TapLink href="/clients" className="block bg-accent-soft transition-colors hover:bg-accent-soft/70">
+        <MenuRow
+          label="Clients"
+          body="See who is training and progressing"
+          icon={IconClients}
+          tint="#fc7605"
+        />
+      </TapLink>
+    </div>
+  );
+}
+
+function IconClients(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
   );
 }
 
