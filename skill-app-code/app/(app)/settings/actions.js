@@ -10,6 +10,7 @@ const BOOL_KEYS = {
   restTimerDone: "rest_timer_done",
   unfinishedWorkout: "unfinished_workout",
   restTimerEnabled: "rest_timer_enabled",
+  inlineVideos: "inline_videos",
 };
 
 // Merge a partial set of preference changes into the user's row.

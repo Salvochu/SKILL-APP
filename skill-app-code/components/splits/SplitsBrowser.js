@@ -82,34 +82,59 @@ export default function SplitsBrowser({
         </div>
       </section>
 
-      {sections.map(({ section, items }) => (
-        <section key={section} className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
-            {SECTION_LABEL[section] ?? section}
-          </h2>
-          <ul className="flex flex-col gap-2.5">
-            {items.map((split) => (
+      {isBeginner ? (
+        // Keep Foundations the clear choice: everything else folds into
+        // one card.
+        <details className="group flex flex-col rounded-card border border-border bg-surface [&_summary::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+            <span className="flex flex-col">
+              <span className="font-display text-base font-semibold text-fg">Other workouts</span>
+              <span className="text-xs text-dim">Browse the full splits once you have the basics</span>
+            </span>
+            <IconChevron className="h-4 w-4 shrink-0 text-dim transition-transform group-open:rotate-90" />
+          </summary>
+          <ul className="flex flex-col gap-2.5 border-t border-border p-4">
+            {sections.flatMap(({ items }) => items).map((split) => (
               <li key={split.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(split.id)}
-                  className="flex w-full items-center gap-4 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2 active:bg-accent-soft"
-                >
-                  <SplitGlyph />
-                  <span className="flex-1">
-                    <span className="block font-display text-base font-semibold text-fg">
-                      {split.name}
-                    </span>
-                    <span className="block text-sm text-muted">{split.cadence}</span>
-                  </span>
-                  <IconChevron className="h-4 w-4 shrink-0 text-dim" />
-                </button>
+                <SplitRow split={split} onClick={() => setSelectedId(split.id)} />
               </li>
             ))}
           </ul>
-        </section>
-      ))}
+        </details>
+      ) : (
+        sections.map(({ section, items }) => (
+          <section key={section} className="flex flex-col gap-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
+              {SECTION_LABEL[section] ?? section}
+            </h2>
+            <ul className="flex flex-col gap-2.5">
+              {items.map((split) => (
+                <li key={split.id}>
+                  <SplitRow split={split} onClick={() => setSelectedId(split.id)} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      )}
     </div>
+  );
+}
+
+function SplitRow({ split, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-4 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2 active:bg-accent-soft"
+    >
+      <SplitGlyph />
+      <span className="flex-1">
+        <span className="block font-display text-base font-semibold text-fg">{split.name}</span>
+        <span className="block text-sm text-muted">{split.cadence}</span>
+      </span>
+      <IconChevron className="h-4 w-4 shrink-0 text-dim" />
+    </button>
   );
 }
 
