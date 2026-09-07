@@ -2,7 +2,7 @@ import TapLink from "@/components/TapLink";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 import FoundationsCard from "@/components/splits/FoundationsCard";
 
-const SECTION_LABEL = { primary: "Choose your split", coached: "Coached programs" };
+const SECTION_LABEL = { primary: "Choose your split", coached: "Specialization programs" };
 
 // The Train landing page: Foundations (for beginners), a couple of quick
 // starts, and the splits. Each split opens its own page at /splits/[id].

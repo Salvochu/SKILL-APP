@@ -91,7 +91,7 @@ export function startingWeightHint(equipment) {
       return "Hold a straight line from head to heels. Stop the moment your form slips.";
     case "cable":
     case "machine":
-      return "Start light - pick a weight where the last rep looks the same as the first.";
+      return "Start light. Pick a weight where the last rep looks the same as the first.";
     default:
       return "Pick a weight you could do for about 15 clean reps. Better too light than too heavy this week.";
   }

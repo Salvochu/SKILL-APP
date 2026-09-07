@@ -44,7 +44,7 @@ export default async function WorkoutDetailPage({ params }) {
         <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-dim">Duration</span>
           <span className="tabular text-2xl font-bold text-fg">
-            {workout.durationMin != null ? `${workout.durationMin}m` : "—"}
+            {workout.durationMin != null ? `${workout.durationMin}m` : "n/a"}
           </span>
         </div>
       </div>

@@ -8,12 +8,12 @@ import { shortDate } from "@/components/progress/chartkit";
 // Popup listing the last few sessions for one exercise. Opened from the
 // "last time" line in the logger; loads on open. A link takes you to the
 // full per-exercise history page.
-export default function LastNumbers({ exerciseId, exerciseName, onClose }) {
-  const [state, setState] = useState({ loading: true, sessions: [], count: 0, unit: "kg" });
+export default function LastNumbers({ exerciseId, exerciseName, unit = "kg", onClose }) {
+  const [state, setState] = useState({ loading: true, sessions: [], count: 0, unit });
 
   useEffect(() => {
     let alive = true;
-    fetchExerciseHistory(exerciseId, 5)
+    fetchExerciseHistory(exerciseId, 5, unit)
       .then((res) => alive && setState({ loading: false, ...res }))
       .catch(() => alive && setState((s) => ({ ...s, loading: false })));
     function onKey(e) {
@@ -24,7 +24,7 @@ export default function LastNumbers({ exerciseId, exerciseName, onClose }) {
       alive = false;
       document.removeEventListener("keydown", onKey);
     };
-  }, [exerciseId, onClose]);
+  }, [exerciseId, unit, onClose]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={`${exerciseName} history`}>

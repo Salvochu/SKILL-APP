@@ -1057,6 +1057,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
         <LastNumbers
           exerciseId={exercise.id}
           exerciseName={exercise.name}
+          unit={unit}
           onClose={() => setShowHistory(false)}
         />
       ) : null}

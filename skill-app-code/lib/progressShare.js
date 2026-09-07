@@ -71,23 +71,40 @@ export async function buildProgressShareBlob({ rangeLabel, stats = [], muscles =
 
   // stat row
   const statY = 480;
-  const colW = WIDTH / Math.max(1, stats.length);
+  const pad = 70;
+  const usable = WIDTH - pad * 2;
+  const colW = usable / Math.max(1, stats.length);
   stats.forEach(([label, value], i) => {
-    const cx = colW * i + colW / 2;
+    const cx = pad + colW * i + colW / 2;
     ctx.fillStyle = COLORS.muted;
-    ctx.font = `600 26px ${SYS_FONT}`;
-    ctx.fillText(label.toUpperCase(), cx, statY);
+    ctx.font = `600 25px ${SYS_FONT}`;
+    ctx.fillText(clip(ctx, label.toUpperCase(), colW - 12), cx, statY);
     ctx.fillStyle = COLORS.fg;
-    ctx.font = `800 58px ${SYS_FONT}`;
+    ctx.font = `800 ${stats.length > 2 ? 50 : 58}px ${SYS_FONT}`;
     ctx.fillText(value, cx, statY + 66);
   });
 
-  // weekly sets by muscle
+  if (!muscles.length) {
+    ctx.textAlign = "center";
+    ctx.font = `500 30px ${SYS_FONT}`;
+    ctx.fillStyle = COLORS.muted;
+    ctx.fillText("Keep logging to see your muscle breakdown", WIDTH / 2, 700);
+    ctx.textAlign = "center";
+    ctx.font = `700 40px ${SYS_FONT}`;
+    ctx.fillStyle = COLORS.accent;
+    ctx.fillText("@salvador_skfitness", WIDTH / 2, HEIGHT - 88);
+    ctx.font = `400 28px ${SYS_FONT}`;
+    ctx.fillStyle = COLORS.muted;
+    ctx.fillText("Train. Track. Improve.", WIDTH / 2, HEIGHT - 44);
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  }
+
+  // sets by muscle (this week)
   let y = 680;
   ctx.textAlign = "left";
   ctx.fillStyle = COLORS.fg;
   ctx.font = `700 38px ${SYS_FONT}`;
-  ctx.fillText("Weekly sets by muscle", 110, y);
+  ctx.fillText("Sets by muscle, this week", 110, y);
   y += 62;
 
   const barX = 470;

@@ -1,12 +1,12 @@
 // Plain-language definitions for the training terms that show up in the
-// UI. Kept short - a sentence or two someone new can act on. Surfaced by
+// UI. Kept short, a sentence or two someone new can act on. Surfaced by
 // components/Explain.js as a tappable "?" next to the term. No imports,
 // so it is safe on the client.
 
 export const GLOSSARY = {
   rir: {
-    term: "RIR - reps in reserve",
-    body: "How many more reps you had left before failing. RIR 2 means you stopped with about 2 reps in the tank. On most working sets, aim to leave 1 to 3 in reserve - hard, but not to failure.",
+    term: "RIR, or reps in reserve",
+    body: "How many more reps you had left before failing. RIR 2 means you stopped with about 2 reps in the tank. On most working sets, aim to leave 1 to 3 in reserve. Hard, but not to failure.",
   },
   warmup: {
     term: "Warm-up sets",
@@ -34,6 +34,6 @@ export const GLOSSARY = {
   },
   effort: {
     term: "How hard was this?",
-    body: "A quick gut-check of how hard the whole session felt, from 1 (very easy) to 5 (very hard). Be honest - over time it shows whether your training is too easy, about right, or wearing you down.",
+    body: "A quick gut-check of how hard the whole session felt, from 1 (very easy) to 5 (very hard). Be honest. Over time it shows whether your training is too easy, about right, or wearing you down.",
   },
 };

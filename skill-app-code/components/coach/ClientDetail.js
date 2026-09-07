@@ -21,12 +21,12 @@ function pitchLine(c) {
   if (c.sessions4w >= 6 && (dir === "flat" || dir === "down")) {
     return `Trained ${c.sessions4w} times in the last 4 weeks, but the strength score is ${
       dir === "down" ? "down" : "flat"
-    }. Putting in the work without the payoff - a strong case for 1:1.`;
+    }. Putting in the work without the payoff, a strong case for 1:1.`;
   }
   if (c.streak >= 3 && dir === "up") {
     return `On a ${c.streak}-week streak with strength climbing${
       c.strengthDelta ? ` (+${c.strengthDelta})` : ""
-    }. Momentum is there - a good moment to offer more structure.`;
+    }. Momentum is there, a good moment to offer more structure.`;
   }
   if (c.sessionsPrev4w >= 4 && c.sessions4w <= 1) {
     return `Trained ${c.sessionsPrev4w} times the previous month, then stopped. A personal check-in could bring them back.`;
@@ -44,7 +44,7 @@ const DIR = {
   up: { sym: "↑", cls: "text-good", word: "climbing" },
   down: { sym: "↓", cls: "text-danger", word: "slipping" },
   flat: { sym: "→", cls: "text-dim", word: "flat" },
-  none: { sym: "–", cls: "text-dim", word: "no data" },
+  none: { sym: "·", cls: "text-dim", word: "no data" },
 };
 
 export default function ClientDetail({ client: c }) {
