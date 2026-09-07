@@ -1,5 +1,6 @@
 import TapLink from "@/components/TapLink";
 import MusclePill from "@/components/MusclePill";
+import Explain from "@/components/Explain";
 import { muscleKey } from "@/lib/exercises";
 
 const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
@@ -22,7 +23,7 @@ export default function WeeklySetsMini({ data }) {
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Sets by muscle, this week</h2>
         <span className="flex items-center gap-2">
-          <span className="tabular text-xs font-semibold text-fg">{fmt(total)} sets</span>
+          <span className="tabular text-xs font-semibold text-fg">{Math.round(total)} sets</span>
           <IconChevron className="h-3.5 w-3.5 shrink-0 text-dim transition-transform group-open:rotate-90" />
         </span>
       </summary>
@@ -49,6 +50,10 @@ export default function WeeklySetsMini({ data }) {
             </li>
           ))}
         </ul>
+        <p className="flex items-center gap-1 text-[11px] text-dim">
+          Hard sets per muscle. Assisting muscles score a half set.
+          <Explain k="hardsets" />
+        </p>
         <TapLink href="/progress" className="self-start text-xs font-medium text-accent hover:underline">
           See full breakdown
         </TapLink>

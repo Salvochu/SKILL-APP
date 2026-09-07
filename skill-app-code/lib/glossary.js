@@ -22,7 +22,7 @@ export const GLOSSARY = {
   },
   hardsets: {
     term: "Hard sets",
-    body: "Sets taken close to failure, within roughly 3 reps. Counting these per muscle each week is a simple way to track training volume. 10 to 20 hard sets per muscle per week is a solid range for growth.",
+    body: "Sets taken close to failure, within roughly 3 reps. Counting these per muscle each week is a simple way to track training volume. 10 to 20 hard sets per muscle per week is a solid range for growth. A set counts as a full set for the main muscle worked and a half set for the muscles that assist, so a total can land on a half.",
   },
   e1rm: {
     term: "Estimated 1RM",

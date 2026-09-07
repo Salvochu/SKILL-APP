@@ -39,7 +39,7 @@ export default function AppLayout({ children }) {
       <Suspense fallback={null}>
         <OnboardingGate />
       </Suspense>
-      <main className="mx-auto w-full max-w-2xl px-4 pt-14 pb-[calc(5rem+env(safe-area-inset-bottom))] md:max-w-5xl md:px-6 md:pt-16 md:pb-16">
+      <main className="mx-auto w-full max-w-2xl px-4 pt-14 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:max-w-5xl md:px-6 md:pt-16 md:pb-16">
         {children}
       </main>
     </div>

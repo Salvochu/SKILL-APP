@@ -124,6 +124,7 @@ export default function DesignPreviewPage() {
               exercises: [
                 { exercise: EX[0], sets: 3, reps: "6-8" },
                 { exercise: EX[1], sets: 3, reps: "6-8" },
+                { exercise: EX[6], sets: 3, reps: "30-45s" },
               ],
               splitId: "full-body",
               dayTemplateId: "full-body",

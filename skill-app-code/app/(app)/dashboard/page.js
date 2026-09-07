@@ -31,7 +31,20 @@ export default function DashboardPage() {
         <WeeklySets />
       </Suspense>
 
-      <QuickLink href="/body" title="Body measurements" body="Weight, body fat, photos" />
+      <div className="grid grid-cols-2 gap-3">
+        <QuickLink
+          href="/progress"
+          title="Progress"
+          body="Level, lifts, trends"
+          icon={<IconChart className="h-5 w-5" />}
+        />
+        <QuickLink
+          href="/body"
+          title="Body measurements"
+          body="Weight, body fat, photos"
+          icon={<IconBody className="h-5 w-5" />}
+        />
+      </div>
     </div>
   );
 }
@@ -81,14 +94,36 @@ async function WeeklySets() {
   return <WeeklySetsMini data={data} />;
 }
 
-function QuickLink({ href, title, body }) {
+function QuickLink({ href, title, body, icon }) {
   return (
     <TapLink
       href={href}
-      className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4 transition-colors hover:border-border-strong hover:bg-surface-2"
+      className="flex flex-col gap-1.5 rounded-card border border-border bg-surface p-4 transition-colors hover:border-border-strong hover:bg-surface-2"
     >
+      {icon ? (
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-accent">
+          {icon}
+        </span>
+      ) : null}
       <span className="font-display text-base font-semibold text-fg">{title}</span>
       <span className="text-sm text-muted">{body}</span>
     </TapLink>
+  );
+}
+
+function IconChart(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 19V5M4 19h16" />
+      <path d="M8 16v-4M13 16V8M18 16v-6" />
+    </svg>
+  );
+}
+function IconBody(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="5" r="2.5" />
+      <path d="M12 9v7M12 12l-4 2M12 12l4 2M12 16l-2.5 5M12 16l2.5 5" />
+    </svg>
   );
 }
