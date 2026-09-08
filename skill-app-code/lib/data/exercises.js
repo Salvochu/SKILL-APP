@@ -1,5 +1,5 @@
 import "server-only";
-import { createPublicClient } from "@/lib/supabase/public";
+import { getServerSupabase } from "@/lib/data/session";
 import { sortMuscles } from "@/lib/exercises";
 
 const BASE_COLS = "id, name, muscle, equipment, instructions, video_url";
@@ -28,13 +28,11 @@ function withMuscles(rows) {
   });
 }
 
-// Fetches library rows for one category with their muscle tags. Reference
-// data, cached. Falls back gracefully: without the muscle join if
-// migration 0017 has not run, then without the category filter if 0009
-// has not run either.
+// Fetches library rows for one category with their muscle tags. Falls back
+// gracefully: without the muscle join if migration 0017 has not run, then
+// without the category filter if 0009 has not run either.
 async function fetchLibrary(category) {
-  "use cache";
-  const supabase = createPublicClient();
+  const supabase = await getServerSupabase();
 
   const full = await supabase
     .from("exercises")
@@ -53,14 +51,16 @@ async function fetchLibrary(category) {
   return { error: full.error };
 }
 
-// Reference data, identical for every user. Cached via fetchLibrary.
+// Reference data, identical for every user (RLS lets any signed-in user
+// read it). Read at request time for now; this is the seam where a
+// `use cache` layer goes once a server-only Supabase key exists.
 export async function getExercises() {
   const rows = await fetchLibrary("exercise");
   if (!rows.error) return rows;
 
   // Before migration 0009 there is no category column: fall back to the
   // whole table (every row is an exercise at that point).
-  const supabase = createPublicClient();
+  const supabase = await getServerSupabase();
   const retry = await supabase.from("exercises").select(BASE_COLS).order("name");
   if (retry.error) throw new Error(`Failed to load exercises: ${retry.error.message}`);
   return withMuscles(retry.data);
@@ -78,9 +78,8 @@ export async function getStretches() {
 
 // One library row by id, with its muscle tags. null if not found.
 export async function getExerciseById(id) {
-  "use cache";
   if (!id) return null;
-  const supabase = createPublicClient();
+  const supabase = await getServerSupabase();
   const full = await supabase
     .from("exercises")
     .select(`${BASE_COLS}, ${MUSCLE_JOIN}`)
