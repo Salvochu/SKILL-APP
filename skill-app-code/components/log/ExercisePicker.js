@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import MusclePill from "@/components/MusclePill";
 
-export default function ExercisePicker({ exercises, onPick, onClose }) {
+export default function ExercisePicker({ exercises, onPick, onClose, title = "Add exercise" }) {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -25,12 +25,12 @@ export default function ExercisePicker({ exercises, onPick, onClose }) {
   }, [exercises, query]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label="Add exercise">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="relative flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-surface sm:rounded-2xl">
         <div className="flex flex-col gap-3 border-b border-border p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-fg">Add Exercise</h2>
+            <h2 className="text-lg font-bold text-fg">{title}</h2>
             <button type="button" onClick={onClose} aria-label="Close" className="rounded-field p-1.5 text-dim hover:text-fg">
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M6 6l12 12M18 6L6 18" />

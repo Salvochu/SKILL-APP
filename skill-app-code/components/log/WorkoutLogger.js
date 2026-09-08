@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveWorkout, getPostSaveSummary, rateWorkout } from "@/app/(app)/log/actions";
 import RestTimer from "@/components/log/RestTimer";
@@ -80,6 +80,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     initial.exercises.map((e) => makeExercise(e.exercise, e.sets, e.reps, history[e.exercise.id])),
   );
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [swapKey, setSwapKey] = useState(null);
   const [videoFor, setVideoFor] = useState(null);
   const [restKey, setRestKey] = useState(0);
   const [restSeconds, setRestSeconds] = useState(90);
@@ -236,6 +237,21 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   }
   function removeExercise(key) {
     setRows((rs) => rs.filter((r) => r.key !== key));
+  }
+  // Swap the exercise on one card, keeping the sets already logged there.
+  function swapExercise(exercise) {
+    setRows((rs) => rs.map((r) => (r.key === swapKey ? { ...r, exercise } : r)));
+    setSwapKey(null);
+  }
+  function moveExercise(key, dir) {
+    setRows((rs) => {
+      const i = rs.findIndex((r) => r.key === key);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= rs.length) return rs;
+      const next = [...rs];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
   }
 
   async function onSave() {
@@ -475,7 +491,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {rows.map((row) => (
+          {rows.map((row, ri) => (
             <ExerciseCard
               key={row.key}
               row={row}
@@ -487,6 +503,10 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               onAddSet={() => addSet(row.key)}
               onRemoveSet={(i) => removeSet(row.key, i)}
               onRemove={() => removeExercise(row.key)}
+              onSwap={() => setSwapKey(row.key)}
+              onMove={(dir) => moveExercise(row.key, dir)}
+              canMoveUp={ri > 0}
+              canMoveDown={ri < rows.length - 1}
               onVideo={() => setVideoFor(row.exercise)}
               inlineVideo={inlineVideos}
               startHint={
@@ -609,6 +629,14 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
 
       {pickerOpen ? (
         <ExercisePicker exercises={allExercises} onPick={addExercise} onClose={() => setPickerOpen(false)} />
+      ) : null}
+      {swapKey ? (
+        <ExercisePicker
+          exercises={allExercises}
+          title="Swap exercise"
+          onPick={swapExercise}
+          onClose={() => setSwapKey(null)}
+        />
       ) : null}
       {videoFor ? <VideoModal exercise={videoFor} onClose={() => setVideoFor(null)} /> : null}
     </div>
@@ -955,9 +983,19 @@ function IconFlame(props) {
   );
 }
 
-function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, showRir = true, showFailure = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, showRir = true, showFailure = false, canMoveUp = false, canMoveDown = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onSwap, onMove, onVideo }) {
   const { exercise, sets } = row;
   const embedUrl = inlineVideo && exercise.video_url ? loomEmbedUrl(exercise.video_url) : null;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDoc(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    }
+    document.addEventListener("pointerdown", onDoc);
+    return () => document.removeEventListener("pointerdown", onDoc);
+  }, [menuOpen]);
   // Isometric holds (planks and the like) are logged in seconds, with no
   // load: hide the Weight / effort fields and label the middle column
   // "Time".
@@ -1013,9 +1051,39 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M8 5.5v13l11-6.5z" /></svg>
           </button>
         ) : null}
-        <button type="button" onClick={onRemove} aria-label="Remove exercise" className="rounded-field p-1.5 text-dim hover:text-danger">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </button>
+        <div ref={menuRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Exercise options"
+            aria-expanded={menuOpen}
+            className="rounded-field p-1.5 text-dim transition-colors hover:bg-surface-2 hover:text-fg"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
+          </button>
+          {menuOpen ? (
+            <div className="absolute right-0 top-full z-20 mt-1 flex w-44 flex-col overflow-hidden rounded-card border border-border bg-surface py-1 shadow-lg">
+              <button type="button" onClick={() => { setMenuOpen(false); onSwap?.(); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2">
+                Swap exercise
+              </button>
+              <button type="button" disabled={!canMoveUp} onClick={() => { setMenuOpen(false); onMove?.(-1); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2 disabled:opacity-40">
+                Move up
+              </button>
+              <button type="button" disabled={!canMoveDown} onClick={() => { setMenuOpen(false); onMove?.(1); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2 disabled:opacity-40">
+                Move down
+              </button>
+              {!row.showNote ? (
+                <button type="button" onClick={() => { setMenuOpen(false); onPatch({ showNote: true }); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2">
+                  Add a note
+                </button>
+              ) : null}
+              <div className="my-1 border-t border-border" />
+              <button type="button" onClick={() => { setMenuOpen(false); onRemove(); }} className="px-3 py-2 text-left text-sm text-danger transition-colors hover:bg-danger/10">
+                Remove exercise
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {embedUrl ? (
@@ -1194,21 +1262,27 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
       </p>
 
       {row.showNote ? (
-        <div className="rounded-field border border-border bg-bg/40 p-2">
+        <div className="flex items-start gap-1 rounded-field border border-border bg-bg/40 p-2">
           <textarea
             value={row.note}
             onChange={(e) => onPatch({ note: e.target.value })}
             rows={2}
+            autoFocus
             placeholder="Cues, tempo, how it felt."
             className="w-full resize-y bg-transparent text-sm text-fg placeholder:text-dim focus:outline-none"
           />
+          {!row.note ? (
+            <button
+              type="button"
+              onClick={() => onPatch({ showNote: false })}
+              aria-label="Remove note"
+              className="shrink-0 rounded p-1 text-dim hover:text-fg"
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          ) : null}
         </div>
-      ) : (
-        <button type="button" onClick={() => onPatch({ showNote: true })} className="flex items-center gap-1.5 self-start text-xs font-medium text-dim hover:text-fg">
-          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16v12H8l-4 4z" /></svg>
-          Add note
-        </button>
-      )}
+      ) : null}
     </section>
   );
 }
