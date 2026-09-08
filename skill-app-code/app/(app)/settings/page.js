@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getNotificationPrefs } from "@/lib/data/notifications";
+import { getBeginnerContext } from "@/lib/data/profile";
 import NotificationSettings from "@/components/notifications/NotificationSettings";
+import TrainingModeSetting from "@/components/settings/TrainingModeSetting";
 
 export const metadata = { title: "Settings" };
 
@@ -27,6 +29,17 @@ export default function SettingsPage() {
 }
 
 async function Body() {
-  const prefs = await getNotificationPrefs();
-  return <NotificationSettings initialPrefs={prefs} />;
+  const [prefs, beginner] = await Promise.all([
+    getNotificationPrefs(),
+    getBeginnerContext(),
+  ]);
+  return (
+    <div className="flex flex-col gap-6">
+      <TrainingModeSetting
+        initialAdvanced={beginner.advanced}
+        isExplicit={beginner.advancedIsExplicit}
+      />
+      <NotificationSettings initialPrefs={prefs} />
+    </div>
+  );
 }

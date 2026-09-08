@@ -32,6 +32,10 @@ export const GLOSSARY = {
     term: "Strength Score",
     body: "Your best estimated 1RM across six main movement patterns, added up. One number that goes up as you get stronger. The per-lift bars show where each one sits from Beginner to Elite.",
   },
+  failure: {
+    term: "Taken to failure",
+    body: "Tap this when you could not have done another clean rep on that set. Most sets should stop a rep or two short of that, but the odd all-out set is useful, and it tells the app you left nothing in the tank.",
+  },
   effort: {
     term: "How hard was this?",
     body: "A quick gut-check of how hard the whole session felt, from 1 (very easy) to 5 (very hard). Be honest. Over time it shows whether your training is too easy, about right, or wearing you down.",

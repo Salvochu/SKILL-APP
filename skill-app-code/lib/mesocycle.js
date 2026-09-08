@@ -66,29 +66,34 @@ export function setsForWeek(baseSets, week, weeks) {
 // Plain-language guidance for the week you are in: what to aim for on
 // every set. Derived from the week number so there is nothing to author
 // per template. `headline` is a short chip; `detail` is a sentence.
-export function weekGuidance(week, weeks, startingRir = 3) {
+// `advanced` false drops the reps-in-reserve language for the simple app.
+export function weekGuidance(week, weeks, startingRir = 3, advanced = true) {
   if (isDeloadWeek(week, weeks)) {
     return {
-      headline: "Deload week",
-      detail:
-        "Half the sets, drop the weight by a third or so, and keep 4 to 5 reps in reserve. This week is for recovery, not progress.",
+      headline: advanced ? "Deload week" : "Easy week",
+      detail: advanced
+        ? "Half the sets, drop the weight by a third or so, and keep 4 to 5 reps in reserve. This week is for recovery, not progress."
+        : "Half the sets, drop the weight by a third or so, and take it easy. This week is for recovery, not progress.",
     };
   }
   if (week === 1) {
     return {
-      headline: "Baseline week",
-      detail:
-        `Leave about ${startingRir} reps in the tank on every set. Pick weights you are sure of. These numbers become your reference for the whole block.`,
+      headline: advanced ? "Baseline week" : "Week 1",
+      detail: advanced
+        ? `Leave about ${startingRir} reps in the tank on every set. Pick weights you are sure of. These numbers become your reference for the whole block.`
+        : "Pick weights you are sure of and leave a couple of reps in the tank. These numbers are your starting point for the block.",
     };
   }
   const rir = rirForWeek(week, weeks, startingRir);
   const trainingWeeks = Math.max(1, weeks - 1);
   const last = week === trainingWeeks;
   return {
-    headline: last ? "Last hard week" : `Beat last week`,
+    headline: last ? "Last hard week" : "Beat last week",
     detail: last
-      ? `Everything you have. Match or beat last week's reps with 0 to 1 left in reserve, then you deload.`
-      : `Add a rep or two per set, or a little weight, versus last week. Aim for about ${rir} rep${rir === 1 ? "" : "s"} in reserve.`,
+      ? "Everything you have. Match or beat last week's reps, then you deload."
+      : advanced
+        ? `Add a rep or two per set, or a little weight, versus last week. Aim for about ${rir} rep${rir === 1 ? "" : "s"} in reserve.`
+        : "Add a rep or two per set, or a little weight, versus last week.",
   };
 }
 

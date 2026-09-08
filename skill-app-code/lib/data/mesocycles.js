@@ -1,5 +1,6 @@
 import "server-only";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
+import { getBeginnerContext } from "@/lib/data/profile";
 import {
   currentWeek,
   isMesocycleComplete,
@@ -80,6 +81,7 @@ export async function getActiveMesocycle() {
   const supabase = await getServerSupabase();
   const user = await getSessionUser();
   if (!user) return null;
+  const { advanced } = await getBeginnerContext();
 
   const { data: run, error } = await supabase
     .from("user_mesocycles")
@@ -146,6 +148,7 @@ export async function getActiveMesocycle() {
     id: run.id,
     startDate: run.start_date,
     kind,
+    advanced,
     variant: run.variant || "Standard",
     templateId: run.template.id,
     templateName: run.template.name,
@@ -158,7 +161,7 @@ export async function getActiveMesocycle() {
     rirTarget: rir,
     guidance: isFoundations
       ? foundationsGuidance(logged, targetSessions)
-      : weekGuidance(week, weeks, startingRir),
+      : weekGuidance(week, weeks, startingRir, advanced),
     isComplete: complete,
     sessionsLogged: logged,
     sessionsThisWeek: sessionsThisWeek ?? 0,

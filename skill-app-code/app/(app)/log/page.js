@@ -3,7 +3,7 @@ import { getDayTemplateExercises, getDayTemplate } from "@/lib/data/dayTemplates
 import { getRecentPerformance } from "@/lib/data/history";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getNotificationPrefs } from "@/lib/data/notifications";
-import { getUnitPreference } from "@/lib/data/profile";
+import { getUnitPreference, getBeginnerContext } from "@/lib/data/profile";
 import { setsForWeek } from "@/lib/mesocycle";
 import { fromKg } from "@/lib/units";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
@@ -22,7 +22,7 @@ export default async function LogPage({ searchParams }) {
   const exerciseId = strOrNull(params?.exercise);
   const mesoId = strOrNull(params?.meso);
 
-  const [allExercises, historyKg, activeMeso, prefs, unit] = await Promise.all([
+  const [allExercises, historyKg, activeMeso, prefs, unit, beginner] = await Promise.all([
     getExercises(),
     getRecentPerformance(),
     // Re-fetched fresh here rather than trusting the link's query params,
@@ -31,6 +31,7 @@ export default async function LogPage({ searchParams }) {
     mesoId ? getActiveMesocycle() : null,
     getNotificationPrefs(),
     getUnitPreference(),
+    getBeginnerContext(),
   ]);
   // The logger works entirely in the user's chosen unit: history comes
   // in converted, and it converts back to kg on save.
@@ -95,6 +96,7 @@ export default async function LogPage({ searchParams }) {
       unit={unit}
       restTimer={prefs.restTimerEnabled}
       inlineVideos={prefs.inlineVideos}
+      advanced={beginner.advanced}
       mesoContext={
         meso
           ? {

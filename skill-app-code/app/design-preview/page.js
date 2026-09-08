@@ -10,6 +10,20 @@ import CompareExercises from "@/components/progress/CompareExercises";
 import ShareCardPreview from "@/components/dev/ShareCardPreview";
 import WorkoutHistoryModal from "@/components/dashboard/WorkoutHistoryModal";
 import MesocyclePanel from "@/components/dashboard/MesocyclePanel";
+import TrainingModeSetting from "@/components/settings/TrainingModeSetting";
+
+const LOG_INITIAL = {
+  title: "Full Body (Full Gym)",
+  date: "2026-09-03",
+  exercises: [
+    { exercise: { id: "1", name: "Back Squat", muscle: "Legs", equipment: "Barbell" }, sets: 3, reps: "6-8" },
+    { exercise: { id: "2", name: "Bench Press", muscle: "Chest", equipment: "Barbell" }, sets: 3, reps: "6-8" },
+    { exercise: { id: "7", name: "Plank", muscle: "Core", equipment: "Bodyweight" }, sets: 3, reps: "30-45s" },
+  ],
+  splitId: "full-body",
+  dayTemplateId: "full-body",
+  variant: "Full Gym",
+};
 
 // Dev-only gallery for reviewing the theme and shared components without a
 // login. 404s in production; proxy.js lets it through unauthenticated.
@@ -174,22 +188,17 @@ export default function DesignPreviewPage() {
             </button>
           </WorkoutHistoryModal>
         </Section>
-        <Section title="/log">
+        <Section title="/log (advanced - RIR box)">
           <WorkoutLogger
             allExercises={EX}
-            initial={{
-              title: "Full Body (Full Gym)",
-              date: "2026-09-03",
-              exercises: [
-                { exercise: EX[0], sets: 3, reps: "6-8" },
-                { exercise: EX[1], sets: 3, reps: "6-8" },
-                { exercise: EX[6], sets: 3, reps: "30-45s" },
-              ],
-              splitId: "full-body",
-              dayTemplateId: "full-body",
-              variant: "Full Gym",
-            }}
+            initial={LOG_INITIAL}
           />
+        </Section>
+        <Section title="/log (simple - to-failure tap)">
+          <WorkoutLogger allExercises={EX} advanced={false} initial={LOG_INITIAL} />
+        </Section>
+        <Section title="settings / training detail">
+          <TrainingModeSetting initialAdvanced={false} isExplicit={false} />
         </Section>
       </main>
     </div>

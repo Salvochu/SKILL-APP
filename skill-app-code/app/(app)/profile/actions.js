@@ -97,6 +97,27 @@ export async function completeOnboarding() {
   return { ok: true };
 }
 
+// The Settings switch between the simple app and the full one (reps in
+// reserve, program weeks, the strength benchmark, trend charts). Writing
+// a real boolean makes it an explicit choice that overrides the
+// beginner/experienced default.
+export async function setAdvancedTracking(enabled) {
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
+  if (!user) return { error: "Please sign in again." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .upsert(
+      { user_id: user.id, advanced_tracking: Boolean(enabled) },
+      { onConflict: "user_id" },
+    );
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 // Permanently deletes the signed-in user's account: their login and,
 // via "on delete cascade" on every table's user_id, all of their logged
 // workouts and their profile row. Irreversible, the confirm step lives

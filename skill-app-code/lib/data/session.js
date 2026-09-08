@@ -22,18 +22,17 @@ export const getSessionUser = cache(async () => {
   return user ?? null;
 });
 
-// The signed-in user's profile row, fetched once and shared. Selects the
-// superset of columns any caller needs so getProfile / getUnitPreference
-// / getBeginnerContext / needsOnboarding all read the same row.
+// The signed-in user's profile row, fetched once and shared by
+// getProfile / getUnitPreference / getBeginnerContext / needsOnboarding.
+// Selects "*" on purpose - the row is tiny, and it means a column added
+// in a migration works before every reader is updated (and vice versa).
 export const getProfileRow = cache(async () => {
   const user = await getSessionUser();
   if (!user) return null;
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from("profiles")
-    .select(
-      "full_name, age, country, fitness_goal, experience_level, phone, avatar_url, unit_preference, role, onboarding_completed",
-    )
+    .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
   if (error) throw new Error(`Failed to load profile: ${error.message}`);

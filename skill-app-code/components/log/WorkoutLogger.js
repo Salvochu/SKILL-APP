@@ -60,7 +60,7 @@ function makeExercise(exercise, targetSets = 3, targetReps = "", last = null) {
   };
 }
 
-export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial, unit = "kg", restTimer = true, inlineVideos = false }) {
+export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial, unit = "kg", restTimer = true, inlineVideos = false, advanced = true }) {
   const U = unit === "lb" ? "lb" : "kg";
   const router = useRouter();
   const [title, setTitle] = useState(initial.title);
@@ -443,11 +443,15 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               <>
                 <span className="flex items-center gap-1 text-sm font-semibold text-accent">
                   Week {mesoContext.week} of {mesoContext.weeks}
-                  <Explain k={mesoContext.isDeload ? "deload" : "mesocycle"} />
+                  {advanced ? <Explain k={mesoContext.isDeload ? "deload" : "mesocycle"} /> : null}
                 </span>
                 <span className="text-sm text-accent">
                   {mesoContext.guidance?.headline ??
-                    (mesoContext.isDeload ? "Deload week" : `Target effort: RIR ${mesoContext.rirTarget}`)}
+                    (mesoContext.isDeload
+                      ? "Deload week"
+                      : advanced
+                        ? `Target effort: RIR ${mesoContext.rirTarget}`
+                        : "Push a little harder than last week")}
                 </span>
               </>
             )}
@@ -490,8 +494,9 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
                   ? startingWeightHint(row.exercise.equipment)
                   : null
               }
-              rirTarget={mesoContext?.rirTarget ?? null}
-              showRir={mesoContext?.kind !== "foundations"}
+              rirTarget={advanced ? mesoContext?.rirTarget ?? null : null}
+              showRir={advanced && mesoContext?.kind !== "foundations"}
+              showFailure={!advanced && mesoContext?.kind !== "foundations"}
               beatLabel={
                 mesoContext?.kind === "foundations"
                   ? "Beat last time"
@@ -941,19 +946,31 @@ function IconClock(props) {
     </svg>
   );
 }
+function IconFlame(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12 2c1 3-1 4-2 6-1 1.6-.6 3.4.6 4.3.7.5 1.7.3 2-.6.5 1 .4 2.2-.5 3 2-.4 3.4-2.2 3.4-4.4 0-2.3-1.6-4-2.4-5.6C13.9 2.9 13 2 12 2z" />
+      <path d="M9 14.5C8 16 8.4 18.6 10 20c1.2 1 3 1 4.2 0 1.4-1.2 1.8-3.4 1-5-.7 1.2-2 1.8-3.2 1.5.5-1.6-.3-3-1.4-4-.3 1-1 1.6-1.6 2z" opacity=".55" />
+    </svg>
+  );
+}
 
-function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, showRir = true, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, showRir = true, showFailure = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onVideo }) {
   const { exercise, sets } = row;
   const embedUrl = inlineVideo && exercise.video_url ? loomEmbedUrl(exercise.video_url) : null;
   // Isometric holds (planks and the like) are logged in seconds, with no
-  // load: hide the Weight and RIR fields and label the middle column
+  // load: hide the Weight / effort fields and label the middle column
   // "Time".
   const timeBased = isTimeBasedExercise(exercise.name);
   const showWeight = !timeBased;
   const withRir = showRir && !timeBased;
+  // Simple mode: no RIR box, just a "taken to failure" tap (stored as
+  // RIR 0). Same column slot.
+  const withFailure = showFailure && !timeBased;
+  const midCol = withRir || withFailure;
   const gridCls = timeBased
     ? "grid grid-cols-[2rem_minmax(0,1fr)_2.25rem_1.5rem] items-center gap-1.5"
-    : withRir
+    : midCol
       ? "grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_3rem_2.25rem_1.5rem] items-center gap-1.5"
       : "grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.25rem_1.5rem] items-center gap-1.5";
   const workSets = sets.filter((s) => !s.warmup);
@@ -1068,6 +1085,10 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
         <span>{timeBased ? "Time (s)" : "Reps"}</span>
         {withRir ? (
           <span className="flex items-center justify-center gap-0.5">RIR <Explain k="rir" label="RIR" /></span>
+        ) : withFailure ? (
+          <span className="flex items-center justify-center gap-0.5">
+            <IconFlame className="h-3 w-3" /> <Explain k="failure" label="to failure" />
+          </span>
         ) : null}
         <span className="text-center">Log</span>
         <span />
@@ -1078,6 +1099,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
           : set.completed
             ? "border-accent/50 bg-accent-soft"
             : "border-border bg-bg";
+        const failed = set.rir === "0" || set.rir === 0;
         return (
         <div
           key={i}
@@ -1125,6 +1147,18 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
               aria-label={`Set ${i + 1} reps in reserve`}
               className={`tabular w-full rounded-field border px-1.5 py-1.5 text-center text-sm text-fg focus:border-accent ${fieldCls}`}
             />
+          ) : withFailure ? (
+            <button
+              type="button"
+              onClick={() => onPatchSet(i, { rir: failed ? "" : "0" })}
+              aria-pressed={failed}
+              aria-label={`Set ${i + 1} taken to failure`}
+              className={`flex h-[34px] w-full items-center justify-center rounded-field border transition-colors ${
+                failed ? "border-accent bg-accent text-black" : `text-dim ${fieldCls}`
+              }`}
+            >
+              <IconFlame className="h-4 w-4" />
+            </button>
           ) : null}
           <button
             type="button"

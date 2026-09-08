@@ -132,8 +132,8 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
             ) : (
               <>
                 Week {active.week} of {active.weeks}
-                {active.isDeload ? " . Deload" : ""}
-                <Explain k={active.isDeload ? "deload" : "mesocycle"} />
+                {active.isDeload ? (active.advanced ? " . Deload" : " . Easy week") : ""}
+                {active.advanced ? <Explain k={active.isDeload ? "deload" : "mesocycle"} /> : null}
               </>
             )}
           </span>
@@ -219,7 +219,8 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
             currentWeek={currentRailWeek}
             weekFill={weekFill}
             startingRir={active.startingRir}
-            isFoundations={isFoundations}
+            showRir={active.advanced && !isFoundations}
+            hasDeload={!isFoundations}
           />
           {active.sessionsPerWeek > 0 ? (
             <div className="flex items-center gap-2 text-xs">
@@ -259,20 +260,23 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
   );
 }
 
-// The block at a glance: one segment per week, effort ramping down the
-// row (RIR 3 to 0, then a dashed deload). Past weeks are full, the
+// The block at a glance: one segment per week. Past weeks are full, the
 // current week fills with this week's sessions, future weeks are empty.
-function WeekRail({ weeks, currentWeek, weekFill, startingRir, isFoundations }) {
+// In the advanced app each segment is labelled with its RIR target and
+// the last week is a dashed deload; the simple app just numbers them.
+function WeekRail({ weeks, currentWeek, weekFill, startingRir, showRir, hasDeload }) {
   return (
     <div className="flex gap-1.5">
       {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => {
-        const deload = !isFoundations && isDeloadWeek(w, weeks);
+        const deload = hasDeload && isDeloadWeek(w, weeks);
         const isCurrent = w === currentWeek;
         const fillPct = w < currentWeek ? 100 : isCurrent ? Math.round(weekFill * 100) : 0;
-        const label = deload
-          ? "Deload"
-          : isFoundations
-            ? `Wk ${w}`
+        const label = !showRir
+          ? deload
+            ? "Easy"
+            : `Wk ${w}`
+          : deload
+            ? "Deload"
             : `RIR ${rirForWeek(w, weeks, startingRir)}`;
         return (
           <div key={w} className="flex flex-1 flex-col items-center gap-1.5">

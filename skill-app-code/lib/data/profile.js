@@ -30,14 +30,24 @@ export async function getProfile() {
   };
 }
 
-// Beginner-friendly gating. Someone who picked "Beginner" in the
-// onboarding quiz gets gentler copy, and the Strength Check stays hidden
-// (everywhere, including Progress) until they have 30 days on the app.
-// Working up to a heavy top set is not a week-one exercise.
+// How much training detail to show: reps in reserve in the logger,
+// program weeks and RIR targets, the strength benchmark, the trend
+// charts. `advanced_tracking` on the profile is the user's explicit
+// choice (Settings); when they have not chosen, a new beginner starts
+// simple and everyone else starts full. A coach always gets the full
+// app. `simplified` and `showStrengthCheck` are kept as the inverse /
+// alias so existing callers keep working.
 export const getBeginnerContext = cache(async () => {
   const user = await getSessionUser();
   if (!user) {
-    return { isBeginner: false, daysSinceJoin: null, showStrengthCheck: true, simplified: false };
+    return {
+      isBeginner: false,
+      daysSinceJoin: null,
+      advanced: true,
+      advancedIsExplicit: false,
+      showStrengthCheck: true,
+      simplified: false,
+    };
   }
 
   const data = await getProfileRow();
@@ -46,14 +56,24 @@ export const getBeginnerContext = cache(async () => {
   const daysSinceJoin = user.created_at
     ? Math.floor((Date.now() - new Date(user.created_at)) / 86400000)
     : null;
-  const showStrengthCheck =
-    !isBeginner || (daysSinceJoin != null && daysSinceJoin >= 30);
-  // Whether to trim the more advanced surfaces (volume trends, the
-  // strength benchmark, dense explainers). Same 30-day window as the
-  // Strength Check.
-  const simplified = isBeginner && !(daysSinceJoin != null && daysSinceJoin >= 30);
 
-  return { isBeginner, daysSinceJoin, showStrengthCheck, simplified };
+  const advancedByDefault =
+    !isBeginner || (daysSinceJoin != null && daysSinceJoin >= 30);
+  const advancedIsExplicit = typeof data?.advanced_tracking === "boolean";
+  const advanced = isCoach
+    ? true
+    : advancedIsExplicit
+      ? data.advanced_tracking
+      : advancedByDefault;
+
+  return {
+    isBeginner,
+    daysSinceJoin,
+    advanced,
+    advancedIsExplicit,
+    showStrengthCheck: advanced,
+    simplified: !advanced,
+  };
 });
 
 // Whether the onboarding quiz (components/onboarding) should show. No
