@@ -17,19 +17,19 @@ export default function ShareCardPreview() {
   }
   async function generateProgress() {
     const blob = await buildProgressShareBlob({
-      rangeLabel: "Last 8 weeks",
+      levelLabel: "Level 34",
+      tierLabel: "Sapphire",
+      tierColor: "#3f86d9",
+      xpPct: 62,
       stats: [
-        ["Total volume", "48k kg"],
-        ["Workouts", "16"],
-        ["Top est. 1RM", "142 kg"],
+        ["Workouts", "128"],
+        ["kg lifted", "412k"],
+        ["Trained", "71h"],
       ],
-      muscles: [
-        { name: "Quads", value: 14 },
-        { name: "Back", value: 12.5 },
-        { name: "Chest", value: 11 },
-        { name: "Glutes", value: 9 },
-        { name: "Shoulders", value: 8.5 },
-        { name: "Hamstrings", value: 6 },
+      lifts: [
+        { name: "Back Squat", detail: "150 kg · Intermediate" },
+        { name: "Deadlift", detail: "180 kg · Intermediate" },
+        { name: "Bench Press", detail: "110 kg · Intermediate" },
       ],
     });
     setPurl(URL.createObjectURL(blob));

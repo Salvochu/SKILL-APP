@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveWorkout, getPostSaveSummary, rateWorkout } from "@/app/(app)/log/actions";
-import { createMyWorkout } from "@/app/(app)/workouts/my-actions";
+import { createMyWorkout, updateMyWorkout } from "@/app/(app)/workouts/my-actions";
 import RestTimer from "@/components/log/RestTimer";
 import ExercisePicker from "@/components/log/ExercisePicker";
 import ReorderSheet from "@/components/log/ReorderSheet";
@@ -24,6 +24,21 @@ import { loomEmbedUrl, isTimeBasedExercise } from "@/lib/exercises";
 // load) can never collide with new ones generated after a reload.
 let keySeq = 0;
 const nextKey = () => `x${Date.now().toString(36)}${++keySeq}`;
+
+// Tapping into a number field that is already pre-filled selects its
+// contents, so the next keystroke overwrites instead of appending. The
+// rAF is for iOS Safari, which ignores a select() called straight from
+// the focus handler.
+const selectOnFocus = (e) => {
+  const el = e.currentTarget;
+  requestAnimationFrame(() => {
+    try {
+      el.select();
+    } catch {
+      /* some input types do not support select() */
+    }
+  });
+};
 
 // The movement patterns the Strength Check tests (all six), so its finish
 // recap does not pull in unrelated lift variants from the score window.
@@ -107,7 +122,11 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [restSeconds, setRestSeconds] = useState(90);
   const [showRest, setShowRest] = useState(false);
   const [restTimerOn, setRestTimerOn] = useState(restTimer);
-  const [barMinimised, setBarMinimised] = useState(false);
+  // The timer / volume / Finish card starts collapsed to a slim pill so
+  // it never covers the sets. `finishHintSeen` gates a one-time nudge
+  // that points at the pill (that is where Finish lives).
+  const [barMinimised, setBarMinimised] = useState(true);
+  const [finishHintSeen, setFinishHintSeen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -118,6 +137,31 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [effort, setEffort] = useState(null);
   const [savingEffort, setSavingEffort] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
+
+  // Show the "Finish lives in the pill" nudge only until it has been seen
+  // once on this device. localStorage read has to wait for mount (SSR has
+  // no window); the functional updater keeps this a no-op once seen.
+  useEffect(() => {
+    function readFinishHint() {
+      let seen = true;
+      try {
+        seen = localStorage.getItem("skill.log.finishHintSeen") === "1";
+      } catch {
+        /* private mode and the like: treat as seen, skip the nudge */
+      }
+      setFinishHintSeen((v) => (seen ? v : false));
+    }
+    readFinishHint();
+  }, []);
+
+  function dismissFinishHint() {
+    setFinishHintSeen(true);
+    try {
+      localStorage.setItem("skill.log.finishHintSeen", "1");
+    } catch {
+      /* ignore */
+    }
+  }
 
   // On mount, resume a matching in-progress draft (same URL: same day,
   // same query), so navigating away and back via ActiveWorkoutBar
@@ -369,14 +413,24 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         savingEffort={savingEffort}
         onSelectEffort={onSelectEffort}
         onDone={() => router.push("/dashboard")}
-        saveAsWorkout={
-          initial.myWorkoutId
-            ? null
-            : {
-                defaultName: title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "").trim() || "My workout",
-                exercises: templateFromRows(rows),
-              }
-        }
+        saveAsWorkout={(() => {
+          const cleanName = title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "").trim() || "My workout";
+          const startedFromId = initial.myWorkoutId ?? null;
+          const fromTemplate = Boolean(startedFromId || initial.dayTemplateId);
+          const initialIds = initial.exercises.map((e) => e.exercise?.id).filter(Boolean);
+          const currentIds = rows.map((r) => r.exercise.id);
+          const modified =
+            fromTemplate &&
+            (initialIds.length !== currentIds.length ||
+              currentIds.some((id, i) => id !== initialIds[i]));
+          return {
+            defaultName: cleanName,
+            exercises: templateFromRows(rows),
+            sourceMyWorkoutId: startedFromId,
+            sourceName: fromTemplate ? cleanName : null,
+            modified,
+          };
+        })()}
       />
     );
   }
@@ -579,23 +633,44 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         ) : null}
 
         {barMinimised ? (
-        <button
-          type="button"
-          onClick={() => setBarMinimised(false)}
-          aria-label="Expand timer and save"
-          className="flex items-center gap-2 self-center rounded-full border border-accent/30 bg-accent-soft px-4 py-2 backdrop-blur"
-        >
-          <span
-            className={`h-2 w-2 shrink-0 rounded-full ${
-              pausedAt || finished ? "bg-dim" : "animate-pulse bg-accent"
-            }`}
-            aria-hidden="true"
-          />
-          <span className="clock text-sm font-semibold text-fg">{formatElapsed(elapsedSeconds)}</span>
-          <span className="text-dim" aria-hidden="true">·</span>
-          <span className="tabular text-sm font-semibold text-fg">{Math.round(totalVolume)} {U}</span>
-          <IconChevron className="h-3.5 w-3.5 shrink-0 -rotate-90 text-dim" />
-        </button>
+        <>
+          {!finishHintSeen && !finished ? (
+            <div className="flex items-center gap-2 self-center rounded-full border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-black shadow-lg">
+              <span>Total volume and Finish are in here</span>
+              <IconChevron className="h-3.5 w-3.5 shrink-0 rotate-90" aria-hidden="true" />
+              <button
+                type="button"
+                onClick={dismissFinishHint}
+                aria-label="Got it"
+                className="ml-0.5 rounded-full p-0.5 text-black/70 hover:text-black"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              setBarMinimised(false);
+              dismissFinishHint();
+            }}
+            aria-label="Expand timer and save"
+            className="flex items-center gap-2 self-center rounded-full border border-accent/30 bg-accent-soft px-4 py-2 backdrop-blur"
+          >
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${
+                pausedAt || finished ? "bg-dim" : "animate-pulse bg-accent"
+              }`}
+              aria-hidden="true"
+            />
+            <span className="clock text-sm font-semibold text-fg">{formatElapsed(elapsedSeconds)}</span>
+            <span className="text-dim" aria-hidden="true">·</span>
+            <span className="tabular text-sm font-semibold text-fg">{Math.round(totalVolume)} {U}</span>
+            <IconChevron className="h-3.5 w-3.5 shrink-0 -rotate-90 text-dim" />
+          </button>
+        </>
       ) : (
         <div className="flex flex-col gap-2 rounded-card border border-accent/30 bg-accent-soft p-3 backdrop-blur">
           <div className="flex items-center gap-2">
@@ -770,91 +845,115 @@ function IconShare(props) {
   );
 }
 
-// On the finish screen: turn the session that was just logged into a
-// reusable "my workout" the user can start again from the Train tab.
-// Only shown for sessions that were not already started from one.
-function SaveAsWorkoutCard({ defaultName, exercises }) {
-  const [state, setState] = useState("idle"); // idle | naming | saving | saved
+// Finish-screen dialog: keep the session that was just logged as a
+// reusable "my workout". Opened from the bookmark icon in the summary
+// header (and from the "you changed this" nudge). When the session began
+// from an existing my workout that has since been edited, it also offers
+// to update that one in place.
+function SaveWorkoutModal({ defaultName, exercises, sourceMyWorkoutId, sourceName, modified, onClose }) {
   const [name, setName] = useState(defaultName);
+  const [state, setState] = useState("form"); // form | saving | saved
   const [error, setError] = useState(null);
+  const canUpdate = Boolean(sourceMyWorkoutId && modified);
 
-  async function onSave() {
+  async function run(kind) {
     setError(null);
-    if (!name.trim()) {
+    if (kind === "new" && !name.trim()) {
       setError("Give it a name.");
       return;
     }
     setState("saving");
-    const result = await createMyWorkout({ name, exercises });
+    const result =
+      kind === "update"
+        ? await updateMyWorkout(sourceMyWorkoutId, { name: sourceName, exercises })
+        : await createMyWorkout({ name, exercises });
     if (result?.error) {
       setError(result.error);
-      setState("naming");
+      setState("form");
       return;
     }
     setState("saved");
   }
 
-  if (state === "saved") {
-    return (
-      <section className="flex items-center gap-3 rounded-card border border-good/40 bg-good/10 p-4">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-good/20 text-good">
-          <IconCheck className="h-5 w-5" />
-        </span>
-        <p className="text-sm text-fg">
-          Saved to <span className="font-semibold">My workouts</span> on the Train tab.
-        </p>
-      </section>
-    );
-  }
-
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-      <div className="flex flex-col gap-0.5">
-        <h2 className="font-display text-base font-semibold text-fg">Save this as a workout</h2>
-        <p className="text-sm text-muted">
-          Keep these {exercises.length} exercise{exercises.length === 1 ? "" : "s"} as a workout you can
-          start again any day.
-        </p>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Save to My workouts"
+    >
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="relative flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
+        {state === "saved" ? (
+          <>
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-good/20 text-good">
+                <IconCheck className="h-5 w-5" />
+              </span>
+              <p className="text-sm text-fg">
+                Saved to <span className="font-semibold">My workouts</span> on the Train tab.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-field bg-accent py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+            >
+              Done
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="flex flex-col gap-1">
+              <h3 className="font-display text-lg font-semibold text-fg">Save to My workouts</h3>
+              <p className="text-sm text-muted">
+                {exercises.length} exercise{exercises.length === 1 ? "" : "s"}, ready to start again any day from
+                the Train tab.
+              </p>
+            </div>
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
+              Name
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onFocus={selectOnFocus}
+                autoFocus
+                placeholder="Workout name"
+                className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
+              />
+            </label>
+            {error ? <p className="text-xs text-danger">{error}</p> : null}
+            <div className="flex flex-col gap-2">
+              {canUpdate ? (
+                <button
+                  type="button"
+                  onClick={() => run("update")}
+                  disabled={state === "saving"}
+                  className="rounded-field border border-border py-2.5 text-sm font-semibold text-fg transition-colors hover:bg-surface-2 disabled:opacity-60"
+                >
+                  Update &ldquo;{sourceName}&rdquo;
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => run("new")}
+                disabled={state === "saving"}
+                className="rounded-field bg-accent py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+              >
+                {state === "saving" ? "Saving..." : canUpdate ? "Save as a new workout" : "Save workout"}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-field py-2 text-sm font-medium text-muted transition-colors hover:text-fg"
+              >
+                Not now
+              </button>
+            </div>
+          </>
+        )}
       </div>
-
-      {state === "idle" ? (
-        <button
-          type="button"
-          onClick={() => setState("naming")}
-          className="self-start rounded-field border border-accent/40 bg-accent-soft px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
-        >
-          Save as a workout
-        </button>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            autoFocus
-            placeholder="Workout name"
-            className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
-          />
-          {error ? <p className="text-xs text-danger">{error}</p> : null}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setState("idle")}
-              className="rounded-field border border-border px-4 py-2 text-sm font-medium text-muted transition-colors hover:text-fg"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={state === "saving"}
-              className="flex-1 rounded-field bg-accent py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
-            >
-              {state === "saving" ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </div>
-      )}
-    </section>
+    </div>
   );
 }
 
@@ -871,15 +970,46 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
   const benchmarkRecap = isBenchmark && s && s.covered > 0;
   const showLevel = established && j;
 
+  const [saveOpen, setSaveOpen] = useState(false);
+  const canSave =
+    saveAsWorkout &&
+    saveAsWorkout.exercises.length > 0 &&
+    !(saveAsWorkout.sourceMyWorkoutId && !saveAsWorkout.modified);
+
   return (
     <div className="flex flex-col gap-6 py-2">
-      <header className="flex flex-col items-center gap-1 pt-2 text-center">
+      <header className="relative flex flex-col items-center gap-1 pt-2 text-center">
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent">
           <IconCheck className="h-7 w-7" />
         </span>
         <h1 className="mt-2 text-2xl font-bold text-fg">Workout completed!</h1>
         <p className="text-sm text-muted">Nice work. Here is how it went.</p>
+        {canSave ? (
+          <button
+            type="button"
+            onClick={() => setSaveOpen(true)}
+            aria-label="Save this workout to My workouts"
+            className="absolute right-0 top-1 flex h-10 w-10 items-center justify-center rounded-field border border-border bg-surface text-muted transition-colors hover:border-border-strong hover:text-fg"
+          >
+            <IconBookmark className="h-5 w-5" />
+          </button>
+        ) : null}
       </header>
+
+      {canSave && saveAsWorkout.modified ? (
+        <button
+          type="button"
+          onClick={() => setSaveOpen(true)}
+          className="flex items-center justify-between gap-3 rounded-card border border-accent/40 bg-accent-soft px-4 py-3 text-left transition-colors hover:bg-accent/15"
+        >
+          <span className="text-sm text-fg">
+            {saveAsWorkout.sourceMyWorkoutId
+              ? `You changed ${saveAsWorkout.sourceName}. Save this version?`
+              : "You changed this session. Save it to My workouts?"}
+          </span>
+          <IconBookmark className="h-4 w-4 shrink-0 text-accent" />
+        </button>
+      ) : null}
 
       {prs.length > 0 ? (
         <section className="flex flex-col gap-2 rounded-card border border-accent bg-accent-soft p-4">
@@ -1043,13 +1173,6 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
         {effort ? <p className="text-center text-xs text-accent">{EFFORT_LABELS[effort]}</p> : null}
       </section>
 
-      {saveAsWorkout && saveAsWorkout.exercises.length > 0 ? (
-        <SaveAsWorkoutCard
-          defaultName={saveAsWorkout.defaultName}
-          exercises={saveAsWorkout.exercises}
-        />
-      ) : null}
-
       <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} />
 
       <button
@@ -1059,6 +1182,17 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
       >
         Done
       </button>
+
+      {saveOpen && canSave ? (
+        <SaveWorkoutModal
+          defaultName={saveAsWorkout.defaultName}
+          exercises={saveAsWorkout.exercises}
+          sourceMyWorkoutId={saveAsWorkout.sourceMyWorkoutId}
+          sourceName={saveAsWorkout.sourceName}
+          modified={saveAsWorkout.modified}
+          onClose={() => setSaveOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -1067,6 +1201,14 @@ function IconCheck(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+function IconBookmark(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" />
+      <path d="M12 8v5M9.5 10.5h5" />
     </svg>
   );
 }
@@ -1312,6 +1454,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
               inputMode="decimal"
               value={set.weight}
               onChange={(e) => onPatchSet(i, { weight: e.target.value })}
+              onFocus={selectOnFocus}
               aria-label={`Set ${i + 1} weight`}
               className={`tabular w-full rounded-field border px-2 py-1.5 text-sm text-fg focus:border-accent ${fieldCls}`}
             />
@@ -1321,6 +1464,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
             inputMode="numeric"
             value={set.reps}
             onChange={(e) => onPatchSet(i, { reps: e.target.value })}
+            onFocus={selectOnFocus}
             aria-label={`Set ${i + 1} ${timeBased ? "seconds" : "reps"}`}
             className={`tabular w-full rounded-field border px-2 py-1.5 text-sm text-fg focus:border-accent ${fieldCls}`}
           />
@@ -1330,6 +1474,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
               inputMode="numeric"
               value={set.rir}
               onChange={(e) => onPatchSet(i, { rir: e.target.value })}
+              onFocus={selectOnFocus}
               aria-label={`Set ${i + 1} reps in reserve`}
               className={`tabular w-full rounded-field border px-1.5 py-1.5 text-center text-sm text-fg focus:border-accent ${fieldCls}`}
             />

@@ -75,7 +75,7 @@ async function ProgressBody({ searchParams }) {
   const mesoRange = resolveMesoRange(activeMeso?.startDate);
   const range = sp.range === MESO_TOKEN && mesoRange ? mesoRange : parseRange(sp.range);
 
-  const [rawData, muscleVolume, records, strength, journey, lastCheck, beginner, unit] =
+  const [rawData, muscleVolume, records, strength, journey, lastCheck, beginner, unit, lifetime] =
     await Promise.all([
       getProgressData(range),
       getWeeklyMuscleVolume(),
@@ -85,6 +85,7 @@ async function ProgressBody({ searchParams }) {
       getLastStrengthCheck(),
       getBeginnerContext(),
       getUnitPreference(),
+      getWorkoutSummary(),
     ]);
   const showStrengthCheck = beginner.showStrengthCheck;
 
@@ -116,21 +117,24 @@ async function ProgressBody({ searchParams }) {
 
   const strongExercises = data.exercises.filter((e) => e.points.length >= 2);
 
-  // Headline "top 1RM" is all-time, from the PR list (not the trimmed range).
-  const topPR = records.reduce((a, b) => (b.best1rm > (a?.best1rm ?? 0) ? b : a), null);
-  const topPRValue = topPR ? conv(topPR.best1rm) : null;
-
+  // The share card is a lifetime identity card (level, rank, totals,
+  // strongest lifts), not a snapshot of the current filter range.
+  const lifetimeVolK = (fromKg(lifetime.volumeKg, unit) / 1000).toFixed(1);
+  const lh = Math.floor(lifetime.minutes / 60);
+  const lm = lifetime.minutes % 60;
   const shareStats = [
-    ["Total volume", `${compact(data.totalVolumeKg)} ${U}`],
-    ["Workouts", String(data.workouts)],
+    ["Workouts", String(lifetime.workouts)],
+    [`${U} lifted`, `${lifetimeVolK}k`],
+    ["Trained", lh > 0 ? `${lh}h` : `${lm}m`],
   ];
-  if (topPRValue) shareStats.push(["Top est. 1RM", `${compact(topPRValue)} ${U}`]);
-  const shareMuscles = [...muscleVolume.groups]
-    .flatMap((g) => g.muscles)
-    .filter((m) => m.thisWeek > 0)
-    .sort((a, b) => b.thisWeek - a.thisWeek)
-    .slice(0, 6)
-    .map((m) => ({ name: m.muscle.replace(/\s*\(.*\)$/, ""), value: m.thisWeek }));
+  const shareLifts = (strength?.patterns ?? [])
+    .filter((p) => p.e1rm > 0 && p.lift)
+    .sort((a, b) => b.e1rm - a.e1rm)
+    .slice(0, 3)
+    .map((p) => ({ name: p.lift, detail: `${conv(p.e1rm)} ${U} · ${p.tier}` }));
+  const shareCaption = journey
+    ? `${journey.tier}, Level ${journey.level} on SKILL. Tracked with @salvador_skfitness`
+    : "My training progress on SKILL. Tracked with @salvador_skfitness";
 
   // The trend charts (per-session volume, estimated 1RM over time,
   // compare-two-lifts) need a few weeks of data to be worth reading and
@@ -142,9 +146,13 @@ async function ProgressBody({ searchParams }) {
     <>
       <div className="flex justify-end">
         <ShareProgress
-          rangeLabel={range.sinceISO ? range.label : "All time"}
+          levelLabel={journey ? `Level ${journey.level}` : null}
+          tierLabel={journey?.tier ?? null}
+          tierColor={journey?.tierColor ?? null}
+          xpPct={journey ? (journey.atMax ? 100 : journey.pctToNextLevel) : null}
           stats={shareStats}
-          muscles={shareMuscles}
+          lifts={shareLifts}
+          caption={shareCaption}
         />
       </div>
 

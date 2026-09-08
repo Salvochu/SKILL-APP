@@ -3,21 +3,21 @@
 import { useState } from "react";
 import { buildProgressShareBlob } from "@/lib/progressShare";
 
-// "Share progress" button: renders a branded PNG of the current range's
-// headline numbers and top muscles, then hands it to the native share
-// sheet, falling back to a download + copied caption.
-export default function ShareProgress({ rangeLabel, stats, muscles }) {
+// "Share progress" button: renders a branded PNG of the user's level,
+// rank, lifetime totals and strongest lifts, then hands it to the native
+// share sheet, falling back to a download + copied caption.
+export default function ShareProgress({ levelLabel, tierLabel, tierColor, xpPct, stats, lifts, caption }) {
   const [status, setStatus] = useState("idle"); // idle | working | shared | downloaded
 
   async function onShare() {
     setStatus("working");
     try {
-      const blob = await buildProgressShareBlob({ rangeLabel, stats, muscles });
+      const blob = await buildProgressShareBlob({ levelLabel, tierLabel, tierColor, xpPct, stats, lifts });
       const file = new File([blob], "skill-progress.png", { type: "image/png" });
-      const caption = `My training progress${rangeLabel ? ` (${rangeLabel})` : ""}. Tracked in SKILL by @salvador_skfitness`;
+      const text = caption || "My training progress. Tracked in SKILL by @salvador_skfitness";
 
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], text: caption });
+        await navigator.share({ files: [file], text });
         setStatus("shared");
         return;
       }
@@ -31,7 +31,7 @@ export default function ShareProgress({ rangeLabel, stats, muscles }) {
       a.remove();
       URL.revokeObjectURL(url);
       try {
-        await navigator.clipboard?.writeText(caption);
+        await navigator.clipboard?.writeText(text);
       } catch {
         // clipboard is best-effort
       }
