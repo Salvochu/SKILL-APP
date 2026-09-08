@@ -6,9 +6,9 @@ import TapLink from "@/components/TapLink";
 import LoggedAt from "@/components/LoggedAt";
 import { deleteAllWorkouts } from "@/app/(app)/workouts/actions";
 
-// Every logged workout, grouped by month, with a type-to-confirm "delete
-// all" at the bottom. Used raw on the /history page and inside the
-// dashboard's popup (WorkoutHistoryModal). `onNavigate` fires when a
+// Every logged workout, grouped by training week, with a type-to-confirm
+// "delete all" at the bottom. Used raw on the /history page and inside
+// the dashboard's popup (WorkoutHistoryModal). `onNavigate` fires when a
 // session link is tapped, so the popup can close itself.
 export default function HistoryList({ sessions, onNavigate }) {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function HistoryList({ sessions, onNavigate }) {
   const [clearing, setClearing] = useState(false);
   const [error, setError] = useState(null);
 
-  const groups = groupByMonth(sessions);
+  const groups = groupByWeek(sessions);
 
   async function onClearAll() {
     setClearing(true);
@@ -114,18 +114,36 @@ export default function HistoryList({ sessions, onNavigate }) {
   );
 }
 
-function groupByMonth(sessions) {
+// Monday (local) of the week containing d, at 00:00.
+function weekStart(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
+}
+
+function groupByWeek(sessions) {
+  const thisMon = weekStart(new Date()).getTime();
+  const week = 7 * 86400000;
   const groups = new Map();
   for (const s of sessions) {
-    const d = new Date(s.started_at);
-    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const mon = weekStart(new Date(s.started_at));
+    const key = mon.getTime();
     if (!groups.has(key)) {
-      groups.set(key, {
-        label: d.toLocaleDateString(undefined, { month: "long", year: "numeric" }),
-        sessions: [],
-      });
+      const diff = Math.round((thisMon - key) / week);
+      const label =
+        diff === 0
+          ? "This week"
+          : diff === 1
+            ? "Last week"
+            : `Week of ${mon.toLocaleDateString(undefined, {
+                day: "numeric",
+                month: "short",
+                ...(mon.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
+              })}`;
+      groups.set(key, { label, sessions: [] });
     }
     groups.get(key).sessions.push(s);
   }
-  return [...groups.values()];
+  return [...groups.entries()].sort((a, b) => b[0] - a[0]).map(([, v]) => v);
 }

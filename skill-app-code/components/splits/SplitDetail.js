@@ -14,7 +14,7 @@ import { sortVariants } from "@/lib/exercises";
 // single-day split (or a benchmark): just that one session card. Each
 // session card offers two ways to run it - start the guided program, or
 // log this one session freely. The page header lives in the route.
-export default function SplitDetail({ split, template, activeProgram }) {
+export default function SplitDetail({ split, template, activeProgram, advanced = true }) {
   const isBenchmark = split.section === "benchmark";
   const days = [...(split.days ?? [])].sort((a, b) => a.position - b.position);
   const programWeeks = !isBenchmark && template ? template.weeks : null;
@@ -72,6 +72,7 @@ export default function SplitDetail({ split, template, activeProgram }) {
         <ProgramSetup
           template={template}
           activeProgram={activeProgram}
+          advanced={advanced}
           onCancel={() => setSetupOpen(false)}
         />
       ) : null}

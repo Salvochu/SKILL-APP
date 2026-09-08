@@ -63,7 +63,12 @@ async function Body({ params }) {
         </span>
       </div>
 
-      <SplitDetail split={split} template={template} activeProgram={activeProgram} />
+      <SplitDetail
+        split={split}
+        template={template}
+        activeProgram={activeProgram}
+        advanced={beginner.advanced}
+      />
     </div>
   );
 }

@@ -12,7 +12,7 @@ import Explain from "@/components/Explain";
 // look at how effort steps down across the weeks, then Start.
 // `activeProgram` (if any) means another run is going, so starting is
 // confirmed first.
-export default function ProgramSetup({ template, activeProgram = null, onCancel }) {
+export default function ProgramSetup({ template, activeProgram = null, advanced = true, onCancel }) {
   const router = useRouter();
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,12 +93,12 @@ export default function ProgramSetup({ template, activeProgram = null, onCancel 
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col">
           <h3 className="flex items-center gap-1 text-sm font-bold text-fg">
-            {weeks}-week guided program
-            <Explain k="mesocycle" />
+            {weeks}-week {advanced ? "guided program" : "program"}
+            {advanced ? <Explain k="mesocycle" /> : null}
           </h3>
           <p className="flex items-center gap-1 text-xs text-muted">
-            Effort builds week by week, then a deload.
-            <Explain k="deload" />
+            {advanced ? "Effort builds week by week, then a deload." : "Gets a bit harder each week, then an easy week."}
+            {advanced ? <Explain k="deload" /> : null}
           </p>
         </div>
         <button type="button" onClick={onCancel} className="shrink-0 text-xs font-medium text-dim hover:text-fg">
@@ -122,7 +122,13 @@ export default function ProgramSetup({ template, activeProgram = null, onCancel 
                 >
                   <span className="text-[10px] font-semibold uppercase text-dim">Wk {w}</span>
                   <span className={`text-xs font-bold ${deload ? "text-dim" : "text-accent"}`}>
-                    {deload ? "Deload" : `RIR ${rirForWeek(w, weeks, startingRir)}`}
+                    {advanced
+                      ? deload
+                        ? "Deload"
+                        : `RIR ${rirForWeek(w, weeks, startingRir)}`
+                      : deload
+                        ? "Easy"
+                        : "↑".repeat(Math.min(4, w))}
                   </span>
                 </div>
               );

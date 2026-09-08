@@ -108,7 +108,7 @@ export async function getActiveMesocycle() {
   const [
     { data: days, error: daysError },
     { count: sessionsLogged, error: countError },
-    { count: sessionsThisWeek, error: weekCountError },
+    { data: weekSessions, error: weekCountError },
   ] = await Promise.all([
     supabase
       .from("split_days")
@@ -121,7 +121,7 @@ export async function getActiveMesocycle() {
       .eq("user_mesocycle_id", run.id),
     supabase
       .from("workout_sessions")
-      .select("id", { count: "exact", head: true })
+      .select("day_template_id")
       .eq("user_mesocycle_id", run.id)
       .gte("started_at", weekFrom)
       .lt("started_at", weekTo),
@@ -130,6 +130,8 @@ export async function getActiveMesocycle() {
   if (countError) throw new Error(`Failed to load mesocycle progress: ${countError.message}`);
   if (weekCountError) throw new Error(`Failed to load mesocycle week progress: ${weekCountError.message}`);
 
+  const sessionsThisWeek = weekSessions?.length ?? 0;
+  const doneDayIds = new Set((weekSessions ?? []).map((s) => s.day_template_id).filter(Boolean));
   const totalDays = days?.length ?? 0;
   const logged = sessionsLogged ?? 0;
   const dayIdx = nextDayIndex(logged, totalDays);
@@ -182,6 +184,7 @@ export async function getActiveMesocycle() {
       name: d.day_template?.name ?? d.label ?? "Day",
       focus: d.day_template?.focus ?? null,
       isNext: d.day_template_id === nextDay?.day_template_id,
+      doneThisWeek: doneDayIds.has(d.day_template_id),
     })),
   };
 }

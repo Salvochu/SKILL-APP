@@ -163,11 +163,18 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
                       href={`/log?meso=${active.id}&split=${active.splitId}&day=${d.dayTemplateId}&variant=${encodeURIComponent(active.variant)}`}
                       className="flex items-center justify-between gap-2 px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2"
                     >
-                      <span className="truncate">{d.name}</span>
+                      <span className="flex min-w-0 items-center gap-1.5 truncate">
+                        {d.doneThisWeek ? (
+                          <IconCheck className="h-3 w-3 shrink-0 text-good" />
+                        ) : null}
+                        <span className="truncate">{d.name}</span>
+                      </span>
                       {d.isNext ? (
                         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-accent">
                           Next
                         </span>
+                      ) : d.doneThisWeek ? (
+                        <span className="shrink-0 text-[10px] font-medium text-dim">done</span>
                       ) : null}
                     </GuardedStartLink>
                   ))}
@@ -302,6 +309,13 @@ function WeekRail({ weeks, currentWeek, weekFill, startingRir, showRir, hasDeloa
   );
 }
 
+function IconCheck(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
 function IconDots(props) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
