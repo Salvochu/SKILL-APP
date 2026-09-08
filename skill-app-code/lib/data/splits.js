@@ -1,10 +1,14 @@
 import "server-only";
-import { getServerSupabase } from "@/lib/data/session";
+import { createPublicClient } from "@/lib/supabase/public";
 
 // All splits with their ordered days and each day's per-variant exercise
-// lists. Reference data, readable by any signed-in user.
+// lists. Reference data - identical for every user and only changes on a
+// migration + redeploy - so it is cached, not re-queried per request.
+// Reads with the session-less public client so the cache entry is
+// user-neutral and the read works during the build.
 export async function getSplits() {
-  const supabase = await getServerSupabase();
+  "use cache";
+  const supabase = createPublicClient();
 
   const [splitsRes, splitDaysRes, templatesRes, templateExRes] = await Promise.all([
     supabase.from("splits").select("id, name, cadence, description, section, position").order("position"),
