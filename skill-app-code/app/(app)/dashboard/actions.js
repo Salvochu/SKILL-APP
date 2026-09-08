@@ -67,6 +67,68 @@ export async function finishMesocycle(userMesocycleId) {
   return { ok: true };
 }
 
+// Challenge onboarding: point the active 14-day run at the equipment the
+// user picked, drop them into the simple app, and mark onboarding done.
+// If the sign-up webhook somehow did not start a run, start one now.
+export async function saveChallengeSetup({ equipment, name } = {}) {
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
+  if (!user) return { error: "Please sign in again." };
+
+  const variant = equipment === "Dumbbells" ? "Dumbbells" : "Full Gym";
+
+  const { data: run } = await supabase
+    .from("user_mesocycles")
+    .select("id, template:mesocycle_templates(kind)")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let mesoId = null;
+  if (run && run.template?.kind === "challenge") {
+    mesoId = run.id;
+    const { error } = await supabase
+      .from("user_mesocycles")
+      .update({ variant })
+      .eq("id", run.id)
+      .eq("user_id", user.id);
+    if (error) return { error: error.message };
+  } else if (!run) {
+    const { data: created, error } = await supabase
+      .from("user_mesocycles")
+      .insert({
+        user_id: user.id,
+        template_id: "main-character-14",
+        start_date: new Date().toISOString().slice(0, 10),
+        status: "active",
+        variant,
+      })
+      .select("id")
+      .single();
+    if (error) return { error: error.message };
+    mesoId = created.id;
+  }
+
+  const patch = {
+    user_id: user.id,
+    advanced_tracking: false,
+    experience_level: "Beginner",
+    onboarding_completed: true,
+  };
+  const cleanName = String(name || "").trim().slice(0, 80);
+  if (cleanName) patch.full_name = cleanName;
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .upsert(patch, { onConflict: "user_id" });
+  if (profileError) return { error: profileError.message };
+
+  revalidatePath("/", "layout");
+  revalidateMesocycle();
+  return { ok: true, mesoId, variant };
+}
+
 export async function abandonMesocycle(userMesocycleId) {
   const supabase = await getServerSupabase();
   const user = await getSessionUser();

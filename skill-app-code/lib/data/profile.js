@@ -75,6 +75,16 @@ export const getBeginnerContext = cache(async () => {
   };
 });
 
+// How the account was created: a free challenge sign-up, a paying app
+// member, or the coach. NULL (accounts predating the column) counts as
+// a member.
+export const getMembership = cache(async () => {
+  const user = await getSessionUser();
+  if (!user) return null;
+  const data = await getProfileRow();
+  return data?.membership ?? "member";
+});
+
 // Whether the onboarding quiz (components/onboarding) should show. No
 // profile row at all (a brand new account) counts as needing it, same
 // as an explicit false.
