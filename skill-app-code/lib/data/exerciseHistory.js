@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/data/session";
 
 const epley = (w, r) => (w > 0 && r > 0 && r <= 15 ? w * (1 + r / 30) : 0);
 
@@ -9,7 +9,7 @@ const epley = (w, r) => (w > 0 && r > 0 && r <= 15 ? w * (1 + r / 30) : 0);
 // returned; pass null for all of them. Also returns the all-time best
 // e1RM and top weight for the header.
 export async function getExerciseHistory(exerciseId, { limit = null } = {}) {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
   if (!exerciseId) return { sessions: [], best1rmKg: 0, topWeightKg: 0, count: 0 };
 
   const { data, error } = await supabase

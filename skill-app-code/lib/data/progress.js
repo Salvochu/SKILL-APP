@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/data/session";
 
 // Epley 1RM estimate, ignored above ~15 reps where it stops tracking
 // strength and just balloons.
@@ -14,7 +14,7 @@ const dayKey = (iso) => new Date(iso).toISOString().slice(0, 10);
 // `range` (a resolved range from lib/dateRange), since those feed the
 // trend charts where a window makes sense.
 export async function getProgressData(range = {}) {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
 
   const [sessionsRes, setsRes] = await Promise.all([
     supabase

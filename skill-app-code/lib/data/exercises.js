@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/data/session";
 import { sortMuscles } from "@/lib/exercises";
 
 const BASE_COLS = "id, name, muscle, equipment, instructions, video_url";
@@ -32,7 +32,7 @@ function withMuscles(rows) {
 // gracefully: without the muscle join if migration 0017 has not run, then
 // without the category filter if 0009 has not run either.
 async function fetchLibrary(category) {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
 
   const full = await supabase
     .from("exercises")
@@ -60,7 +60,7 @@ export async function getExercises() {
 
   // Before migration 0009 there is no category column: fall back to the
   // whole table (every row is an exercise at that point).
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
   const retry = await supabase.from("exercises").select(BASE_COLS).order("name");
   if (retry.error) throw new Error(`Failed to load exercises: ${retry.error.message}`);
   return withMuscles(retry.data);
@@ -79,7 +79,7 @@ export async function getStretches() {
 // One library row by id, with its muscle tags. null if not found.
 export async function getExerciseById(id) {
   if (!id) return null;
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
   const full = await supabase
     .from("exercises")
     .select(`${BASE_COLS}, ${MUSCLE_JOIN}`)

@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 
 export const DEFAULT_PREFS = {
   quietDayNudge: true,
@@ -29,10 +29,8 @@ function fromRow(row) {
 }
 
 export async function getNotificationPrefs() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { ...DEFAULT_PREFS };
 
   const { data } = await supabase

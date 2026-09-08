@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import {
   currentWeek,
   isMesocycleComplete,
@@ -16,7 +16,7 @@ import { sortVariants } from "@/lib/exercises";
 // The programs available to start. Reference data, readable by any
 // signed-in user, same as splits/day_templates.
 export async function getMesocycleTemplates() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from("mesocycle_templates")
     .select("id, name, description, weeks, starting_rir, kind, split:splits(id, name, cadence)")
@@ -30,7 +30,7 @@ export async function getMesocycleTemplates() {
 // coached programs have only "Standard"; the primary splits have Full
 // Gym / Dumbbells / Bodyweight).
 export async function getMesocycleOverview(templateId) {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
   const { data: template, error } = await supabase
     .from("mesocycle_templates")
     .select("id, name, description, weeks, starting_rir, kind, split:splits(id, name, cadence)")
@@ -77,10 +77,8 @@ export async function getMesocycleOverview(templateId) {
 // target, deload, which day of the split comes next. Null if they are
 // not running one.
 export async function getActiveMesocycle() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return null;
 
   const { data: run, error } = await supabase
@@ -189,10 +187,8 @@ export async function getActiveMesocycle() {
 // mesocycle run, and where strength moved. Compares the best estimated
 // 1RM in the first half of the run against the second half, per lift.
 export async function getMesocycleSummary(userMesocycleId) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return null;
 
   const { data: run } = await supabase

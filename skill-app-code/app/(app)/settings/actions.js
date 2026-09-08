@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 
 const BOOL_KEYS = {
   quietDayNudge: "quiet_day_nudge",
@@ -15,10 +15,8 @@ const BOOL_KEYS = {
 
 // Merge a partial set of preference changes into the user's row.
 export async function saveNotificationPrefs(patch) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const row = { user_id: user.id, updated_at: new Date().toISOString() };

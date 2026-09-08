@@ -1,13 +1,13 @@
 import "server-only";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { computeWeekStreak } from "@/lib/training";
 
 // The signed-in user's workout history. RLS scopes every row to auth.uid(),
 // so these queries never need an explicit user filter. Cached per request
 // so the dashboard's header line and mesocycle panel share one query.
 export const getWorkoutSummary = cache(async function getWorkoutSummary() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
 
   const [sessionsRes, setsRes] = await Promise.all([
     supabase
@@ -48,7 +48,7 @@ export const getWorkoutSummary = cache(async function getWorkoutSummary() {
 // view: no sets query needed, so it is far cheaper than getWorkoutSummary
 // when the stats it also computes are not wanted.
 export async function getAllWorkoutSessions() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from("workout_sessions")
     .select("id, title, started_at")
@@ -63,10 +63,8 @@ export async function getAllWorkoutSessions() {
 // would already block the read, this just makes the "not found" case
 // explicit for the page to redirect on).
 export async function getWorkoutDetail(sessionId) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return null;
 
   const { data: session, error: sessionError } = await supabase

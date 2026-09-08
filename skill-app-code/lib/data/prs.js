@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { isTimeBasedExercise } from "@/lib/exercises";
 
 // Epley 1RM estimate. Only meaningful in the low-rep range; above ~15
@@ -44,7 +44,7 @@ async function loadLoadedSets(supabase) {
 // Best-ever estimated 1RM and heaviest-ever weight per exercise, most
 // recent PR first. For the Progress "Personal records" card.
 export async function getPersonalRecords() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
   const rows = await loadLoadedSets(supabase);
 
   const byExercise = new Map();
@@ -76,10 +76,8 @@ export async function getPersonalRecords() {
 // Exercises where this session hit a new best estimated 1RM, judged
 // against every earlier session. For the post-workout screen.
 export async function getSessionPRs(sessionId) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return [];
 
   const rows = await loadLoadedSets(supabase);

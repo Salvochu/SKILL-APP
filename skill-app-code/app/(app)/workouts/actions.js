@@ -1,16 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 
 // Delete one logged workout. RLS already scopes workout_sessions to the
 // owner, and the user_id filter here makes that explicit. workout_sets
 // go with it via "on delete cascade".
 export async function deleteWorkout(sessionId) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   if (!sessionId || typeof sessionId !== "string") {
@@ -33,10 +31,8 @@ export async function deleteWorkout(sessionId) {
 // tampered payload cannot touch anything else. Weights arrive in kg,
 // already converted by the client.
 export async function updateWorkoutSession(sessionId, patch) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   if (!sessionId || typeof sessionId !== "string") {
@@ -127,10 +123,8 @@ export async function updateWorkoutSession(sessionId, patch) {
 // Mesocycle runs are left alone: their progress just recomputes from
 // zero logged sessions.
 export async function deleteAllWorkouts() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const { error } = await supabase
