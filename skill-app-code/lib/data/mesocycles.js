@@ -1,5 +1,6 @@
 import "server-only";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
+import { createPublicClient } from "@/lib/supabase/public";
 import {
   currentWeek,
   isMesocycleComplete,
@@ -16,7 +17,8 @@ import { sortVariants } from "@/lib/exercises";
 // The programs available to start. Reference data, readable by any
 // signed-in user, same as splits/day_templates.
 export async function getMesocycleTemplates() {
-  const supabase = await getServerSupabase();
+  "use cache";
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("mesocycle_templates")
     .select("id, name, description, weeks, starting_rir, kind, split:splits(id, name, cadence)")
@@ -30,7 +32,8 @@ export async function getMesocycleTemplates() {
 // coached programs have only "Standard"; the primary splits have Full
 // Gym / Dumbbells / Bodyweight).
 export async function getMesocycleOverview(templateId) {
-  const supabase = await getServerSupabase();
+  "use cache";
+  const supabase = createPublicClient();
   const { data: template, error } = await supabase
     .from("mesocycle_templates")
     .select("id, name, description, weeks, starting_rir, kind, split:splits(id, name, cadence)")
