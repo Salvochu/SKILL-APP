@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { setAdvancedTracking } from "@/app/(app)/profile/actions";
 
 // The switch between the simple app and the full one. On = reps in
@@ -8,7 +9,9 @@ import { setAdvancedTracking } from "@/app/(app)/profile/actions";
 // benchmark, and the trend charts on Progress. Off keeps all of that
 // hidden and swaps the RIR box for a "taken to failure" tap.
 export default function TrainingModeSetting({ initialAdvanced, isExplicit }) {
+  const router = useRouter();
   const [advanced, setAdvanced] = useState(initialAdvanced);
+  const [chosen, setChosen] = useState(isExplicit);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
 
@@ -21,7 +24,12 @@ export default function TrainingModeSetting({ initialAdvanced, isExplicit }) {
     if (res?.error) {
       setAdvanced(!next);
       setError(res.error);
+      return;
     }
+    setChosen(true);
+    // Push the new value through every server component (the logger's
+    // RIR column, the dashboard, Progress) without a manual reload.
+    router.refresh();
   }
 
   return (
@@ -54,7 +62,7 @@ export default function TrainingModeSetting({ initialAdvanced, isExplicit }) {
             />
           </button>
         </div>
-        {!isExplicit ? (
+        {!chosen ? (
           <p className="text-[11px] text-dim">
             {advanced ? "On" : "Off"} by default for your experience level. Flip it any time.
           </p>

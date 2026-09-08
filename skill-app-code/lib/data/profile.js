@@ -57,14 +57,13 @@ export const getBeginnerContext = cache(async () => {
     ? Math.floor((Date.now() - new Date(user.created_at)) / 86400000)
     : null;
 
+  // A coach, an experienced lifter, or a beginner past their first month
+  // gets the full app by default; a new beginner starts simple. The
+  // Settings switch overrides the default for anyone, coach included.
   const advancedByDefault =
-    !isBeginner || (daysSinceJoin != null && daysSinceJoin >= 30);
+    isCoach || !isBeginner || (daysSinceJoin != null && daysSinceJoin >= 30);
   const advancedIsExplicit = typeof data?.advanced_tracking === "boolean";
-  const advanced = isCoach
-    ? true
-    : advancedIsExplicit
-      ? data.advanced_tracking
-      : advancedByDefault;
+  const advanced = advancedIsExplicit ? data.advanced_tracking : advancedByDefault;
 
   return {
     isBeginner,
