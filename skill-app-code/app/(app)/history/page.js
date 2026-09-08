@@ -12,7 +12,7 @@ export default function HistoryPage() {
         <p className="text-sm text-muted">Every session you have logged.</p>
       </header>
 
-      <Suspense fallback={<div className="h-64 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-64 rounded-card skeleton bg-surface-2" />}>
         <HistoryBody />
       </Suspense>
     </div>

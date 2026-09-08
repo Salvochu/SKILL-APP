@@ -53,15 +53,15 @@ function BackLink() {
 function LibrarySkeleton() {
   return (
     <div className="flex flex-col gap-4">
-      <div className="h-10 w-full rounded-field bg-surface" />
+      <div className="h-10 w-full rounded-field skeleton bg-surface-2" />
       <div className="flex gap-2">
         {MUSCLE_ORDER.map((m) => (
-          <div key={m} className="h-6 w-16 rounded-full bg-surface" />
+          <div key={m} className="h-6 w-16 rounded-full skeleton bg-surface-2" />
         ))}
       </div>
       <div className="flex flex-col gap-2.5">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-24 w-full rounded-card bg-surface" />
+          <div key={i} className="h-24 w-full rounded-card skeleton bg-surface-2" />
         ))}
       </div>
     </div>

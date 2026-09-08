@@ -178,6 +178,35 @@ h4 {
   .bar-fill { animation: none; background-image: none; }
 }
 
+/* The navigation veil fades in so a slow page change reads as a
+   deliberate loading state, not a freeze. */
+@keyframes nav-veil-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.nav-veil {
+  animation: nav-veil-in 160ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-veil {
+    animation: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Loading placeholders: a soft pulse so a skeleton reads as "loading",
+   not a broken empty box. */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.skeleton {
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; opacity: 0.75; }
+}
+
 /* A slow highlight sweeping left to right across a solid button, to pull
    a new user's eye to the primary call to action. */
 @keyframes btn-shine {
@@ -211,6 +240,17 @@ h4 {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/* Touch feedback: every button and link visibly reacts the instant it is
+   pressed, so a tap that kicks off a slow load never feels ignored. */
+@media (hover: none) and (pointer: coarse) {
+  a:active,
+  button:not(:disabled):active,
+  [role="button"]:active {
+    filter: brightness(0.85);
+    transition: filter 60ms ease-out;
+  }
 }
 
 /* Hide number input spinners; the log screen uses its own steppers. */

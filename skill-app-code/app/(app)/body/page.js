@@ -20,7 +20,7 @@ export default function BodyPage() {
         <p className="text-sm text-muted">Weight and measurements over time.</p>
       </header>
 
-      <Suspense fallback={<div className="h-64 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-64 rounded-card skeleton bg-surface-2" />}>
         <BodyBody />
       </Suspense>
     </div>

@@ -48,7 +48,7 @@ function Skeleton() {
   return (
     <div className="flex flex-col gap-2.5">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="h-24 w-full rounded-card bg-surface" />
+        <div key={i} className="h-24 w-full rounded-card skeleton bg-surface-2" />
       ))}
     </div>
   );

@@ -21,7 +21,7 @@ export default function SettingsPage() {
         <p className="text-sm text-muted">Notifications, the rest timer, and how the app behaves.</p>
       </header>
 
-      <Suspense fallback={<div className="h-64 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-64 rounded-card skeleton bg-surface-2" />}>
         <Body />
       </Suspense>
     </div>

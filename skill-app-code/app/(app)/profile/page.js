@@ -19,7 +19,7 @@ export default function ProfilePage() {
         </p>
       </header>
 
-      <Suspense fallback={<div className="h-96 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-96 rounded-card skeleton bg-surface-2" />}>
         <ProfileSection />
       </Suspense>
 

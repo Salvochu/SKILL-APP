@@ -28,7 +28,7 @@ export default async function ExerciseHistoryPage({ params }) {
           Exercise Library
         </Link>
       </header>
-      <Suspense fallback={<div className="h-64 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-64 rounded-card skeleton bg-surface-2" />}>
         <Body id={id} />
       </Suspense>
     </div>

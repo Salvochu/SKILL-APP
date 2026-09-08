@@ -17,7 +17,7 @@ export async function generateMetadata({ params }) {
 export default function SplitPage({ params }) {
   return (
     <div className="py-2">
-      <Suspense fallback={<div className="h-72 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-72 rounded-card skeleton bg-surface-2" />}>
         <Body params={params} />
       </Suspense>
     </div>

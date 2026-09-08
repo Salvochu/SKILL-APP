@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
 import StreakBadge from "@/components/StreakBadge";
 import RouteProgress from "@/components/RouteProgress";
+import NavigationOverlay from "@/components/NavigationOverlay";
 import OfflineQueueSync from "@/components/OfflineQueueSync";
 import ActiveWorkoutBar from "@/components/log/ActiveWorkoutBar";
 import UnfinishedWorkoutPrompt from "@/components/log/UnfinishedWorkoutPrompt";
@@ -15,6 +16,9 @@ export default function AppLayout({ children }) {
     <div className="min-h-full">
       <Suspense fallback={null}>
         <RouteProgress />
+      </Suspense>
+      <Suspense fallback={null}>
+        <NavigationOverlay />
       </Suspense>
       <Suspense fallback={<div className="fixed inset-x-0 top-0 z-40 h-14 border-b border-border bg-bg md:h-16" />}>
         <NavBar streak={<Suspense fallback={null}><StreakBadge /></Suspense>} />

@@ -13,15 +13,15 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-7 py-2">
       <div className="flex flex-col gap-2">
-        <Suspense fallback={<div className="h-8 w-48 rounded bg-surface" />}>
+        <Suspense fallback={<div className="h-8 w-48 rounded skeleton bg-surface-2" />}>
           <Greeting />
         </Suspense>
-        <Suspense fallback={<div className="h-5 w-56 rounded bg-surface" />}>
+        <Suspense fallback={<div className="h-5 w-56 rounded skeleton bg-surface-2" />}>
           <HeaderStats />
         </Suspense>
       </div>
 
-      <Suspense fallback={<div className="h-48 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-48 rounded-card skeleton bg-surface-2" />}>
         <MesocycleSection />
       </Suspense>
 

@@ -28,11 +28,11 @@ export default function ProgressPage({ searchParams }) {
     <div className="flex flex-col gap-6 py-2">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold text-fg">Progress</h1>
-        <Suspense fallback={<div className="h-5 w-52 rounded bg-surface" />}>
+        <Suspense fallback={<div className="h-5 w-52 rounded skeleton bg-surface-2" />}>
           <LifetimeStrip />
         </Suspense>
       </div>
-      <Suspense fallback={<div className="h-64 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-64 rounded-card skeleton bg-surface-2" />}>
         <ProgressBody searchParams={searchParams} />
       </Suspense>
     </div>

@@ -9,7 +9,7 @@ export const instant = false;
 export default function ClientsPage() {
   return (
     <div className="py-2">
-      <Suspense fallback={<div className="h-64 rounded-card bg-surface" />}>
+      <Suspense fallback={<div className="h-64 rounded-card skeleton bg-surface-2" />}>
         <Body />
       </Suspense>
     </div>
