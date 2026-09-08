@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getProgressData } from "@/lib/data/progress";
-import { getWeeklyMuscleVolume } from "@/lib/data/volume";
+import { getWeeklyMuscleVolume, getMuscleTrainingTotals } from "@/lib/data/volume";
 import { getPersonalRecords } from "@/lib/data/prs";
 import { getStrengthScore, getLastStrengthCheck } from "@/lib/data/strength";
 import { getJourney } from "@/lib/data/journey";
@@ -75,7 +75,7 @@ async function ProgressBody({ searchParams }) {
   const mesoRange = resolveMesoRange(activeMeso?.startDate);
   const range = sp.range === MESO_TOKEN && mesoRange ? mesoRange : parseRange(sp.range);
 
-  const [rawData, muscleVolume, records, strength, journey, lastCheck, beginner, unit, lifetime] =
+  const [rawData, muscleVolume, records, strength, journey, lastCheck, beginner, unit, lifetime, muscleTotals] =
     await Promise.all([
       getProgressData(range),
       getWeeklyMuscleVolume(),
@@ -86,6 +86,7 @@ async function ProgressBody({ searchParams }) {
       getBeginnerContext(),
       getUnitPreference(),
       getWorkoutSummary(),
+      getMuscleTrainingTotals(),
     ]);
   const showStrengthCheck = beginner.showStrengthCheck;
 
@@ -127,11 +128,9 @@ async function ProgressBody({ searchParams }) {
     [`${U} lifted`, `${lifetimeVolK}k`],
     ["Trained", lh > 0 ? `${lh}h` : `${lm}m`],
   ];
-  const shareLifts = (strength?.patterns ?? [])
-    .filter((p) => p.e1rm > 0 && p.lift)
-    .sort((a, b) => b.e1rm - a.e1rm)
-    .slice(0, 3)
-    .map((p) => ({ name: p.lift, detail: `${conv(p.e1rm)} ${U} · ${p.tier}` }));
+  const shareMuscles = muscleTotals
+    .slice(0, 4)
+    .map((g) => ({ name: g.parent, sets: g.sets }));
   const shareCaption = journey
     ? `${journey.tier}, Level ${journey.level} on SKILL. Tracked with @salvador_skfitness`
     : "My training progress on SKILL. Tracked with @salvador_skfitness";
@@ -151,7 +150,7 @@ async function ProgressBody({ searchParams }) {
           tierColor={journey?.tierColor ?? null}
           xpPct={journey ? (journey.atMax ? 100 : journey.pctToNextLevel) : null}
           stats={shareStats}
-          lifts={shareLifts}
+          muscles={shareMuscles}
           caption={shareCaption}
         />
       </div>

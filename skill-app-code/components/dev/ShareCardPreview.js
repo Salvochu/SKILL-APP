@@ -26,10 +26,11 @@ export default function ShareCardPreview() {
         ["kg lifted", "412k"],
         ["Trained", "71h"],
       ],
-      lifts: [
-        { name: "Back Squat", detail: "150 kg · Intermediate" },
-        { name: "Deadlift", detail: "180 kg · Intermediate" },
-        { name: "Bench Press", detail: "110 kg · Intermediate" },
+      muscles: [
+        { name: "Legs", sets: 148 },
+        { name: "Back", sets: 121 },
+        { name: "Chest", sets: 96 },
+        { name: "Shoulders", sets: 74 },
       ],
     });
     setPurl(URL.createObjectURL(blob));

@@ -4,15 +4,15 @@ import { useState } from "react";
 import { buildProgressShareBlob } from "@/lib/progressShare";
 
 // "Share progress" button: renders a branded PNG of the user's level,
-// rank, lifetime totals and strongest lifts, then hands it to the native
-// share sheet, falling back to a download + copied caption.
-export default function ShareProgress({ levelLabel, tierLabel, tierColor, xpPct, stats, lifts, caption }) {
+// rank, lifetime totals and most-trained muscles, then hands it to the
+// native share sheet, falling back to a download + copied caption.
+export default function ShareProgress({ levelLabel, tierLabel, tierColor, xpPct, stats, muscles, caption }) {
   const [status, setStatus] = useState("idle"); // idle | working | shared | downloaded
 
   async function onShare() {
     setStatus("working");
     try {
-      const blob = await buildProgressShareBlob({ levelLabel, tierLabel, tierColor, xpPct, stats, lifts });
+      const blob = await buildProgressShareBlob({ levelLabel, tierLabel, tierColor, xpPct, stats, muscles });
       const file = new File([blob], "skill-progress.png", { type: "image/png" });
       const text = caption || "My training progress. Tracked in SKILL by @salvador_skfitness";
 

@@ -5,20 +5,30 @@
 // page rasterising, no new dependency. Portrait 4:5, the densest crop
 // that still posts cleanly to a feed or a story.
 //
-// It leads with the thing people actually want to show off: their level
-// and rank, then a few lifetime totals, then their strongest lifts. The
-// @handle is kept small, the way the workout card does it, so the
-// numbers stay the hero.
+// It leads with the thing people want to show off: their level and rank,
+// then a few lifetime totals, then the four muscle groups they have
+// trained the most. Orange is reserved for the @handle and the logo;
+// everything else is the rank colour, white, or a per-muscle hue.
 
 const WIDTH = 1080;
-const HEIGHT = 1200;
+const HEIGHT = 1300;
 const SYS_FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
 const COLORS = {
   bg: "#000000",
   accent: "#fc7605",
   fg: "#ffffff",
   muted: "#9a938c",
-  track: "#2a2521",
+  track: "#221f1c",
+};
+
+// One hue per muscle group, matching the app's dark-theme --muscle-*.
+const MUSCLE_HEX = {
+  chest: "#e66767",
+  back: "#3987e5",
+  legs: "#1faa77",
+  shoulders: "#9085e9",
+  arms: "#cf8a1f",
+  core: "#d55181",
 };
 
 function loadImage(src) {
@@ -53,7 +63,7 @@ export async function buildProgressShareBlob({
   tierColor = null,
   xpPct = null,
   stats = [],
-  lifts = [],
+  muscles = [],
 } = {}) {
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
@@ -135,40 +145,57 @@ export async function buildProgressShareBlob({
     y += 110;
   }
 
-  // Strongest lifts
-  if (!lifts.length) {
+  // Most-trained muscle groups, all-time hard sets each
+  if (!muscles.length) {
     ctx.textAlign = "center";
     ctx.fillStyle = COLORS.muted;
     ctx.font = `500 28px ${SYS_FONT}`;
-    ctx.fillText("Log a Strength Check to show your best lifts", WIDTH / 2, y + 30);
+    ctx.fillText("Keep logging to see your muscle breakdown", WIDTH / 2, y + 30);
   } else {
-    y += 20;
+    y += 24;
     ctx.textAlign = "left";
     ctx.fillStyle = COLORS.fg;
     ctx.font = `700 38px ${SYS_FONT}`;
-    ctx.fillText("Strongest lifts", 120, y);
-    y += 54;
+    ctx.fillText("Most trained", 120, y);
+    y += 56;
 
-    for (const lift of lifts.slice(0, 3)) {
+    const rowX = 120;
+    const rowW = WIDTH - 240;
+    const maxSets = Math.max(1, ...muscles.map((m) => m.sets));
+
+    for (const m of muscles.slice(0, 4)) {
+      const hue = MUSCLE_HEX[String(m.name).toLowerCase()] || COLORS.muted;
+
       ctx.fillStyle = COLORS.track;
-      roundRect(ctx, 120, y - 34, WIDTH - 240, 78, 18);
+      roundRect(ctx, rowX, y - 34, rowW, 78, 18);
+      ctx.fill();
+
+      // Keep the fill clear of the right-hand set count so it stays legible.
+      const fillW = Math.max(56, Math.min(rowW - 220, (m.sets / maxSets) * (rowW - 220)));
+      ctx.fillStyle = hexA(hue, 0.26);
+      roundRect(ctx, rowX, y - 34, fillW, 78, 18);
+      ctx.fill();
+
+      ctx.fillStyle = hue;
+      ctx.beginPath();
+      ctx.arc(rowX + 34, y + 5, 9, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.textAlign = "left";
       ctx.fillStyle = COLORS.fg;
       ctx.font = `600 32px ${SYS_FONT}`;
-      ctx.fillText(clip(ctx, lift.name, 460), 156, y + 10);
+      ctx.fillText(clip(ctx, m.name, 380), rowX + 60, y + 15);
 
       ctx.textAlign = "right";
-      ctx.fillStyle = COLORS.accent;
+      ctx.fillStyle = COLORS.fg;
       ctx.font = `700 32px ${SYS_FONT}`;
-      ctx.fillText(clip(ctx, lift.detail, 380), WIDTH - 156, y + 10);
+      ctx.fillText(`${m.sets} sets`, rowX + rowW - 28, y + 15);
 
       y += 96;
     }
   }
 
-  // Credit, kept small: the numbers are the hero.
+  // Credit. The @handle is the one orange thing on the card besides the logo.
   ctx.textAlign = "center";
   ctx.font = `600 30px ${SYS_FONT}`;
   ctx.fillStyle = COLORS.accent;

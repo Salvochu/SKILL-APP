@@ -85,3 +85,30 @@ export async function getWeeklyMuscleVolume() {
     trainedThisWeek: groups.some((g) => g.thisWeek > 0),
   };
 }
+
+// All-time weighted hard sets per parent muscle group, biggest first.
+// Same fractional-set convention as the weekly card (primary 1, secondary
+// 0.5), just with no week filter. Feeds the "most trained" block on the
+// progress share card.
+export async function getMuscleTrainingTotals() {
+  const supabase = await getServerSupabase();
+
+  const { data, error } = await supabase
+    .from("workout_sets")
+    .select("completed, is_warmup, exercise:exercises(exercise_muscles(role, muscle:muscles(parent)))");
+  if (error) throw new Error(`Failed to load volume: ${error.message}`);
+
+  const totals = new Map(MUSCLE_ORDER.map((p) => [p, 0]));
+  for (const s of data ?? []) {
+    if (s.completed === false || s.is_warmup) continue;
+    for (const t of s.exercise?.exercise_muscles ?? []) {
+      const parent = t.muscle?.parent;
+      if (!parent || !totals.has(parent)) continue;
+      totals.set(parent, totals.get(parent) + (ROLE_WEIGHT[t.role] ?? 0));
+    }
+  }
+
+  return MUSCLE_ORDER.map((parent) => ({ parent, sets: Math.round(totals.get(parent)) }))
+    .filter((g) => g.sets > 0)
+    .sort((a, b) => b.sets - a.sets);
+}
