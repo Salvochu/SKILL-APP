@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncProfileToGHL } from "@/lib/ghl";
 
@@ -11,10 +11,8 @@ const str = (v) => (typeof v === "string" ? v.trim() : "");
 // Both happen in the one action so the form only has a single pending
 // state, rather than juggling an upload and a save separately.
 export async function saveProfile(formData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const fullName = str(formData.get("fullName"));
@@ -86,10 +84,8 @@ export async function saveProfile(formData) {
 // Marks onboarding done without saving any profile fields: the "Skip
 // for now" path out of the quiz, or exiting before answering anything.
 export async function completeOnboarding() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const { error } = await supabase
@@ -106,10 +102,8 @@ export async function completeOnboarding() {
 // workouts and their profile row. Irreversible, the confirm step lives
 // in the UI (components/profile/DangerZone.js).
 export async function deleteAccount() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const admin = createAdminClient();

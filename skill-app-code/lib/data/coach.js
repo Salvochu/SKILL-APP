@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { computeWeekStreak, weekKeyOf } from "@/lib/training";
 import { currentWeek } from "@/lib/mesocycle";
@@ -19,10 +19,8 @@ const dayKey = (d) => new Date(d).toISOString().slice(0, 10);
 // (not the admin client), so this can never be spoofed. Cached per
 // request - several coach screens check it.
 export const getIsCoach = cache(async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return false;
   const { data } = await supabase
     .from("profiles")

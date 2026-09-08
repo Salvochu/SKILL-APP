@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "crypto";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 
 const ANGLES = ["front", "side", "back"];
 
@@ -10,10 +10,8 @@ const ANGLES = ["front", "side", "back"];
 // progress-photos bucket under the user's own folder; the DB row is the
 // index. If the row insert fails the object is rolled back.
 export async function uploadProgressPhoto(formData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const file = formData.get("photo");
@@ -57,10 +55,8 @@ export async function uploadProgressPhoto(formData) {
 }
 
 export async function deleteProgressPhoto(id) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
   if (!id || typeof id !== "string") return { error: "That photo could not be found." };
 

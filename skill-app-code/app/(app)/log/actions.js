@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { getProgressData } from "@/lib/data/progress";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getSessionPRs } from "@/lib/data/prs";
@@ -16,10 +16,8 @@ import { getSessionJourneyDelta } from "@/lib/data/journey";
 // call this the same way. WorkoutLogger navigates to /dashboard itself
 // on success; a background replay does not navigate anywhere.
 export async function saveWorkout(payload) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again to save this workout." };
 
   const title = String(payload.title || "").trim() || "Workout";
@@ -141,10 +139,8 @@ export async function getPostSaveSummary(sessionId, userMesocycleId) {
 // The coarse 1 to 5 "how hard was this" rating, set from the summary
 // screen after the session already exists.
 export async function rateWorkout(sessionId, perceivedEffort) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const effort = Math.round(Number(perceivedEffort));

@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import {
   MOVEMENT_PATTERNS,
   patternForExercise,
@@ -62,10 +62,8 @@ function scoreFrom(rows, bodyweightKg) {
 // Current Strength Score: best estimated 1RM per movement pattern over
 // the last six weeks, summed.
 export async function getStrengthScore() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return null;
 
   const { rows, bodyweightKg } = await loadWindow(supabase);
@@ -75,10 +73,8 @@ export async function getStrengthScore() {
 // The most recent Strength Check session, if any. Powers the "last
 // checked / re-test" line on the Progress page.
 export async function getLastStrengthCheck() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -94,10 +90,8 @@ export async function getLastStrengthCheck() {
 
 // How the just-saved session moved the score.
 export async function getStrengthScoreDelta(sessionId) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user || !sessionId) return null;
 
   const { rows, bodyweightKg } = await loadWindow(supabase);

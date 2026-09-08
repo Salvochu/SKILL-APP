@@ -1,40 +1,21 @@
 import "server-only";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser, getProfileRow } from "@/lib/data/session";
 
-// The user's kg / lb display choice. Cached per request so the several
-// components that format weights on one page share a single read.
-// Weights are always stored in kg; this only changes display and input.
+// The user's kg / lb display choice. Weights are always stored in kg;
+// this only changes display and input.
 export const getUnitPreference = cache(async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return "kg";
-  const { data } = await supabase
-    .from("profiles")
-    .select("unit_preference")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  return data?.unit_preference === "lb" ? "lb" : "kg";
+  const row = await getProfileRow();
+  return row?.unit_preference === "lb" ? "lb" : "kg";
 });
 
 // The signed-in user's profile row. Most fields are optional and the row
 // itself may not exist yet (a fresh account has none), so this always
 // returns a plain object with sensible defaults rather than null.
 export async function getProfile() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
   if (!user) return null;
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("full_name, age, country, fitness_goal, experience_level, phone, avatar_url, unit_preference")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (error) throw new Error(`Failed to load profile: ${error.message}`);
+  const data = await getProfileRow();
 
   return {
     email: user.email,
@@ -51,21 +32,15 @@ export async function getProfile() {
 
 // Beginner-friendly gating. Someone who picked "Beginner" in the
 // onboarding quiz gets gentler copy, and the Strength Check stays hidden
-// (everywhere, including Progress) until they have 30 days on the app -
-// working up to a heavy top set is not a week-one exercise.
+// (everywhere, including Progress) until they have 30 days on the app.
+// Working up to a heavy top set is not a week-one exercise.
 export const getBeginnerContext = cache(async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { isBeginner: false, daysSinceJoin: null, showStrengthCheck: true };
+  const user = await getSessionUser();
+  if (!user) {
+    return { isBeginner: false, daysSinceJoin: null, showStrengthCheck: true, simplified: false };
+  }
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("experience_level, role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
+  const data = await getProfileRow();
   const isCoach = data?.role === "coach";
   const isBeginner = !isCoach && (data?.experience_level ?? "") === "Beginner";
   const daysSinceJoin = user.created_at
@@ -85,18 +60,8 @@ export const getBeginnerContext = cache(async () => {
 // profile row at all (a brand new account) counts as needing it, same
 // as an explicit false.
 export async function needsOnboarding() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
   if (!user) return false;
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("onboarding_completed")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (error) throw new Error(`Failed to check onboarding: ${error.message}`);
-
+  const data = await getProfileRow();
   return !data?.onboarding_completed;
 }

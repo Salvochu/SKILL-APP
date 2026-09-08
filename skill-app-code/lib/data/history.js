@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/data/session";
 
 // For every exercise the user has ever logged, the sets from the most
 // recent session that included it. Keyed by exercise id. The Log screen
@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 // a user's history grows into the thousands of sets, swap this for a
 // "latest set per exercise" view.
 export async function getRecentPerformance() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
   const { data: raw, error } = await supabase
     .from("workout_sets")
     .select(

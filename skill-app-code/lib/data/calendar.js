@@ -1,12 +1,12 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/data/session";
 
 // Everything the training calendar needs: each logged session with its
 // day, title and volume, plus the days that have a body check-in. Small
 // payload, so the client component can page through months without
 // re-fetching.
 export async function getWorkoutCalendar() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
 
   const [sessionsRes, setsRes, bodyRes] = await Promise.all([
     supabase

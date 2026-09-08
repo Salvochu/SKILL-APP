@@ -1,12 +1,12 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/data/session";
 
 const FIELDS = ["weight", "body_fat", "waist_cm", "chest_cm", "arm_cm", "thigh_cm", "hip_cm"];
 
 // The signed-in user's body check-ins (weight and optional tape
 // measurements), oldest first. RLS scopes body_logs to auth.uid().
 export async function getBodyLog() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from("body_logs")
     .select("logged_at, weight, body_fat, waist_cm, chest_cm, arm_cm, thigh_cm, hip_cm, note")

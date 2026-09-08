@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { getMesocycleOverview } from "@/lib/data/mesocycles";
 import { VARIANT_ORDER } from "@/lib/exercises";
 
@@ -22,10 +22,8 @@ export async function loadMesocycleOverview(templateId) {
 // time: abandons any other active one first, rather than blocking with
 // an error, since switching programs is a normal thing to want to do.
 export async function startMesocycle(templateId, variant, sessionsPerWeek) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const safeVariant = VARIANT_ORDER.includes(variant) ? variant : "Standard";
@@ -54,10 +52,8 @@ export async function startMesocycle(templateId, variant, sessionsPerWeek) {
 }
 
 export async function finishMesocycle(userMesocycleId) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const { error } = await supabase
@@ -72,10 +68,8 @@ export async function finishMesocycle(userMesocycleId) {
 }
 
 export async function abandonMesocycle(userMesocycleId) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const { error } = await supabase

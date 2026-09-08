@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { patternForExercise } from "@/lib/strength";
 import { weekKeyOf } from "@/lib/training";
 import { XP, journeyProgress } from "@/lib/journey";
@@ -137,10 +137,8 @@ function computeXp({ sessions, sets, mesos, body }, excludeSessionId = null) {
 }
 
 export async function getJourney() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return null;
 
   const data = await loadJourneyData(supabase);
@@ -151,10 +149,8 @@ export async function getJourney() {
 // What the just-saved session was worth: XP gained, and whether it pushed
 // a level-up or a new tier.
 export async function getSessionJourneyDelta(sessionId) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user || !sessionId) return null;
 
   const data = await loadJourneyData(supabase);

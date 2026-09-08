@@ -1,10 +1,10 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/data/session";
 
 // All splits with their ordered days and each day's per-variant exercise
 // lists. Reference data, readable by any signed-in user.
 export async function getSplits() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
 
   const [splitsRes, splitDaysRes, templatesRes, templateExRes] = await Promise.all([
     supabase.from("splits").select("id, name, cadence, description, section, position").order("position"),

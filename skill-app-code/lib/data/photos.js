@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/data/session";
 
 const SIGNED_TTL = 60 * 60; // 1 hour
 
@@ -7,7 +7,7 @@ const SIGNED_TTL = 60 * 60; // 1 hour
 // short-lived signed URL (the bucket is private). Grouped by date so the
 // gallery and the compare picker can work in whole check-ins.
 export async function getProgressPhotos() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
 
   const { data, error } = await supabase
     .from("progress_photos")

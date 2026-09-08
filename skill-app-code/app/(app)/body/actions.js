@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 
 const num = (v, lo, hi) => {
   const s = typeof v === "string" ? v.trim() : "";
@@ -13,10 +13,8 @@ const num = (v, lo, hi) => {
 // Upsert one body check-in for a date. One row per day per user
 // (unique on user_id + logged_at), so re-logging the same day edits it.
 export async function logBodyEntry(formData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const date = /^\d{4}-\d{2}-\d{2}$/.test(formData.get("date"))
@@ -60,10 +58,8 @@ export async function logBodyEntry(formData) {
 }
 
 export async function deleteBodyEntry(date) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
 
   const { error } = await supabase

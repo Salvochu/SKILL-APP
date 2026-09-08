@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/data/session";
 import { MUSCLE_ORDER, MUSCLE_LIST } from "@/lib/exercises";
 
 // Monday of the ISO week containing d, as a YYYY-MM-DD key. Same bucketing
@@ -31,7 +31,7 @@ const ROLE_WEIGHT = { primary: 1, secondary: 0.5 };
 // up their specific muscles. Deliberately just "this week" - it is the
 // number that drives the next session.
 export async function getWeeklyMuscleVolume() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
 
   const [sessionsRes, setsRes] = await Promise.all([
     supabase.from("workout_sessions").select("id, started_at"),
