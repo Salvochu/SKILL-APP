@@ -4,6 +4,7 @@ import LibraryBrowser from "@/components/library/LibraryBrowser";
 import SplitsList from "@/components/splits/SplitsList";
 import SplitDetail from "@/components/splits/SplitDetail";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
+import WorkoutBuilder from "@/components/workouts/WorkoutBuilder";
 import BarChart from "@/components/progress/BarChart";
 import StrengthChart from "@/components/progress/StrengthChart";
 import CompareExercises from "@/components/progress/CompareExercises";
@@ -157,6 +158,41 @@ export default function DesignPreviewPage() {
         </Section>
         <Section title="/splits">
           <SplitsList splits={SPLITS} />
+        </Section>
+        <Section title="/splits (with My workouts)">
+          <SplitsList
+            splits={SPLITS}
+            myWorkouts={[
+              {
+                id: "mw1",
+                name: "Quick push day",
+                note: "",
+                updatedAt: "2026-09-06",
+                exercises: [
+                  { exerciseId: "2", exercise: EX[1], name: "Bench Press", muscle: "Chest", sets: 4, reps: "6 to 8" },
+                  { exerciseId: "6", exercise: EX[5], name: "Lateral Raise", muscle: "Shoulders", sets: 3, reps: "12 to 15" },
+                ],
+                muscleSummary: "Chest, Shoulders",
+              },
+            ]}
+          />
+        </Section>
+        <Section title="/workouts/mine/new (builder, empty)">
+          <WorkoutBuilder allExercises={EX} initial={{ id: null, name: "", note: "", exercises: [] }} />
+        </Section>
+        <Section title="/workouts/mine/[id] (builder, editing)">
+          <WorkoutBuilder
+            allExercises={EX}
+            initial={{
+              id: "mw1",
+              name: "Quick push day",
+              note: "Keep rests short.",
+              exercises: [
+                { exerciseId: "2", exercise: EX[1], sets: 4, reps: "6 to 8" },
+                { exerciseId: "6", exercise: EX[5], sets: 3, reps: "12 to 15" },
+              ],
+            }}
+          />
         </Section>
         <Section title="/splits/[id] (multi-day)">
           <SplitDetail split={MULTI_SPLIT} template={{ id: "ppl-demo", weeks: 5 }} activeProgram={null} />

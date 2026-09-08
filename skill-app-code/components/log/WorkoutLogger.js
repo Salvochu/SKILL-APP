@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveWorkout, getPostSaveSummary, rateWorkout } from "@/app/(app)/log/actions";
+import { createMyWorkout } from "@/app/(app)/workouts/my-actions";
 import RestTimer from "@/components/log/RestTimer";
 import ExercisePicker from "@/components/log/ExercisePicker";
 import ReorderSheet from "@/components/log/ReorderSheet";
@@ -27,6 +28,24 @@ const nextKey = () => `x${Date.now().toString(36)}${++keySeq}`;
 // The movement patterns the Strength Check tests (all six), so its finish
 // recap does not pull in unrelated lift variants from the score window.
 const BENCHMARK_PATTERNS = ["squat", "hinge", "hpush", "vpush", "hpull", "vpull"];
+
+// Turns the exercises just logged into a reusable template: keep the
+// order, count the working sets, and take the rep target that came up
+// most often. Warm-ups do not count toward either.
+function templateFromRows(rows) {
+  return rows
+    .map((r) => {
+      const working = r.sets.filter((s) => !s.warmup);
+      const repCounts = new Map();
+      for (const s of working) {
+        const v = String(s.reps ?? "").trim();
+        if (v) repCounts.set(v, (repCounts.get(v) ?? 0) + 1);
+      }
+      const reps = [...repCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
+      return { exerciseId: r.exercise.id, sets: Math.max(1, working.length || 1), reps };
+    })
+    .filter((e) => e.exerciseId);
+}
 
 function epley1rm(weight, reps) {
   const w = Number(weight);
@@ -350,6 +369,14 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         savingEffort={savingEffort}
         onSelectEffort={onSelectEffort}
         onDone={() => router.push("/dashboard")}
+        saveAsWorkout={
+          initial.myWorkoutId
+            ? null
+            : {
+                defaultName: title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "").trim() || "My workout",
+                exercises: templateFromRows(rows),
+              }
+        }
       />
     );
   }
@@ -743,7 +770,95 @@ function IconShare(props) {
   );
 }
 
-function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "kg", savingEffort, onSelectEffort, onDone }) {
+// On the finish screen: turn the session that was just logged into a
+// reusable "my workout" the user can start again from the Train tab.
+// Only shown for sessions that were not already started from one.
+function SaveAsWorkoutCard({ defaultName, exercises }) {
+  const [state, setState] = useState("idle"); // idle | naming | saving | saved
+  const [name, setName] = useState(defaultName);
+  const [error, setError] = useState(null);
+
+  async function onSave() {
+    setError(null);
+    if (!name.trim()) {
+      setError("Give it a name.");
+      return;
+    }
+    setState("saving");
+    const result = await createMyWorkout({ name, exercises });
+    if (result?.error) {
+      setError(result.error);
+      setState("naming");
+      return;
+    }
+    setState("saved");
+  }
+
+  if (state === "saved") {
+    return (
+      <section className="flex items-center gap-3 rounded-card border border-good/40 bg-good/10 p-4">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-good/20 text-good">
+          <IconCheck className="h-5 w-5" />
+        </span>
+        <p className="text-sm text-fg">
+          Saved to <span className="font-semibold">My workouts</span> on the Train tab.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="font-display text-base font-semibold text-fg">Save this as a workout</h2>
+        <p className="text-sm text-muted">
+          Keep these {exercises.length} exercise{exercises.length === 1 ? "" : "s"} as a workout you can
+          start again any day.
+        </p>
+      </div>
+
+      {state === "idle" ? (
+        <button
+          type="button"
+          onClick={() => setState("naming")}
+          className="self-start rounded-field border border-accent/40 bg-accent-soft px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
+        >
+          Save as a workout
+        </button>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoFocus
+            placeholder="Workout name"
+            className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
+          />
+          {error ? <p className="text-xs text-danger">{error}</p> : null}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setState("idle")}
+              className="rounded-field border border-border px-4 py-2 text-sm font-medium text-muted transition-colors hover:text-fg"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={state === "saving"}
+              className="flex-1 rounded-field bg-accent py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+            >
+              {state === "saving" ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "kg", savingEffort, onSelectEffort, onDone, saveAsWorkout = null }) {
   const mins = summary.durationMin;
   const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
   const prs = extras?.newPRs ?? [];
@@ -927,6 +1042,13 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
         </div>
         {effort ? <p className="text-center text-xs text-accent">{EFFORT_LABELS[effort]}</p> : null}
       </section>
+
+      {saveAsWorkout && saveAsWorkout.exercises.length > 0 ? (
+        <SaveAsWorkoutCard
+          defaultName={saveAsWorkout.defaultName}
+          exercises={saveAsWorkout.exercises}
+        />
+      ) : null}
 
       <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} />
 

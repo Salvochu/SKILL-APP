@@ -1,5 +1,6 @@
 import { getExercises } from "@/lib/data/exercises";
 import { getDayTemplateExercises, getDayTemplate } from "@/lib/data/dayTemplates";
+import { getMyWorkout } from "@/lib/data/myWorkouts";
 import { getRecentPerformance } from "@/lib/data/history";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getNotificationPrefs } from "@/lib/data/notifications";
@@ -21,8 +22,9 @@ export default async function LogPage({ searchParams }) {
   const variant = strOrNull(params?.variant);
   const exerciseId = strOrNull(params?.exercise);
   const mesoId = strOrNull(params?.meso);
+  const myWorkoutId = strOrNull(params?.mine);
 
-  const [allExercises, historyKg, activeMeso, prefs, unit, beginner] = await Promise.all([
+  const [allExercises, historyKg, activeMeso, prefs, unit, beginner, myWorkout] = await Promise.all([
     getExercises(),
     getRecentPerformance(),
     // Re-fetched fresh here rather than trusting the link's query params,
@@ -32,6 +34,7 @@ export default async function LogPage({ searchParams }) {
     getNotificationPrefs(),
     getUnitPreference(),
     getBeginnerContext(),
+    myWorkoutId ? getMyWorkout(myWorkoutId) : null,
   ]);
   // The logger works entirely in the user's chosen unit: history comes
   // in converted, and it converts back to kg on save.
@@ -76,6 +79,11 @@ export default async function LogPage({ searchParams }) {
         sets: applyDeload ? setsForWeek(it.sets, meso.week, meso.weeks) : it.sets,
         reps: it.reps,
       }));
+  } else if (myWorkout) {
+    title = myWorkout.name;
+    preload = myWorkout.exercises
+      .filter((it) => it.exercise)
+      .map((it) => ({ exercise: it.exercise, sets: it.sets, reps: it.reps }));
   } else if (exerciseId && byId.has(exerciseId)) {
     const e = byId.get(exerciseId);
     title = e.name;
@@ -90,7 +98,7 @@ export default async function LogPage({ searchParams }) {
       // start a different one) keeps this route segment mounted, so
       // without a key the old form state, timer and draft would carry
       // over. Keying on the workout's identity forces a clean remount.
-      key={`${splitId ?? ""}|${dayTemplateId ?? ""}|${variant ?? ""}|${exerciseId ?? ""}|${today}`}
+      key={`${splitId ?? ""}|${dayTemplateId ?? ""}|${variant ?? ""}|${exerciseId ?? ""}|${myWorkoutId ?? ""}|${today}`}
       allExercises={allExercises}
       history={history}
       unit={unit}
@@ -117,6 +125,7 @@ export default async function LogPage({ searchParams }) {
         dayTemplateId,
         variant,
         userMesocycleId: meso?.id ?? null,
+        myWorkoutId: myWorkout?.id ?? null,
       }}
     />
   );

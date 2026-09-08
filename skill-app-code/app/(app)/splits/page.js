@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getSplits } from "@/lib/data/splits";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getBeginnerContext } from "@/lib/data/profile";
+import { getMyWorkouts } from "@/lib/data/myWorkouts";
 import SplitsList from "@/components/splits/SplitsList";
 
 export const metadata = { title: "Train" };
@@ -22,10 +23,11 @@ export default function SplitsPage() {
 }
 
 async function Body() {
-  const [splits, beginner, active] = await Promise.all([
+  const [splits, beginner, active, myWorkouts] = await Promise.all([
     getSplits(),
     getBeginnerContext(),
     getActiveMesocycle(),
+    getMyWorkouts(),
   ]);
 
   const strengthCheck = beginner.showStrengthCheck
@@ -46,6 +48,7 @@ async function Body() {
       strengthCheck={strengthCheck}
       foundations={foundations}
       isBeginner={beginner.isBeginner}
+      myWorkouts={myWorkouts}
     />
   );
 }

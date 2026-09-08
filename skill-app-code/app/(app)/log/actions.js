@@ -83,6 +83,18 @@ export async function saveWorkout(payload) {
     if (owned) userMesocycleId = owned.id;
   }
 
+  // Same check for the custom workout this session was started from.
+  let myWorkoutId = null;
+  if (payload.myWorkoutId) {
+    const { data: owned } = await supabase
+      .from("my_workouts")
+      .select("id")
+      .eq("id", payload.myWorkoutId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (owned) myWorkoutId = owned.id;
+  }
+
   const { data: session, error: sessionError } = await supabase
     .from("workout_sessions")
     .insert({
@@ -95,6 +107,7 @@ export async function saveWorkout(payload) {
       day_template_id: payload.dayTemplateId || null,
       variant: payload.variant || null,
       user_mesocycle_id: userMesocycleId,
+      my_workout_id: myWorkoutId,
     })
     .select("id")
     .single();

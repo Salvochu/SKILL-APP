@@ -5,8 +5,9 @@ import FoundationsCard from "@/components/splits/FoundationsCard";
 const SECTION_LABEL = { primary: "Choose your split", coached: "Specialization programs" };
 
 // The Train landing page: Foundations (for beginners), a couple of quick
-// starts, and the splits. Each split opens its own page at /splits/[id].
-export default function SplitsList({ splits, strengthCheck = null, foundations = null, isBeginner = false }) {
+// starts, the user's own saved workouts, and the splits. Each split opens
+// its own page at /splits/[id].
+export default function SplitsList({ splits, strengthCheck = null, foundations = null, isBeginner = false, myWorkouts = [] }) {
   const sections = groupBySection(splits).filter((s) => !isBeginner || s.section !== "coached");
   const others = sections.flatMap(({ items }) => items);
 
@@ -47,6 +48,8 @@ export default function SplitsList({ splits, strengthCheck = null, foundations =
           ) : null}
         </div>
       </section>
+
+      <MyWorkoutsSection myWorkouts={myWorkouts} />
 
       {isBeginner ? (
         <details className="group flex flex-col rounded-card border border-border bg-surface [&_summary::-webkit-details-marker]:hidden">
@@ -113,6 +116,68 @@ function SplitRow({ split }) {
   );
 }
 
+// The user's own saved workouts. Tapping the card starts a session from
+// it (GuardedStartLink warns first if another workout is unsaved); the
+// pencil opens the builder to edit it. Always shows the "Build a workout"
+// entry point, even with an empty list.
+function MyWorkoutsSection({ myWorkouts }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">My workouts</h2>
+        <TapLink
+          href="/workouts/mine/new"
+          className="flex items-center gap-1 rounded-field px-1 text-xs font-semibold text-accent transition-colors hover:text-accent-2"
+        >
+          <IconPlus className="h-3.5 w-3.5" />
+          Build a workout
+        </TapLink>
+      </div>
+
+      {myWorkouts.length === 0 ? (
+        <TapLink
+          href="/workouts/mine/new"
+          className="flex flex-col items-center gap-1 rounded-card border border-dashed border-border p-6 text-center transition-colors hover:border-border-strong hover:bg-surface-2"
+        >
+          <span className="text-sm font-medium text-fg">Build your own workout</span>
+          <span className="text-xs text-dim">Save a set of exercises you can start any day</span>
+        </TapLink>
+      ) : (
+        <ul className="flex flex-col gap-2.5">
+          {myWorkouts.map((w) => (
+            <li
+              key={w.id}
+              className="flex items-stretch overflow-hidden rounded-card border border-border bg-surface transition-colors hover:border-border-strong"
+            >
+              <GuardedStartLink
+                href={`/log?mine=${w.id}`}
+                className="flex min-w-0 flex-1 items-center gap-4 p-4 text-left transition-colors hover:bg-surface-2"
+              >
+                <span className="tabular flex h-11 w-11 shrink-0 items-center justify-center rounded-field bg-accent-soft text-base font-bold text-accent">
+                  {w.exercises.length}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-display text-base font-semibold text-fg">{w.name}</span>
+                  <span className="block truncate text-xs text-dim">
+                    {w.muscleSummary || `${w.exercises.length} exercise${w.exercises.length === 1 ? "" : "s"}`}
+                  </span>
+                </span>
+              </GuardedStartLink>
+              <TapLink
+                href={`/workouts/mine/${w.id}`}
+                aria-label={`Edit ${w.name}`}
+                className="flex shrink-0 items-center border-l border-border px-3 text-dim transition-colors hover:bg-surface-2 hover:text-fg"
+              >
+                <IconPencil className="h-4 w-4" />
+              </TapLink>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function groupBySection(splits) {
   const order = ["primary", "coached"];
   const map = new Map();
@@ -144,6 +209,14 @@ function IconChevron(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+function IconPencil(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
     </svg>
   );
 }
