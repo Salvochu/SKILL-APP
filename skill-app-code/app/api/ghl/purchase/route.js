@@ -14,10 +14,20 @@ import { createAdminClient } from "@/lib/supabase/admin";
 //                                 action does not sign its requests.)
 //   - GHL_WEBHOOK_PUBLIC_KEY     (optional; Ed25519 PEM, for the signed
 //                                 native webhook trigger instead of a secret)
-//   - GHL_EXPECTED_PRODUCT_ID    (optional; if set, only that product is
-//                                 accepted)
+//   - GHL_EXPECTED_PRODUCT_ID    (optional; the paid app product id. If
+//                                 set, only it and the challenge product
+//                                 are accepted as paying members)
+//   - GHL_CHALLENGE_PRODUCT_ID   (optional; the free 14-day challenge
+//                                 product / form id. Defaults to
+//                                 "main-character-challenge". A call
+//                                 carrying this id creates a challenge
+//                                 account and starts the 14-day plan)
 //   - NEXT_PUBLIC_SITE_URL       (optional; where the set-password link
 //                                 points back, defaults to this origin)
+
+// The mesocycle template the free challenge runs on (migration 0033).
+const CHALLENGE_TEMPLATE_ID = "main-character-14";
+const CHALLENGE_PRODUCT_ID = process.env.GHL_CHALLENGE_PRODUCT_ID || "main-character-challenge";
 
 // From GoHighLevel's Webhook Integration Guide. Overridable via env in
 // case GHL rotates it.
@@ -129,17 +139,28 @@ function deepFindEmail(obj, seen = new Set()) {
   return null;
 }
 
-function isTargetPurchase(payload) {
-  const expected = process.env.GHL_EXPECTED_PRODUCT_ID;
-  if (!expected) return true; // no filter configured: accept every call
-  const ids = [
+function productIdsIn(payload) {
+  return [
     payload?.product_id,
     payload?.productId,
     payload?.product?.id,
     payload?.customData?.product_id,
+    payload?.plan,
     ...(Array.isArray(payload?.line_items) ? payload.line_items.map((i) => i?.product_id) : []),
-  ];
-  return ids.some((id) => String(id) === String(expected));
+  ]
+    .filter((v) => v != null)
+    .map((v) => String(v));
+}
+
+// "challenge" -> free 14-day challenge sign-up, "member" -> paid app
+// purchase, null -> ignore (not one of our products).
+function classifyPurchase(payload) {
+  const ids = productIdsIn(payload);
+  if (ids.some((id) => id === String(CHALLENGE_PRODUCT_ID))) return "challenge";
+
+  const paid = process.env.GHL_EXPECTED_PRODUCT_ID;
+  if (!paid) return "member"; // no paid-product filter configured: treat every other call as a member
+  return ids.some((id) => id === String(paid)) ? "member" : null;
 }
 
 export async function POST(request) {
@@ -156,7 +177,8 @@ export async function POST(request) {
     return json({ error: "invalid JSON body" }, 400);
   }
 
-  if (!isTargetPurchase(payload)) {
+  const plan = classifyPurchase(payload);
+  if (!plan) {
     return json({ ok: true, skipped: "not the target product" });
   }
 
@@ -194,6 +216,18 @@ export async function POST(request) {
     return json({ error: "could not generate login link" }, 502);
   }
 
+  // Flag the account and, for the challenge, start the 14-day plan. The
+  // login link above is the critical path, so a failure here is logged
+  // and swallowed rather than failing the webhook.
+  const userId = linkData?.user?.id ?? null;
+  if (userId) {
+    try {
+      await applyPlan(supabase, userId, plan);
+    } catch (err) {
+      console.error("ghl/purchase applyPlan failed:", err?.message);
+    }
+  }
+
   // Build our own confirm URL from the token hash rather than using
   // Supabase's action_link: this one keeps the /auth/set-password
   // destination and verifies cross-device (no PKCE verifier needed).
@@ -204,10 +238,53 @@ export async function POST(request) {
   return json({
     ok: true,
     email,
+    plan,
     is_new_user: !alreadyExisted,
     // GHL maps this into the workflow's follow-up email.
     set_password_url: setPasswordUrl,
   });
+}
+
+// Set the membership flag and, for a challenge sign-up, start the 14-day
+// plan. Runs through the admin client (RLS bypassed).
+async function applyPlan(supabase, userId, plan) {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("membership")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (plan === "member") {
+    await supabase
+      .from("profiles")
+      .upsert({ user_id: userId, membership: "member" }, { onConflict: "user_id" });
+    return;
+  }
+
+  // plan === "challenge": never downgrade an existing member or the coach.
+  if (profile?.membership !== "member" && profile?.membership !== "coach") {
+    await supabase
+      .from("profiles")
+      .upsert({ user_id: userId, membership: "challenge" }, { onConflict: "user_id" });
+  }
+
+  // Start the 14-day plan unless they already have a run going.
+  const { data: activeRun } = await supabase
+    .from("user_mesocycles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+  if (!activeRun) {
+    await supabase.from("user_mesocycles").insert({
+      user_id: userId,
+      template_id: CHALLENGE_TEMPLATE_ID,
+      start_date: new Date().toISOString().slice(0, 10),
+      status: "active",
+      variant: "Full Gym",
+    });
+  }
 }
 
 export function GET() {

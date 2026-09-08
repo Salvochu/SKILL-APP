@@ -10,6 +10,7 @@ import {
   weekDateRange,
   weekGuidance,
   foundationsGuidance,
+  challengeGuidance,
   sessionOptionsFromCadence,
 } from "@/lib/mesocycle";
 import { sortVariants } from "@/lib/exercises";
@@ -97,11 +98,29 @@ export async function getActiveMesocycle() {
   if (!run) return null;
 
   const { weeks, starting_rir: startingRir } = run.template;
-  const kind = run.template.kind === "foundations" ? "foundations" : "mesocycle";
+  const rawKind = run.template.kind;
+  const isChallenge = rawKind === "challenge";
+  const kind = rawKind === "foundations" ? "foundations" : isChallenge ? "challenge" : "mesocycle";
   const isFoundations = kind === "foundations";
+  // Foundations and the challenge are both linear: no RIR ramp, no
+  // deload, and they finish on session count, not the calendar.
+  const linear = isFoundations || isChallenge;
   const week = currentWeek(run.start_date, weeks);
-  const deload = !isFoundations && isDeloadWeek(week, weeks);
-  const rir = isFoundations ? null : rirForWeek(week, weeks, startingRir);
+  const deload = !linear && isDeloadWeek(week, weeks);
+  const rir = linear ? null : rirForWeek(week, weeks, startingRir);
+
+  const DAY_MS = 86400000;
+  const challengeDay = isChallenge
+    ? Math.max(
+        1,
+        Math.floor(
+          (Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`) -
+            Date.parse(`${run.start_date}T00:00:00Z`)) /
+            DAY_MS,
+        ) + 1,
+      )
+    : null;
+  const challengeDays = isChallenge ? weeks * 7 : null;
 
   const { from: weekFrom, to: weekTo } = weekDateRange(run.start_date, week);
 
@@ -137,12 +156,12 @@ export async function getActiveMesocycle() {
   const dayIdx = nextDayIndex(logged, totalDays);
   const nextDay = days?.[dayIdx] ?? null;
 
-  // Foundations aims for 3 sessions a week and finishes on session count,
-  // not the calendar - a beginner running behind should still get their
-  // full month of training.
-  const sessionsPerWeek = isFoundations ? 3 : run.sessions_per_week || totalDays || 1;
-  const targetSessions = isFoundations ? weeks * 3 : null;
-  const complete = isFoundations
+  // Foundations and the challenge aim for 3 sessions a week and finish
+  // on session count, not the calendar - someone running behind still
+  // gets their full block of training.
+  const sessionsPerWeek = linear ? 3 : run.sessions_per_week || totalDays || 1;
+  const targetSessions = linear ? weeks * 3 : null;
+  const complete = linear
     ? logged >= targetSessions
     : isMesocycleComplete(run.start_date, weeks);
 
@@ -150,6 +169,9 @@ export async function getActiveMesocycle() {
     id: run.id,
     startDate: run.start_date,
     kind,
+    isChallenge,
+    challengeDay,
+    challengeDays,
     advanced,
     variant: run.variant || "Standard",
     templateId: run.template.id,
@@ -161,9 +183,11 @@ export async function getActiveMesocycle() {
     startingRir,
     isDeload: deload,
     rirTarget: rir,
-    guidance: isFoundations
-      ? foundationsGuidance(logged, targetSessions)
-      : weekGuidance(week, weeks, startingRir, advanced),
+    guidance: isChallenge
+      ? challengeGuidance(challengeDay, logged, targetSessions)
+      : isFoundations
+        ? foundationsGuidance(logged, targetSessions)
+        : weekGuidance(week, weeks, startingRir, advanced),
     isComplete: complete,
     sessionsLogged: logged,
     sessionsThisWeek: sessionsThisWeek ?? 0,

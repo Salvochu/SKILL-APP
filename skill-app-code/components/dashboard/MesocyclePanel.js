@@ -9,6 +9,9 @@ import Explain from "@/components/Explain";
 import MesocycleComplete from "@/components/dashboard/MesocycleComplete";
 import { rirForWeek, isDeloadWeek } from "@/lib/mesocycle";
 
+const KEEP_TRAINING_URL =
+  process.env.NEXT_PUBLIC_KEEP_TRAINING_URL || "https://www.salvadorskfitness.com";
+
 export default function MesocyclePanel({ active, summary, isNew = false, isBeginner = false }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -92,6 +95,13 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
   }
 
   const isFoundations = active.kind === "foundations";
+  const isChallenge = active.kind === "challenge";
+  // Both run linear (no RIR ramp, no deload) and finish on session count.
+  const linear = isFoundations || isChallenge;
+  // The challenge shows its fork (keep training / work with Salvador)
+  // once the 14 days are up or all the sessions are done.
+  const challengeOver =
+    isChallenge && (active.isComplete || (active.challengeDay ?? 0) >= (active.challengeDays ?? 14));
 
   // The days you can jump to from the menu, each distinct day once (a
   // twice-a-week split lists "Push" once, not twice).
@@ -107,7 +117,7 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
   // the calendar week; Foundations follows session count so a beginner
   // running behind still sees themselves on the right week.
   const railWeeks = active.weeks;
-  const currentRailWeek = isFoundations
+  const currentRailWeek = linear
     ? Math.min(railWeeks, Math.floor(active.sessionsLogged / 3) + 1)
     : active.week;
   const weekFill =
@@ -118,7 +128,7 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
   // A finished mesocycle swaps to its end-of-block readout. Foundations
   // never hard-stops - it just adds a "ready to graduate" nudge to the
   // normal panel once the month is done (below).
-  if (active.isComplete && !isFoundations) {
+  if (active.isComplete && !linear) {
     return <MesocycleComplete active={active} summary={summary} />;
   }
 
@@ -127,7 +137,9 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-accent">
-            {isFoundations ? (
+            {isChallenge ? (
+              `Day ${Math.min(active.challengeDay ?? 1, active.challengeDays ?? 14)} of ${active.challengeDays ?? 14}`
+            ) : isFoundations ? (
               `Session ${Math.min(active.sessionsLogged + 1, active.targetSessions)} of ${active.targetSessions}`
             ) : (
               <>
@@ -200,7 +212,31 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
         </div>
       </div>
 
-      {isFoundations && active.isComplete ? (
+      {challengeOver ? (
+        <div className="flex flex-col gap-3 rounded-field border border-accent/40 bg-surface p-4">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-accent">Your 14 days are up</p>
+            <p className="text-sm text-fg">
+              {active.sessionsLogged} session{active.sessionsLogged === 1 ? "" : "s"} logged. Keep the
+              momentum, don&apos;t lose your streak and your level.
+            </p>
+          </div>
+          <a
+            href={KEEP_TRAINING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+          >
+            Keep training &mdash; &pound;14.99/mo
+          </a>
+          <TapLink
+            href="/work-with-me"
+            className="flex w-full items-center justify-center rounded-field border border-accent/40 px-4 py-3 text-sm font-semibold text-accent transition-colors hover:bg-accent/10"
+          >
+            Work with Salvador 1:1
+          </TapLink>
+        </div>
+      ) : isFoundations && active.isComplete ? (
         <div className="flex flex-col gap-2 rounded-field border border-accent/30 bg-surface p-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-accent">Month done</p>
           <p className="text-sm text-fg">
@@ -226,8 +262,8 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
             currentWeek={currentRailWeek}
             weekFill={weekFill}
             startingRir={active.startingRir}
-            showRir={active.advanced && !isFoundations}
-            hasDeload={!isFoundations}
+            showRir={active.advanced && !linear}
+            hasDeload={!linear}
           />
           {active.sessionsPerWeek > 0 ? (
             <div className="flex items-center gap-2 text-xs">

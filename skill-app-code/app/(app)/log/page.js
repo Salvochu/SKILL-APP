@@ -55,6 +55,9 @@ export default async function LogPage({ searchParams }) {
         );
   const byId = new Map(allExercises.map((e) => [e.id, e]));
   const meso = mesoId && activeMeso?.id === mesoId ? activeMeso : null;
+  // Foundations and the 14-day challenge both keep a fixed prescription
+  // every session and carry no week / deload framing on the log screen.
+  const linearMeso = meso && (meso.kind === "foundations" || meso.kind === "challenge");
 
   let title = "Workout";
   let preload = [];
@@ -65,13 +68,13 @@ export default async function LogPage({ searchParams }) {
       getDayTemplateExercises(dayTemplateId, variant),
     ]);
     if (day) title = variant === "Standard" ? day.name : `${day.name} (${variant})`;
-    if (meso && meso.kind !== "foundations") {
+    if (meso && !linearMeso) {
       title = `${title} . Week ${meso.week} of ${meso.weeks}${meso.isDeload ? " (deload)" : ""}`;
     }
 
-    // Foundations keeps its fixed prescription every session; only a
-    // periodised mesocycle's deload week trims the set count.
-    const applyDeload = meso && meso.kind !== "foundations";
+    // Foundations and the challenge keep a fixed prescription every
+    // session; only a periodised mesocycle's deload week trims sets.
+    const applyDeload = meso && !linearMeso;
     preload = items
       .filter((it) => it.exercise)
       .map((it) => ({
@@ -108,7 +111,8 @@ export default async function LogPage({ searchParams }) {
       mesoContext={
         meso
           ? {
-              kind: meso.kind,
+              // The challenge behaves like Foundations on the log screen.
+              kind: meso.kind === "challenge" ? "foundations" : meso.kind,
               week: meso.week,
               weeks: meso.weeks,
               isDeload: meso.isDeload,

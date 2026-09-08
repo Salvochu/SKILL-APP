@@ -117,6 +117,22 @@ const MESO_ACTIVE = {
   ],
 };
 
+const MESO_CHALLENGE = {
+  id: "c1", kind: "challenge", isChallenge: true, challengeDay: 4, challengeDays: 14,
+  variant: "Full Gym", splitId: "main-character-14", splitName: "14-Day Main Character",
+  weeks: 2, week: 1, startingRir: 3, isDeload: false, advanced: false,
+  sessionsThisWeek: 1, sessionsPerWeek: 3, sessionsLogged: 2,
+  totalDays: 2, targetSessions: 6, isComplete: false,
+  guidance: { headline: "2 of 6 sessions", detail: "Alternate Day A and Day B, beat last time where you can, and get your cardio in each week." },
+  nextDay: { position: 1, dayTemplateId: "foundations-b", name: "Day B", focus: "Hinge, press, pull" },
+  days: [
+    { position: 0, dayTemplateId: "foundations-a", name: "Day A", focus: "Squat, push, pull", isNext: false, doneThisWeek: true },
+    { position: 1, dayTemplateId: "foundations-b", name: "Day B", focus: "Hinge, press, pull", isNext: true, doneThisWeek: false },
+  ],
+};
+
+const MESO_CHALLENGE_OVER = { ...MESO_CHALLENGE, challengeDay: 15, sessionsLogged: 5, sessionsThisWeek: 2 };
+
 const VOL = [
   ["2026-08-04", "Full Body", 3800], ["2026-08-07", "Upper", 4200], ["2026-08-10", "Lower", 5100],
   ["2026-08-14", "Full Body", 4050], ["2026-08-18", "Upper", 4600], ["2026-08-21", "Lower", 5400],
@@ -155,6 +171,12 @@ export default function DesignPreviewPage() {
         </Section>
         <Section title="dashboard / mesocycle panel">
           <MesocyclePanel active={MESO_ACTIVE} summary={null} />
+        </Section>
+        <Section title="dashboard / 14-day challenge (mid)">
+          <MesocyclePanel active={MESO_CHALLENGE} summary={null} isBeginner />
+        </Section>
+        <Section title="dashboard / 14-day challenge (fork)">
+          <MesocyclePanel active={MESO_CHALLENGE_OVER} summary={null} isBeginner />
         </Section>
         <Section title="/splits">
           <SplitsList splits={SPLITS} />

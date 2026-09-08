@@ -122,6 +122,36 @@ export function foundationsGuidance(sessionsLogged = 0, targetSessions = 12) {
   };
 }
 
+// The 14-day challenge: linear like Foundations, but framed as a short
+// sprint. Guidance keys off both the day and how many sessions are done.
+export function challengeGuidance(day = 1, sessionsLogged = 0, targetSessions = 6) {
+  const left = Math.max(0, targetSessions - sessionsLogged);
+  if (sessionsLogged === 0) {
+    return {
+      headline: "Day 1",
+      detail:
+        "Start with Day A. Keep the weight manageable, watch the form video for each lift, and log every set.",
+    };
+  }
+  if (left === 0) {
+    return {
+      headline: "Challenge done",
+      detail: `All ${targetSessions} sessions logged. Keep going and see how much further you can take it.`,
+    };
+  }
+  if (day >= 12) {
+    return {
+      headline: "Final push",
+      detail: `${left} session${left === 1 ? "" : "s"} to go. Finish strong, then check your day-1 numbers.`,
+    };
+  }
+  return {
+    headline: `${sessionsLogged} of ${targetSessions} sessions`,
+    detail:
+      "Alternate Day A and Day B, beat last time where you can, and get your cardio in each week.",
+  };
+}
+
 // Weekly-session options implied by a split's cadence string. A range
 // ("2-3x per week") returns [2, 3] so the user is asked to pick; a fixed
 // count ("5 days") returns [] and the split's own day count is used.

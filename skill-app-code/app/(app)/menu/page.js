@@ -31,6 +31,9 @@ export default function MenuPage() {
       <Suspense fallback={null}>
         <CoachEntry />
       </Suspense>
+      <Suspense fallback={null}>
+        <WorkWithMeEntry />
+      </Suspense>
 
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
         {ITEMS.map((it) => (
@@ -60,6 +63,33 @@ async function CoachEntry() {
         />
       </TapLink>
     </div>
+  );
+}
+
+// Everyone who is not the coach gets the 1:1 upsell here.
+async function WorkWithMeEntry() {
+  if (await getIsCoach()) return null;
+  return (
+    <div className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-accent/40">
+      <TapLink href="/work-with-me" className="block bg-accent-soft transition-colors hover:bg-accent-soft/70">
+        <MenuRow
+          label="Work with Salvador"
+          body="1:1 coaching, built around you"
+          icon={IconCoach}
+          tint="#fc7605"
+        />
+      </TapLink>
+    </div>
+  );
+}
+
+function IconCoach(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="7" r="3.25" />
+      <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+      <path d="m18 5 1.2 1.2L22 3.5" />
+    </svg>
   );
 }
 
