@@ -1,8 +1,7 @@
 import Link from "next/link";
+import { BOOKING_URL } from "@/lib/links";
 
 export const metadata = { title: "Work with Salvador" };
-
-const BOOKING_URL = process.env.NEXT_PUBLIC_BOOKING_URL || "https://www.salvadorskfitness.com";
 
 const INCLUDED = [
   "A program built around your body, your schedule and your equipment, delivered in this app",

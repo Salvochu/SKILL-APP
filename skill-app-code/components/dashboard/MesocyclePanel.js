@@ -8,11 +8,15 @@ import GuardedStartLink from "@/components/log/GuardedStartLink";
 import Explain from "@/components/Explain";
 import MesocycleComplete from "@/components/dashboard/MesocycleComplete";
 import { rirForWeek, isDeloadWeek } from "@/lib/mesocycle";
+import { KEEP_TRAINING_URL } from "@/lib/links";
 
-const KEEP_TRAINING_URL =
-  process.env.NEXT_PUBLIC_KEEP_TRAINING_URL || "https://www.salvadorskfitness.com";
-
-export default function MesocyclePanel({ active, summary, isNew = false, isBeginner = false }) {
+export default function MesocyclePanel({
+  active,
+  summary,
+  isNew = false,
+  isBeginner = false,
+  challengeLapsed = false,
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -99,9 +103,13 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
   // Both run linear (no RIR ramp, no deload) and finish on session count.
   const linear = isFoundations || isChallenge;
   // The challenge shows its fork (keep training / work with Salvador)
-  // once the 14 days are up or all the sessions are done.
+  // once the 14 days are up or all the sessions are done. `challengeLapsed`
+  // is the hard state a few days later: training is locked.
   const challengeOver =
-    isChallenge && (active.isComplete || (active.challengeDay ?? 0) >= (active.challengeDays ?? 14));
+    isChallenge &&
+    (challengeLapsed ||
+      active.isComplete ||
+      (active.challengeDay ?? 0) >= (active.challengeDays ?? 14));
 
   // The days you can jump to from the menu, each distinct day once (a
   // twice-a-week split lists "Push" once, not twice).
@@ -215,10 +223,13 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
       {challengeOver ? (
         <div className="flex flex-col gap-3 rounded-field border border-accent/40 bg-surface p-4">
           <div className="flex flex-col gap-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-accent">Your 14 days are up</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-accent">
+              {challengeLapsed ? "Challenge ended" : "Your 14 days are up"}
+            </p>
             <p className="text-sm text-fg">
-              {active.sessionsLogged} session{active.sessionsLogged === 1 ? "" : "s"} logged. Keep the
-              momentum, don&apos;t lose your streak and your level.
+              {challengeLapsed
+                ? "Training is paused. Pick it back up and keep your streak, your level and your history."
+                : `${active.sessionsLogged} session${active.sessionsLogged === 1 ? "" : "s"} logged. Keep the momentum, don't lose your streak and your level.`}
             </p>
           </div>
           <a
@@ -289,7 +300,7 @@ export default function MesocyclePanel({ active, summary, isNew = false, isBegin
       ) : null}
 
       {error ? <p className="text-sm text-danger">{error}</p> : null}
-      {active.nextDay ? (
+      {challengeLapsed ? null : active.nextDay ? (
         <GuardedStartLink
           href={`/log?meso=${active.id}&split=${active.splitId}&day=${active.nextDay.dayTemplateId}&variant=${encodeURIComponent(active.variant)}`}
           className="btn-shine flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-2"

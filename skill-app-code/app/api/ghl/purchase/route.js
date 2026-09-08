@@ -153,14 +153,19 @@ function productIdsIn(payload) {
 }
 
 // "challenge" -> free 14-day challenge sign-up, "member" -> paid app
-// purchase, null -> ignore (not one of our products).
+// purchase or subscription, null -> ignore (not one of our products).
+// GHL_EXPECTED_PRODUCT_ID accepts a comma-separated list, so the £14.99
+// subscription and any older paid product both count.
 function classifyPurchase(payload) {
   const ids = productIdsIn(payload);
   if (ids.some((id) => id === String(CHALLENGE_PRODUCT_ID))) return "challenge";
 
-  const paid = process.env.GHL_EXPECTED_PRODUCT_ID;
-  if (!paid) return "member"; // no paid-product filter configured: treat every other call as a member
-  return ids.some((id) => id === String(paid)) ? "member" : null;
+  const paid = (process.env.GHL_EXPECTED_PRODUCT_ID || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (paid.length === 0) return "member"; // no filter configured: treat every other call as a member
+  return ids.some((id) => paid.includes(id)) ? "member" : null;
 }
 
 export async function POST(request) {

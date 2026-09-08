@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { getMesocycleOverview } from "@/lib/data/mesocycles";
+import { getChallengeAccess } from "@/lib/data/challenge";
 import { VARIANT_ORDER } from "@/lib/exercises";
 
 // The mesocycle state is read on the dashboard and the log screen; after
@@ -25,6 +26,9 @@ export async function startMesocycle(templateId, variant, sessionsPerWeek) {
   const supabase = await getServerSupabase();
   const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
+  if ((await getChallengeAccess()).lapsed) {
+    return { error: "Your 14-day challenge has ended. Keep training to start a program." };
+  }
 
   const safeVariant = VARIANT_ORDER.includes(variant) ? variant : "Standard";
   const spw = Number(sessionsPerWeek);

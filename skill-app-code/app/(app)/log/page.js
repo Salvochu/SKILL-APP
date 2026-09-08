@@ -5,9 +5,11 @@ import { getRecentPerformance } from "@/lib/data/history";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getNotificationPrefs } from "@/lib/data/notifications";
 import { getUnitPreference, getBeginnerContext } from "@/lib/data/profile";
+import { getChallengeAccess } from "@/lib/data/challenge";
 import { setsForWeek } from "@/lib/mesocycle";
 import { fromKg } from "@/lib/units";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
+import ChallengeEnded from "@/components/challenge/ChallengeEnded";
 
 export const metadata = { title: "Log Workout" };
 
@@ -16,6 +18,11 @@ export const metadata = { title: "Log Workout" };
 export const instant = false;
 
 export default async function LogPage({ searchParams }) {
+  // A lapsed challenge account cannot start new workouts.
+  if ((await getChallengeAccess()).lapsed) {
+    return <ChallengeEnded />;
+  }
+
   const params = await searchParams;
   const splitId = strOrNull(params?.split);
   const dayTemplateId = strOrNull(params?.day);

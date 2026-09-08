@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
+import { getChallengeAccess } from "@/lib/data/challenge";
 import { getProgressData } from "@/lib/data/progress";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getSessionPRs } from "@/lib/data/prs";
@@ -19,6 +20,12 @@ export async function saveWorkout(payload) {
   const supabase = await getServerSupabase();
   const user = await getSessionUser();
   if (!user) return { error: "Please sign in again to save this workout." };
+
+  // Backstop for the /log paywall: a form already open when the
+  // challenge lapsed still cannot save.
+  if ((await getChallengeAccess()).lapsed) {
+    return { error: "Your 14-day challenge has ended. Keep training to log new workouts." };
+  }
 
   const title = String(payload.title || "").trim() || "Workout";
   const date = /^\d{4}-\d{2}-\d{2}$/.test(payload.date)
