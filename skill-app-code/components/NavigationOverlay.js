@@ -22,7 +22,7 @@ export default function NavigationOverlay() {
       setVisible(true);
       clearTimeout(safety.current);
       safety.current = setTimeout(() => setVisible(false), 8000);
-    }, 180);
+    }, 110);
   }
   function stop() {
     clearTimeout(delay.current);
@@ -91,7 +91,18 @@ export default function NavigationOverlay() {
       aria-hidden="true"
       className="nav-veil fixed inset-0 z-[65] flex items-center justify-center bg-bg/55 backdrop-blur-[2px]"
     >
-      <span className="h-8 w-8 rounded-full border-2 border-border border-t-accent motion-safe:animate-spin" />
+      <div className="flex flex-col items-center gap-2">
+        <svg viewBox="0 0 64 44" className="h-11 w-16 text-accent" fill="currentColor">
+          <g className="db-drop">
+            <rect x="22" y="16" width="20" height="6" rx="3" />
+            <rect x="8" y="8" width="9" height="22" rx="3" />
+            <rect x="17" y="12" width="4" height="14" rx="2" />
+            <rect x="47" y="8" width="9" height="22" rx="3" />
+            <rect x="43" y="12" width="4" height="14" rx="2" />
+          </g>
+        </svg>
+        <span className="h-1 w-14 rounded-full bg-border-strong" />
+      </div>
     </div>
   );
 }

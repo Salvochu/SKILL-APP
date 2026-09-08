@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { saveWorkout, getPostSaveSummary, rateWorkout } from "@/app/(app)/log/actions";
 import RestTimer from "@/components/log/RestTimer";
 import ExercisePicker from "@/components/log/ExercisePicker";
+import ReorderSheet from "@/components/log/ReorderSheet";
 import LastNumbers from "@/components/log/LastNumbers";
 import VideoModal from "@/components/log/VideoModal";
 import MusclePill from "@/components/MusclePill";
@@ -81,6 +82,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   );
   const [pickerOpen, setPickerOpen] = useState(false);
   const [swapKey, setSwapKey] = useState(null);
+  const [reorderOpen, setReorderOpen] = useState(false);
   const [videoFor, setVideoFor] = useState(null);
   const [restKey, setRestKey] = useState(0);
   const [restSeconds, setRestSeconds] = useState(90);
@@ -243,15 +245,9 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     setRows((rs) => rs.map((r) => (r.key === swapKey ? { ...r, exercise } : r)));
     setSwapKey(null);
   }
-  function moveExercise(key, dir) {
-    setRows((rs) => {
-      const i = rs.findIndex((r) => r.key === key);
-      const j = i + dir;
-      if (i < 0 || j < 0 || j >= rs.length) return rs;
-      const next = [...rs];
-      [next[i], next[j]] = [next[j], next[i]];
-      return next;
-    });
+  function reorderExercises(next) {
+    setRows(next);
+    setReorderOpen(false);
   }
 
   async function onSave() {
@@ -491,7 +487,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {rows.map((row, ri) => (
+          {rows.map((row) => (
             <ExerciseCard
               key={row.key}
               row={row}
@@ -504,9 +500,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               onRemoveSet={(i) => removeSet(row.key, i)}
               onRemove={() => removeExercise(row.key)}
               onSwap={() => setSwapKey(row.key)}
-              onMove={(dir) => moveExercise(row.key, dir)}
-              canMoveUp={ri > 0}
-              canMoveDown={ri < rows.length - 1}
+              onReorder={rows.length > 1 ? () => setReorderOpen(true) : null}
               onVideo={() => setVideoFor(row.exercise)}
               inlineVideo={inlineVideos}
               startHint={
@@ -637,6 +631,9 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
           onPick={swapExercise}
           onClose={() => setSwapKey(null)}
         />
+      ) : null}
+      {reorderOpen ? (
+        <ReorderSheet rows={rows} onSave={reorderExercises} onClose={() => setReorderOpen(false)} />
       ) : null}
       {videoFor ? <VideoModal exercise={videoFor} onClose={() => setVideoFor(null)} /> : null}
     </div>
@@ -983,7 +980,7 @@ function IconFlame(props) {
   );
 }
 
-function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, showRir = true, showFailure = false, canMoveUp = false, canMoveDown = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onSwap, onMove, onVideo }) {
+function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, showRir = true, showFailure = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onSwap, onReorder, onVideo }) {
   const { exercise, sets } = row;
   const embedUrl = inlineVideo && exercise.video_url ? loomEmbedUrl(exercise.video_url) : null;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1066,12 +1063,11 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
               <button type="button" onClick={() => { setMenuOpen(false); onSwap?.(); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2">
                 Swap exercise
               </button>
-              <button type="button" disabled={!canMoveUp} onClick={() => { setMenuOpen(false); onMove?.(-1); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2 disabled:opacity-40">
-                Move up
-              </button>
-              <button type="button" disabled={!canMoveDown} onClick={() => { setMenuOpen(false); onMove?.(1); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2 disabled:opacity-40">
-                Move down
-              </button>
+              {onReorder ? (
+                <button type="button" onClick={() => { setMenuOpen(false); onReorder(); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2">
+                  Reorder exercises
+                </button>
+              ) : null}
               {!row.showNote ? (
                 <button type="button" onClick={() => { setMenuOpen(false); onPatch({ showNote: true }); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2">
                   Add a note

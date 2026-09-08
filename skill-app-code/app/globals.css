@@ -187,11 +187,30 @@ h4 {
 .nav-veil {
   animation: nav-veil-in 160ms ease-out;
 }
+
+/* Loading mark: a dumbbell drops onto the line, squashes, bounces once,
+   lifts off, repeats. */
+@keyframes db-drop {
+  0%   { transform: translateY(-38px); opacity: 0; }
+  14%  { transform: translateY(-38px); opacity: 1; }
+  46%  { transform: translateY(0) scaleY(1); }
+  56%  { transform: translateY(0) scaleY(0.82) scaleX(1.08); }
+  70%  { transform: translateY(-13px) scaleY(1) scaleX(1); }
+  84%  { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+.db-drop {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: db-drop 1.15s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nav-veil {
     animation: none;
     backdrop-filter: none;
   }
+  .db-drop { animation: none; }
 }
 
 /* Loading placeholders: a soft pulse so a skeleton reads as "loading",

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import TapLink from "@/components/TapLink";
 import Wordmark from "@/components/Wordmark";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -75,20 +74,20 @@ export default function NavBar({ streak = null }) {
             const active = isActive(pathname, tab.href);
             const Icon = tab.icon;
             return (
-              <TapLink
+              <Link
                 key={tab.href}
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors ${
+                className={`group relative flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors [-webkit-tap-highlight-color:transparent] ${
                   active ? "text-accent" : "text-dim hover:text-muted"
                 }`}
               >
                 {active ? (
                   <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-accent" />
                 ) : null}
-                <Icon className="h-[22px] w-[22px]" />
+                <Icon className="h-[22px] w-[22px] transition-transform duration-100 group-active:scale-90" />
                 {tab.label}
-              </TapLink>
+              </Link>
             );
           })}
         </div>
