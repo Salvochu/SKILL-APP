@@ -1,12 +1,13 @@
 import "server-only";
-import { getServerSupabase } from "@/lib/data/session";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Short teaching videos for the Education Library (how to train, how to
-// progress, form principles). Reference data, readable by any signed-in
-// user. Degrades to an empty list rather than throwing so the page still
-// renders before migration 0009 has been applied.
+// progress, form principles). Reference data, cached. Degrades to an
+// empty list rather than throwing so the page still renders before
+// migration 0009 has been applied.
 export async function getEducationVideos() {
-  const supabase = await getServerSupabase();
+  "use cache";
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("education_videos")
     .select("id, title, description, video_url")

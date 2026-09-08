@@ -1,10 +1,11 @@
 import "server-only";
-import { getServerSupabase } from "@/lib/data/session";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // The ordered exercises for one day template + variant, used to preload the
-// Log screen when a session is started from Splits.
+// Log screen when a session is started from Splits. Reference data, cached.
 export async function getDayTemplateExercises(dayTemplateId, variant) {
-  const supabase = await getServerSupabase();
+  "use cache";
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("day_template_exercises")
     .select("position, sets, reps, exercise:exercises(id, name, muscle, equipment, video_url, instructions)")
@@ -17,7 +18,8 @@ export async function getDayTemplateExercises(dayTemplateId, variant) {
 }
 
 export async function getDayTemplate(dayTemplateId) {
-  const supabase = await getServerSupabase();
+  "use cache";
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("day_templates")
     .select("id, name, focus")
