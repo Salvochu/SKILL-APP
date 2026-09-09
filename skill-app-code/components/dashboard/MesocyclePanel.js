@@ -141,10 +141,11 @@ export default function MesocyclePanel({
   }
 
   return (
-    <section className="relative flex flex-col overflow-hidden rounded-card border border-accent/25 bg-gradient-to-b from-[#1c1409] to-surface">
+    <section className="relative flex flex-col overflow-hidden rounded-card border border-accent/25 bg-gradient-to-b from-[var(--panel-warm)] to-surface">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-accent/25 blur-3xl"
+        className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full blur-3xl"
+        style={{ backgroundColor: "var(--panel-glow)" }}
       />
       <div className="relative flex items-start justify-between gap-2 p-5 pb-4">
         <div className="flex min-w-0 flex-col gap-1">

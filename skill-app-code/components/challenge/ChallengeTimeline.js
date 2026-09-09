@@ -4,7 +4,7 @@ import { isChallengeDayComplete } from "@/lib/data/challenge";
 
 // The whole 14 days as a list. Past and current days open to their
 // checklist so a day can be backfilled; future days show a preview only.
-export default function ChallengeTimeline({ challengeDay, byDay = {} }) {
+export default function ChallengeTimeline({ challengeDay, byDay = {}, readOnly = false }) {
   return (
     <section className="flex flex-col gap-2">
       <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-dim">
@@ -58,7 +58,7 @@ export default function ChallengeTimeline({ challengeDay, byDay = {} }) {
                   <p className="px-4 py-3 text-sm leading-relaxed text-muted">{d.what}</p>
                   {started ? (
                     <div className="border-t border-border">
-                      <ChallengeChecklist day={d.day} kind={d.kind} items={byDay[d.day] ?? {}} />
+                      <ChallengeChecklist day={d.day} kind={d.kind} items={byDay[d.day] ?? {}} locked={readOnly} />
                     </div>
                   ) : (
                     <p className="border-t border-border px-4 py-3 text-xs text-dim">

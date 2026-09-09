@@ -82,26 +82,13 @@ export default function ExercisePicker({ exercises, onPick, onClose, title = "Ad
         </div>
         <ul className="flex flex-col gap-2 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4">
           {filtered.map((e) => (
-            <li
-              key={e.id}
-              className="flex items-stretch overflow-hidden rounded-card border border-border bg-bg/40 transition-colors hover:border-border-strong"
-            >
-              {e.video_url ? (
-                <button
-                  type="button"
-                  onClick={() => setPreviewFor(e)}
-                  aria-label={`Watch ${e.name} form video`}
-                  className="flex shrink-0 items-center border-r border-border px-3 text-accent transition-colors hover:bg-accent-soft"
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-soft">
-                    <IconPlay className="ml-0.5 h-3.5 w-3.5" />
-                  </span>
-                </button>
-              ) : null}
+            <li key={e.id} className="relative">
               <button
                 type="button"
                 onClick={() => onPick(e)}
-                className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-surface-2 active:bg-accent-soft"
+                className={`flex w-full items-center gap-3 rounded-card border border-border bg-bg/40 py-2.5 pr-3 text-left transition-colors hover:border-border-strong hover:bg-surface-2 active:bg-accent-soft ${
+                  e.video_url ? "pl-[52px]" : "pl-3"
+                }`}
               >
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-fg">{e.name}</span>
@@ -109,6 +96,16 @@ export default function ExercisePicker({ exercises, onPick, onClose, title = "Ad
                 </span>
                 <MusclePill muscle={e.muscles?.find((m) => m.role === "primary")?.name ?? e.muscle} />
               </button>
+              {e.video_url ? (
+                <button
+                  type="button"
+                  onClick={() => setPreviewFor(e)}
+                  aria-label={`Watch ${e.name} form video`}
+                  className="absolute left-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-accent-soft text-accent transition-colors hover:bg-accent hover:text-black"
+                >
+                  <IconPlay className="ml-0.5 h-3.5 w-3.5" />
+                </button>
+              ) : null}
             </li>
           ))}
           {filtered.length === 0 ? (

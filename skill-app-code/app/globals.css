@@ -61,10 +61,17 @@
   --muscle-shoulders: #9085e9;
   --muscle-arms: #cf8a1f;
   --muscle-core: #d55181;
+
+  /* Dashboard active-program panel: a warm near-black top fading into the
+     surface, plus a soft accent glow bleeding from the corner. */
+  --panel-warm: #1c1409;
+  --panel-glow: rgba(252, 118, 5, 0.22);
 }
 
 :root.light {
   color-scheme: light;
+  --panel-warm: #fff3e7;
+  --panel-glow: rgba(252, 118, 5, 0.10);
   --color-bg: #ffffff;
   --color-surface: #f7f6f4;
   --color-surface-2: #efedea;

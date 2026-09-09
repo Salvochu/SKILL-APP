@@ -75,6 +75,26 @@ export default function ClientDetail({ client: c }) {
         </div>
       </header>
 
+      {c.membership === "challenge" ? (
+        <Link
+          href={`/clients/${c.id}/challenge`}
+          className="flex items-center gap-3 rounded-card border border-accent/40 bg-accent-soft p-4 transition-colors hover:bg-accent/15"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-black">
+            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 21V4M5 4l4-1 6 2 4-1v10l-4 1-6-2-4 1" />
+            </svg>
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-sm font-semibold text-fg">View their 14-Day Challenge</span>
+            <span className="text-xs text-muted">The climb, the checklist, day by day</span>
+          </span>
+          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-dim" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m9 6 6 6-6 6" />
+          </svg>
+        </Link>
+      ) : null}
+
       <section className="flex flex-col gap-2 rounded-card border border-accent/40 bg-accent-soft p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-accent">Worth a conversation?</h2>
         <p className="text-sm text-fg">{pitchLine(c)}</p>

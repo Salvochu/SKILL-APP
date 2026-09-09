@@ -8,6 +8,7 @@ import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getSessionPRs } from "@/lib/data/prs";
 import { getStrengthScoreDelta } from "@/lib/data/strength";
 import { getSessionJourneyDelta } from "@/lib/data/journey";
+import { getMuscleMapForSessions } from "@/lib/data/volume";
 
 // Save a logged workout: one workout_sessions row plus its workout_sets.
 // The session is re-authorised here rather than trusting the client.

@@ -4,6 +4,7 @@ import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { computeWeekStreak, weekKeyOf } from "@/lib/training";
 import { currentWeek } from "@/lib/mesocycle";
+import { isChallengeDayComplete } from "@/lib/data/challenge";
 import {
   patternForExercise,
   epley1RM,
@@ -44,7 +45,7 @@ async function loadEveryone() {
   }
 
   const [profilesRes, sessionsRes, setsRes, bodyRes, mesosRes, templatesRes] = await Promise.all([
-    admin.from("profiles").select("user_id, full_name, fitness_goal, experience_level, phone, unit_preference, role"),
+    admin.from("profiles").select("user_id, full_name, fitness_goal, experience_level, phone, unit_preference, role, membership"),
     admin.from("workout_sessions").select("id, user_id, title, started_at, completed_at, perceived_effort, user_mesocycle_id"),
     admin
       .from("workout_sets")
@@ -195,6 +196,7 @@ function summarize(userId, ctx, now = Date.now()) {
     experience: profile.experience_level || "",
     unit: profile.unit_preference === "lb" ? "lb" : "kg",
     role: profile.role || "client",
+    membership: profile.membership ?? null,
     joinedAt,
     joinedDaysAgo,
     lastWorkoutAt,
@@ -303,5 +305,104 @@ export async function getClientDetail(clientId) {
     recentWorkouts,
     weightSeries,
     consistency,
+  };
+}
+
+// One client's 14-Day Challenge, from the coach's side: read-only, the
+// same numbers the client sees on their own Challenge tab. Returns null
+// if the caller is not a coach; { started: false } if the client never
+// began the challenge.
+export async function getClientChallenge(clientId) {
+  if (!(await getIsCoach())) return null;
+  const admin = createAdminClient();
+  const DAY_MS = 86400000;
+  const CHALLENGE_DAYS = 14;
+  const TARGET_SESSIONS = 6;
+
+  const { data: prof } = await admin
+    .from("profiles")
+    .select("full_name, membership")
+    .eq("user_id", clientId)
+    .maybeSingle();
+  const name = (prof?.full_name || "").trim();
+
+  const { data: run } = await admin
+    .from("user_mesocycles")
+    .select("id, start_date, status")
+    .eq("user_id", clientId)
+    .eq("template_id", "main-character-14")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!run) return { name, membership: prof?.membership ?? null, started: false };
+
+  const startMs = Date.parse(`${run.start_date}T00:00:00Z`);
+  const todayMs = Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+  const challengeDay = Math.max(1, Math.floor((todayMs - startMs) / DAY_MS) + 1);
+
+  const { data: checks } = await admin
+    .from("challenge_checklist")
+    .select("day, items")
+    .eq("user_id", clientId);
+  const byDay = {};
+  for (const r of checks ?? []) byDay[r.day] = r.items ?? {};
+  const completeDays = [];
+  for (let d = 1; d <= CHALLENGE_DAYS; d++) {
+    if (isChallengeDayComplete(byDay[d])) completeDays.push(d);
+  }
+  const dayNow = Math.min(challengeDay, CHALLENGE_DAYS);
+  let streak = 0;
+  for (let d = dayNow; d >= 1; d--) {
+    if (completeDays.includes(d)) streak++;
+    else if (d < dayNow) break;
+  }
+
+  const { data: sess } = await admin
+    .from("workout_sessions")
+    .select("id")
+    .eq("user_id", clientId)
+    .eq("user_mesocycle_id", run.id);
+  const sessionIds = (sess ?? []).map((s) => s.id);
+
+  let volumeKg = 0;
+  const muscleTally = {};
+  if (sessionIds.length) {
+    const { data: sets } = await admin
+      .from("workout_sets")
+      .select(
+        "weight, reps, completed, is_warmup, exercise:exercises(exercise_muscles(role, muscle:muscles(parent)))",
+      )
+      .in("session_id", sessionIds);
+    for (const s of sets ?? []) {
+      if (s.completed === false || s.is_warmup) continue;
+      volumeKg += (Number(s.weight) || 0) * (Number(s.reps) || 0);
+      for (const t of s.exercise?.exercise_muscles ?? []) {
+        const p = t.muscle?.parent;
+        if (!p) continue;
+        muscleTally[p] = (muscleTally[p] ?? 0) + (t.role === "primary" ? 1 : 0.5);
+      }
+    }
+  }
+  const topMuscles = Object.entries(muscleTally)
+    .map(([group, sets]) => ({ group, sets: Math.round(sets) }))
+    .sort((a, b) => b.sets - a.sets)
+    .slice(0, 3);
+
+  return {
+    name,
+    membership: prof?.membership ?? null,
+    started: true,
+    status: run.status,
+    challengeDay,
+    challengeDays: CHALLENGE_DAYS,
+    completeDays,
+    byDay,
+    streak,
+    sessions: sessionIds.length,
+    targetSessions: TARGET_SESSIONS,
+    perfectDays: completeDays.length,
+    volumeKg: Math.round(volumeKg),
+    complete: run.status === "completed" || sessionIds.length >= TARGET_SESSIONS,
+    topMuscles,
   };
 }
