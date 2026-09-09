@@ -280,15 +280,26 @@ async function applyPlan(supabase, userId, plan, name) {
     await supabase.from("profiles").upsert({ user_id: userId, ...namePatch }, { onConflict: "user_id" });
   }
 
-  // Start the 14-day plan unless they already have a run going.
-  const { data: activeRun } = await supabase
-    .from("user_mesocycles")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .limit(1)
-    .maybeSingle();
-  if (!activeRun) {
+  // Start the 14-day plan once per account: never if they have ever run
+  // the challenge before (it is a one-time thing), and never on top of
+  // an active run of anything.
+  const [{ data: priorChallenge }, { data: activeRun }] = await Promise.all([
+    supabase
+      .from("user_mesocycles")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("template_id", CHALLENGE_TEMPLATE_ID)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("user_mesocycles")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (!priorChallenge && !activeRun) {
     await supabase.from("user_mesocycles").insert({
       user_id: userId,
       template_id: CHALLENGE_TEMPLATE_ID,

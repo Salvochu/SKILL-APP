@@ -9,6 +9,10 @@ export const XP = {
   patternPR: 40,
   mesocycle: 60,
   bodyCheckIn: 5,
+  // 14-Day Challenge: a small bonus for a fully-ticked checklist day,
+  // and a one-time bonus for finishing the challenge.
+  perfectChallengeDay: 10,
+  challengeComplete: 100,
 };
 
 export const MAX_LEVEL = 100;

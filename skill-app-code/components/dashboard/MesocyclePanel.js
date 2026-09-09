@@ -141,10 +141,14 @@ export default function MesocyclePanel({
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-card border border-accent/30 bg-accent-soft p-5">
-      <div className="flex items-start justify-between gap-2">
+    <section className="relative flex flex-col overflow-hidden rounded-card border border-accent/25 bg-gradient-to-b from-[#1c1409] to-surface">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-accent/25 blur-3xl"
+      />
+      <div className="relative flex items-start justify-between gap-2 p-5 pb-4">
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-accent">
+          <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-accent">
             {isChallenge ? (
               `Day ${Math.min(active.challengeDay ?? 1, active.challengeDays ?? 14)} of ${active.challengeDays ?? 14}`
             ) : isFoundations ? (
@@ -157,7 +161,7 @@ export default function MesocyclePanel({
               </>
             )}
           </span>
-          <h2 className="font-display text-xl font-semibold text-fg">{active.splitName}</h2>
+          <h2 className="font-display text-2xl font-bold text-fg">{active.splitName}</h2>
         </div>
 
         <div ref={menuRef} className="relative shrink-0">
@@ -221,9 +225,9 @@ export default function MesocyclePanel({
       </div>
 
       {challengeOver ? (
-        <div className="flex flex-col gap-3 rounded-field border border-accent/40 bg-surface p-4">
+        <div className="relative flex flex-col gap-3 border-t border-accent/20 p-5">
           <div className="flex flex-col gap-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-accent">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
               {challengeLapsed ? "Challenge ended" : "Your 14 days are up"}
             </p>
             <p className="text-sm text-fg">
@@ -236,7 +240,7 @@ export default function MesocyclePanel({
             href={KEEP_TRAINING_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+            className="btn-shine flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
           >
             Keep training &mdash; &pound;14.99/mo
           </a>
@@ -248,26 +252,26 @@ export default function MesocyclePanel({
           </TapLink>
         </div>
       ) : isFoundations && active.isComplete ? (
-        <div className="flex flex-col gap-2 rounded-field border border-accent/30 bg-surface p-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-accent">Month done</p>
+        <div className="relative flex flex-col gap-1.5 border-t border-accent/20 p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Month done</p>
           <p className="text-sm text-fg">
             You have the lifts down. Ready for a structured program where effort builds week to week?
           </p>
-          <TapLink href="/splits" className="self-start text-sm font-semibold text-accent hover:underline">
+          <TapLink href="/splits" className="mt-0.5 self-start text-sm font-semibold text-accent hover:underline">
             Pick your next program
           </TapLink>
         </div>
       ) : active.guidance ? (
-        <div className="rounded-field border border-accent/30 bg-surface p-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-accent">
+        <div className="relative border-t border-accent/20 p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
             {active.guidance.headline}
           </p>
           <p className="mt-1 text-sm text-fg">{active.guidance.detail}</p>
         </div>
       ) : null}
 
-      {railWeeks > 1 ? (
-        <div className="flex flex-col gap-3 rounded-field border border-border bg-surface p-3">
+      {railWeeks > 1 && !isChallenge ? (
+        <div className="relative flex flex-col gap-3 border-t border-border/70 p-5">
           <WeekRail
             weeks={railWeeks}
             currentWeek={currentRailWeek}
@@ -299,17 +303,19 @@ export default function MesocyclePanel({
         </div>
       ) : null}
 
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
-      {challengeLapsed ? null : active.nextDay ? (
-        <GuardedStartLink
-          href={`/log?meso=${active.id}&split=${active.splitId}&day=${active.nextDay.dayTemplateId}&variant=${encodeURIComponent(active.variant)}`}
-          className="btn-shine flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-2"
-        >
-          Start {active.nextDay.name}
-        </GuardedStartLink>
-      ) : (
-        <p className="text-sm text-muted">This program&apos;s split has no days set up yet.</p>
-      )}
+      <div className="relative border-t border-border/70 p-5 pt-4">
+        {error ? <p className="mb-2 text-sm text-danger">{error}</p> : null}
+        {challengeLapsed ? null : active.nextDay ? (
+          <GuardedStartLink
+            href={`/log?meso=${active.id}&split=${active.splitId}&day=${active.nextDay.dayTemplateId}&variant=${encodeURIComponent(active.variant)}`}
+            className="btn-shine flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black shadow-[0_8px_24px_-8px_rgba(252,118,5,0.6)] transition-colors hover:bg-accent-2"
+          >
+            Start {active.nextDay.name}
+          </GuardedStartLink>
+        ) : (
+          <p className="text-sm text-muted">This program&apos;s split has no days set up yet.</p>
+        )}
+      </div>
     </section>
   );
 }

@@ -272,6 +272,37 @@ h4 {
   }
 }
 
+/* 14-Day Challenge climb hero (components/challenge/ChallengeClimb.js).
+   The trail animates from empty (--cc-len) to its base filled offset;
+   nodes pop in on a stagger; the current node's rings pulse; the bloom
+   breathes. Reduced motion drops straight to the resting state. */
+@keyframes cc-trail-draw {
+  from { stroke-dashoffset: var(--cc-len, 0); }
+}
+.cc-trail-draw {
+  animation: cc-trail-draw 1100ms cubic-bezier(.22, 1, .36, 1) forwards;
+}
+@keyframes cc-node {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.cc-node { animation: cc-node 380ms cubic-bezier(.34, 1.56, .64, 1) backwards; }
+@keyframes cc-halo {
+  0% { transform: scale(1); opacity: 0.85; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.cc-halo { animation: cc-halo 1800ms ease-out infinite; }
+.cc-halo-2 { animation-delay: 900ms; }
+@keyframes cc-bloom {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+.cc-bloom { animation: cc-bloom 3200ms ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .cc-node, .cc-halo, .cc-bloom, .cc-trail-draw { animation: none; }
+}
+
 /* Hide number input spinners; the log screen uses its own steppers. */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {

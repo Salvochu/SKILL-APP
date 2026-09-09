@@ -26,8 +26,19 @@ export async function startMesocycle(templateId, variant, sessionsPerWeek) {
   const supabase = await getServerSupabase();
   const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
-  if ((await getChallengeAccess()).lapsed) {
-    return { error: "Your 14-day challenge has ended. Keep training to start a program." };
+  // The 14-Day Challenge is started by the sign-up webhook only, once
+  // per account. It is never a program you pick or restart from the app.
+  if (templateId === "main-character-14") {
+    return { error: "The 14-Day Challenge can't be started from here." };
+  }
+  // Challenge accounts run the challenge and nothing else. Starting any
+  // other program unlocks with a membership (whether the 14 days are
+  // still going or already lapsed).
+  if ((await getChallengeAccess()).isChallenge) {
+    return {
+      locked: true,
+      error: "The training library unlocks when you continue with a membership.",
+    };
   }
 
   const safeVariant = VARIANT_ORDER.includes(variant) ? variant : "Standard";

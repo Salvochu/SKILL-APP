@@ -16,7 +16,7 @@ export const BEGINNER_STAPLE_NAMES = [
   "Lat Pulldown",
   "Goblet Squat",
   "DB Bench Press",
-  "DB Row (one arm)",
+  "DB Row",
   "Plank",
 ];
 

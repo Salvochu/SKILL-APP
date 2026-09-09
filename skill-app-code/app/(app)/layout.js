@@ -1,6 +1,5 @@
 import { Suspense } from "react";
-import NavBar from "@/components/NavBar";
-import StreakBadge from "@/components/StreakBadge";
+import NavBarShell from "@/components/NavBarShell";
 import RouteProgress from "@/components/RouteProgress";
 import NavigationOverlay from "@/components/NavigationOverlay";
 import OfflineQueueSync from "@/components/OfflineQueueSync";
@@ -21,7 +20,7 @@ export default function AppLayout({ children }) {
         <NavigationOverlay />
       </Suspense>
       <Suspense fallback={<div className="fixed inset-x-0 top-0 z-40 h-14 border-b border-border bg-bg md:h-16" />}>
-        <NavBar streak={<Suspense fallback={null}><StreakBadge /></Suspense>} />
+        <NavBarShell />
       </Suspense>
       {/* Mounted once, app-wide, so a workout queued offline on the Log
          screen still syncs even if the user has since moved on to

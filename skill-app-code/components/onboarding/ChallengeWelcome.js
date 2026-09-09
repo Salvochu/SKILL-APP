@@ -38,6 +38,7 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
 
   function leave() {
     setDismissed(true);
+    router.push("/challenge");
     router.refresh();
   }
   async function skip() {
@@ -73,11 +74,12 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
                 6 to 8 workouts across your 14 days.
               </HowItWorks>
               <HowItWorks n="2">
-                Log every set here. The app shows you exactly what to beat each session and counts down
-                your 14 days on the dashboard.
+                Your Challenge tab has a plan for every one of the 14 days, a short video for each, and
+                a daily checklist to keep you honest.
               </HowItWorks>
               <HowItWorks n="3">
-                Your meal plan and the cardio details are in the PDFs from your welcome email.
+                Log every set here. The app shows you exactly what to beat each session. Your meal plan
+                is in the PDFs from your welcome email.
               </HowItWorks>
             </ul>
 
@@ -178,7 +180,7 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
                 onClick={leave}
                 className="w-full rounded-field bg-accent px-4 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-2"
               >
-                Go to my dashboard
+                Go to my challenge
               </button>
             )}
             <button
@@ -186,7 +188,7 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
               onClick={leave}
               className="self-center text-xs font-medium text-dim hover:text-fg"
             >
-              I&apos;ll start from the dashboard
+              I&apos;ll start from my challenge tab
             </button>
           </>
         )}

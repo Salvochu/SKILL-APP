@@ -112,3 +112,50 @@ export async function getMuscleTrainingTotals() {
     .filter((g) => g.sets > 0)
     .sort((a, b) => b.sets - a.sets);
 }
+
+// Turn a { group: weightedSets } tally into { intensity, top }:
+// intensity is 0..1 per group (relative to the busiest group, with a
+// floor so a trained group is always visible), top is the groups by
+// volume, biggest first.
+export function shapeMuscleTally(tally) {
+  const entries = MUSCLE_ORDER.map((g) => [g, Math.round((tally[g] ?? 0) * 10) / 10]).filter(
+    ([, v]) => v > 0,
+  );
+  const max = entries.reduce((m, [, v]) => Math.max(m, v), 0) || 1;
+  const intensity = {};
+  // Relative to the busiest group, on a steep curve: the leaders light
+  // up, everything below roughly half the top volume stays visibly dim.
+  // Keeps the map readable instead of one big orange blob.
+  for (const [g, v] of entries) {
+    intensity[g] = Math.min(1, Math.pow(v / max, 1.7));
+  }
+  const top = entries
+    .map(([group, sets]) => ({ group, sets: Math.round(sets) }))
+    .sort((a, b) => b.sets - a.sets);
+  return { intensity, top };
+}
+
+// Weighted hard sets per parent muscle group for a specific set of
+// workout sessions (fractional-set convention, primary 1 / secondary
+// 0.5). Feeds the per-session share card and the challenge summary.
+export async function getMuscleMapForSessions(sessionIds) {
+  const ids = [...new Set((sessionIds ?? []).filter(Boolean))];
+  if (ids.length === 0) return { intensity: {}, top: [] };
+
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from("workout_sets")
+    .select("session_id, completed, is_warmup, exercise:exercises(exercise_muscles(role, muscle:muscles(parent)))")
+    .in("session_id", ids);
+  if (error) throw new Error(`Failed to load session muscles: ${error.message}`);
+
+  const tally = Object.fromEntries(MUSCLE_ORDER.map((p) => [p, 0]));
+  for (const s of data ?? []) {
+    if (s.completed === false || s.is_warmup) continue;
+    for (const t of s.exercise?.exercise_muscles ?? []) {
+      const parent = t.muscle?.parent;
+      if (parent && parent in tally) tally[parent] += ROLE_WEIGHT[t.role] ?? 0;
+    }
+  }
+  return shapeMuscleTally(tally);
+}

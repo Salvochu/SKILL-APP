@@ -140,12 +140,13 @@ export async function saveWorkout(payload) {
 // part of one (the just-saved session already counts, since save
 // happens before this is called).
 export async function getPostSaveSummary(sessionId, userMesocycleId) {
-  const [progress, meso, prs, strength, journey] = await Promise.all([
+  const [progress, meso, prs, strength, journey, muscles] = await Promise.all([
     getProgressData(),
     userMesocycleId ? getActiveMesocycle() : Promise.resolve(null),
     sessionId ? getSessionPRs(sessionId) : Promise.resolve([]),
     sessionId ? getStrengthScoreDelta(sessionId) : Promise.resolve(null),
     sessionId ? getSessionJourneyDelta(sessionId) : Promise.resolve(null),
+    sessionId ? getMuscleMapForSessions([sessionId]) : Promise.resolve({ intensity: {}, top: [] }),
   ]);
   return {
     workoutCount: progress.workouts ?? 0,
@@ -153,6 +154,7 @@ export async function getPostSaveSummary(sessionId, userMesocycleId) {
     newPRs: prs,
     strength,
     journey,
+    muscles,
   };
 }
 

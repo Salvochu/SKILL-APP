@@ -63,7 +63,7 @@ export const MOVEMENT_PATTERNS = [
     key: "hpull",
     label: "Horiz. pull",
     lifts: [
-      "Bent Over Row", "Barbell Row", "DB Row (one arm)", "DB Chest Supported Row",
+      "Bent Over Row", "Barbell Row", "DB Row", "DB Chest Supported Row",
       "Chest Supported Landmine Row", "Seated Cable Row", "Plate Loaded Row Machine", "Renegade Row",
     ],
     thresholds: [45, 70, 95, 125],

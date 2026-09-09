@@ -10,6 +10,11 @@ import { setsForWeek } from "@/lib/mesocycle";
 import { fromKg } from "@/lib/units";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
 import ChallengeEnded from "@/components/challenge/ChallengeEnded";
+import ChallengeProgramLocked from "@/components/challenge/ChallengeProgramLocked";
+
+// The challenge runs on this split; a challenge account can log its days
+// and its own saved workouts, but not other programs' sessions.
+const CHALLENGE_SPLIT_ID = "main-character-14";
 
 export const metadata = { title: "Log Workout" };
 
@@ -18,13 +23,20 @@ export const metadata = { title: "Log Workout" };
 export const instant = false;
 
 export default async function LogPage({ searchParams }) {
+  const challengeAccess = await getChallengeAccess();
   // A lapsed challenge account cannot start new workouts.
-  if ((await getChallengeAccess()).lapsed) {
+  if (challengeAccess.lapsed) {
     return <ChallengeEnded />;
   }
 
   const params = await searchParams;
   const splitId = strOrNull(params?.split);
+
+  // An active challenge account can log its own challenge days and its
+  // saved workouts, but another program's session is a paid feature.
+  if (challengeAccess.isChallenge && splitId && splitId !== CHALLENGE_SPLIT_ID) {
+    return <ChallengeProgramLocked />;
+  }
   const dayTemplateId = strOrNull(params?.day);
   const variant = strOrNull(params?.variant);
   const exerciseId = strOrNull(params?.exercise);

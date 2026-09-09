@@ -7,19 +7,23 @@ import ThemeToggle from "@/components/ThemeToggle";
 
 // Same three primary tabs on both layouts. Progress, Library, Profile
 // and Workout History all live behind Menu, so the bottom bar on mobile
-// stays uncrowded and desktop matches it.
-const TABS = [
+// stays uncrowded and desktop matches it. Challenge accounts get a
+// fourth tab, first, for the 14-day challenge home.
+const BASE_TABS = [
   { href: "/dashboard", label: "Dashboard", icon: IconHome },
   { href: "/splits", label: "Train", icon: IconSplits },
   { href: "/menu", label: "Menu", icon: IconMenu },
 ];
+const CHALLENGE_TAB = { href: "/challenge", label: "Challenge", icon: IconFlag };
 
 function isActive(pathname, href) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export default function NavBar({ streak = null }) {
+export default function NavBar({ streak = null, challenge = false }) {
   const pathname = usePathname() ?? "";
+  const TABS = challenge ? [CHALLENGE_TAB, ...BASE_TABS] : BASE_TABS;
+  const gridCols = TABS.length === 4 ? "grid-cols-4" : "grid-cols-3";
 
   return (
     <>
@@ -69,7 +73,7 @@ export default function NavBar({ streak = null }) {
           still land in iOS's own home-indicator gesture strip instead of
           the link under it. */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 pb-[calc(env(safe-area-inset-bottom)+1rem)] backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-2xl grid-cols-3">
+        <div className={`mx-auto grid max-w-2xl ${gridCols}`}>
           {TABS.map((tab) => {
             const active = isActive(pathname, tab.href);
             const Icon = tab.icon;
@@ -117,6 +121,13 @@ function IconMenu(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" {...props}>
       <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  );
+}
+function IconFlag(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M5 21V4M5 4l4-1 6 2 4-1v10l-4 1-6-2-4 1" />
     </svg>
   );
 }

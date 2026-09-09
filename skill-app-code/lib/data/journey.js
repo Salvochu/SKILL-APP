@@ -3,6 +3,10 @@ import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { patternForExercise } from "@/lib/strength";
 import { weekKeyOf } from "@/lib/training";
 import { XP, journeyProgress } from "@/lib/journey";
+import { CHECKLIST_KEYS } from "@/lib/challenge/curriculum";
+
+const CHALLENGE_TEMPLATE_ID = "main-character-14";
+const CHALLENGE_TARGET_SESSIONS = 6;
 
 const dayKey = (iso) => new Date(iso).toISOString().slice(0, 10);
 const epley = (w, r) => (w > 0 && r > 0 && r <= 15 ? w * (1 + r / 30) : 0);
@@ -30,24 +34,32 @@ async function loadJourneyData(supabase) {
     supabase
       .from("workout_sets")
       .select("session_id, exercise_id, reps, weight, completed, is_warmup, exercise:exercises(name)"),
-    supabase.from("user_mesocycles").select("id, status, sessions_per_week"),
+    supabase.from("user_mesocycles").select("id, status, sessions_per_week, template_id"),
     supabase.from("body_logs").select("logged_at"),
   ]);
   for (const r of [sessionsRes, setsRes, mesoRes, bodyRes]) {
     if (r.error) throw new Error(`Failed to load journey: ${r.error.message}`);
   }
+  // Challenge checklist is optional (table may predate a deploy).
+  const checksRes = await supabase.from("challenge_checklist").select("items");
+  const checklist =
+    checksRes.error && !/does not exist/i.test(checksRes.error.message ?? "")
+      ? []
+      : checksRes.data ?? [];
+
   return {
     sessions: sessionsRes.data ?? [],
     sets: setsRes.data ?? [],
     mesos: mesoRes.data ?? [],
     body: bodyRes.data ?? [],
+    checklist,
   };
 }
 
 // Pure: total XP and its breakdown from the loaded data. `excludeSessionId`
 // drops one session, so the finish screen can diff "with" against
 // "without" to see exactly what the just-saved workout was worth.
-function computeXp({ sessions, sets, mesos, body }, excludeSessionId = null) {
+function computeXp({ sessions, sets, mesos, body, checklist = [] }, excludeSessionId = null) {
   const sessById = new Map(
     sessions.filter((s) => s.id !== excludeSessionId).map((s) => [s.id, s]),
   );
@@ -126,12 +138,31 @@ function computeXp({ sessions, sets, mesos, body }, excludeSessionId = null) {
   const bodyWeeks = new Set(body.map((b) => weekKeyOf(b.logged_at)));
   const bodyCount = bodyWeeks.size;
 
+  // 14-Day Challenge: fully-ticked checklist days, and whether the
+  // challenge itself is finished (target sessions on its run, or the run
+  // marked completed). Uses all sessions, not just the "substantial"
+  // ones - a challenge day still counts even if it was a short session.
+  const perfectDays = checklist.filter(
+    (row) => row.items && CHECKLIST_KEYS.every((k) => row.items[k] === true),
+  ).length;
+  const challengeRun = mesos.find((m) => m.template_id === CHALLENGE_TEMPLATE_ID);
+  let challengeComplete = false;
+  if (challengeRun) {
+    const runSessions = [...sessById.values()].filter(
+      (s) => s.user_mesocycle_id === challengeRun.id,
+    ).length;
+    challengeComplete =
+      challengeRun.status === "completed" || runSessions >= CHALLENGE_TARGET_SESSIONS;
+  }
+
   const breakdown = [
     { key: "workout", label: "Workouts logged", count: workoutCount, xp: workoutCount * XP.workout },
     { key: "consistentWeek", label: "Consistent weeks", count: consistentWeeks, xp: consistentWeeks * XP.consistentWeek },
     { key: "patternPR", label: "Strength PRs", count: prCount, xp: prCount * XP.patternPR },
     { key: "mesocycle", label: "Programs finished", count: mesoCount, xp: mesoCount * XP.mesocycle },
     { key: "bodyCheckIn", label: "Body check-ins", count: bodyCount, xp: bodyCount * XP.bodyCheckIn },
+    { key: "perfectChallengeDay", label: "Perfect challenge days", count: perfectDays, xp: perfectDays * XP.perfectChallengeDay },
+    { key: "challengeComplete", label: "14-Day Challenge", count: challengeComplete ? 1 : 0, xp: challengeComplete ? XP.challengeComplete : 0 },
   ];
   return { xp: breakdown.reduce((a, b) => a + b.xp, 0), breakdown };
 }

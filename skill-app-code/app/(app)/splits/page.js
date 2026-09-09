@@ -34,7 +34,7 @@ async function Body() {
     ? splits.find((s) => s.id === "strength-check") ?? null
     : null;
   const browsable = splits.filter(
-    (s) => s.section !== "benchmark" && s.section !== "foundations",
+    (s) => s.section !== "benchmark" && s.section !== "foundations" && s.section !== "challenge",
   );
   // Only offer Foundations while a beginner has no program running -
   // starting it again would abandon the one in progress.

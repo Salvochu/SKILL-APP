@@ -742,7 +742,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   );
 }
 
-function ShareCard({ summary, timeLabel, effortLabel, unit = "kg" }) {
+function ShareCard({ summary, timeLabel, effortLabel, unit = "kg", muscles = null }) {
   const [status, setStatus] = useState("idle"); // idle | preparing | shared | downloaded | copied
 
   const caption = `Just logged ${Math.round(summary.totalVolume)} ${unit} in ${timeLabel} with SKILL. @salvador_skfitness`;
@@ -755,6 +755,7 @@ function ShareCard({ summary, timeLabel, effortLabel, unit = "kg" }) {
         volumeLabel: `${Math.round(summary.totalVolume)} ${unit}`,
         timeLabel,
         effortLabel,
+        topMuscles: muscles?.top ?? [],
       });
     } catch {
       // Image generation failed (e.g. the logo did not load); fall back
@@ -1173,7 +1174,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
         {effort ? <p className="text-center text-xs text-accent">{EFFORT_LABELS[effort]}</p> : null}
       </section>
 
-      <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} />
+      <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} muscles={extras?.muscles} />
 
       <button
         type="button"

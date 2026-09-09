@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { startMesocycle, loadMesocycleOverview } from "@/app/(app)/dashboard/actions";
 import { rirForWeek, isDeloadWeek } from "@/lib/mesocycle";
 import ConfirmModal from "@/components/ConfirmModal";
+import ProgramLockModal from "@/components/challenge/ProgramLockModal";
 import Explain from "@/components/Explain";
 
 // Everything needed to start the guided program for one split, shown in a
@@ -20,6 +21,7 @@ export default function ProgramSetup({ template, activeProgram = null, advanced 
   const [sessionsPerWeek, setSessionsPerWeek] = useState(null);
   const [starting, setStarting] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -65,6 +67,10 @@ export default function ProgramSetup({ template, activeProgram = null, advanced 
     setError(null);
     const result = await startMesocycle(template.id, variant, sessionsPerWeek);
     setStarting(false);
+    if (result?.locked) {
+      setLocked(true);
+      return;
+    }
     if (result?.error) {
       setError(result.error);
       return;
@@ -75,6 +81,7 @@ export default function ProgramSetup({ template, activeProgram = null, advanced 
 
   const weeks = template.weeks;
   const startingRir = overview?.startingRir ?? 3;
+  const linear = overview?.linear ?? false;
 
   return (
     <div
@@ -93,12 +100,16 @@ export default function ProgramSetup({ template, activeProgram = null, advanced 
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col">
           <h3 className="flex items-center gap-1 text-sm font-bold text-fg">
-            {weeks}-week {advanced ? "guided program" : "program"}
-            {advanced ? <Explain k="mesocycle" /> : null}
+            {weeks}-week {linear ? "plan" : advanced ? "guided program" : "program"}
+            {!linear && advanced ? <Explain k="mesocycle" /> : null}
           </h3>
           <p className="flex items-center gap-1 text-xs text-muted">
-            {advanced ? "Effort builds week by week, then a deload." : "Gets a bit harder each week, then an easy week."}
-            {advanced ? <Explain k="deload" /> : null}
+            {linear
+              ? "The same sessions every week. Just turn up and beat your last numbers."
+              : advanced
+                ? "Effort builds week by week, then a deload."
+                : "Gets a bit harder each week, then an easy week."}
+            {!linear && advanced ? <Explain k="deload" /> : null}
           </p>
         </div>
         <button type="button" onClick={onCancel} className="shrink-0 text-xs font-medium text-dim hover:text-fg">
@@ -110,30 +121,46 @@ export default function ProgramSetup({ template, activeProgram = null, advanced 
         <div className="loading-bar h-1 w-full rounded-full bg-surface-2" />
       ) : overview ? (
         <>
-          <div className="flex flex-wrap gap-1">
-            {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => {
-              const deload = isDeloadWeek(w, weeks);
-              return (
-                <div
-                  key={w}
-                  className={`flex min-w-[3.25rem] flex-1 flex-col items-center rounded-field border px-1.5 py-1.5 text-center ${
-                    deload ? "border-border bg-bg/40" : "border-accent/30 bg-surface"
-                  }`}
+          {linear ? (
+            <ul className="flex flex-col gap-1.5">
+              {(overview.days ?? []).map((d, i) => (
+                <li
+                  key={i}
+                  className="flex items-center gap-2.5 rounded-field border border-border bg-bg/40 px-3 py-2"
                 >
-                  <span className="text-[10px] font-semibold uppercase text-dim">Wk {w}</span>
-                  <span className={`text-xs font-bold ${deload ? "text-dim" : "text-accent"}`}>
-                    {advanced
-                      ? deload
-                        ? "Deload"
-                        : `RIR ${rirForWeek(w, weeks, startingRir)}`
-                      : deload
-                        ? "Easy"
-                        : "↑".repeat(Math.min(4, w))}
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-accent">
+                    {d.name}
                   </span>
-                </div>
-              );
-            })}
-          </div>
+                  {d.focus ? <span className="truncate text-xs text-dim">{d.focus}</span> : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => {
+                const deload = isDeloadWeek(w, weeks);
+                return (
+                  <div
+                    key={w}
+                    className={`flex min-w-[3.25rem] flex-1 flex-col items-center rounded-field border px-1.5 py-1.5 text-center ${
+                      deload ? "border-border bg-bg/40" : "border-accent/30 bg-surface"
+                    }`}
+                  >
+                    <span className="text-[10px] font-semibold uppercase text-dim">Wk {w}</span>
+                    <span className={`text-xs font-bold ${deload ? "text-dim" : "text-accent"}`}>
+                      {advanced
+                        ? deload
+                          ? "Deload"
+                          : `RIR ${rirForWeek(w, weeks, startingRir)}`
+                        : deload
+                          ? "Easy"
+                          : "↑".repeat(Math.min(4, w))}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {overview.variants.length > 1 ? (
             <div className="flex flex-col gap-1.5">
@@ -191,6 +218,8 @@ export default function ProgramSetup({ template, activeProgram = null, advanced 
       )}
 
       </section>
+
+      {locked ? <ProgramLockModal onClose={() => { setLocked(false); onCancel?.(); }} /> : null}
 
       {confirming ? (
         <ConfirmModal

@@ -62,6 +62,10 @@ export async function getMesocycleOverview(templateId) {
     description: template.description,
     weeks: template.weeks,
     startingRir: template.starting_rir,
+    // Foundations and the challenge are "linear": fixed prescription
+    // every session, no RIR ramp and no deload week.
+    kind: template.kind === "foundations" ? "foundations" : template.kind === "challenge" ? "challenge" : "mesocycle",
+    linear: template.kind === "foundations" || template.kind === "challenge",
     splitName: template.split.name,
     variants,
     // When the split's cadence is a range (Full Body "2-3x per week")
