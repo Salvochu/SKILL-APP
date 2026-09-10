@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveWorkout, getPostSaveSummary, rateWorkout } from "@/app/(app)/log/actions";
+import { saveNotificationPrefs } from "@/app/(app)/settings/actions";
 import { createMyWorkout, updateMyWorkout } from "@/app/(app)/workouts/my-actions";
 import RestTimer from "@/components/log/RestTimer";
+import { useWakeLock } from "@/components/log/useWakeLock";
 import ExercisePicker from "@/components/log/ExercisePicker";
 import ReorderSheet from "@/components/log/ReorderSheet";
 import LastNumbers from "@/components/log/LastNumbers";
@@ -19,6 +21,10 @@ import { buildShareImageBlob } from "@/lib/shareCard";
 import { toKg, fromKg, formatWeight } from "@/lib/units";
 import { tierColorFor } from "@/lib/strength";
 import { loomEmbedUrl, isTimeBasedExercise } from "@/lib/exercises";
+
+// Rest-timer start lengths offered in the logger's settings row. The
+// full list also lives in the Settings screen.
+const REST_LENGTHS = [30, 45, 60, 90, 120, 150, 180];
 
 // Time-seeded so a resumed draft's saved keys (from a previous page
 // load) can never collide with new ones generated after a reload.
@@ -95,7 +101,7 @@ function makeExercise(exercise, targetSets = 3, targetReps = "", last = null) {
   };
 }
 
-export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial, unit = "kg", restTimer = true, inlineVideos = false, advanced = true }) {
+export default function WorkoutLogger({ allExercises, history = {}, mesoContext = null, initial, unit = "kg", restTimer = true, defaultRest = 90, inlineVideos = false, advanced = true }) {
   const U = unit === "lb" ? "lb" : "kg";
   const router = useRouter();
   const [title, setTitle] = useState(initial.title);
@@ -119,7 +125,10 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [reorderOpen, setReorderOpen] = useState(false);
   const [videoFor, setVideoFor] = useState(null);
   const [restKey, setRestKey] = useState(0);
-  const [restSeconds, setRestSeconds] = useState(90);
+  const [restSeconds, setRestSeconds] = useState(() => {
+    const n = Math.round(Number(defaultRest));
+    return Number.isFinite(n) && n >= 15 ? n : 90;
+  });
   const [showRest, setShowRest] = useState(false);
   const [restTimerOn, setRestTimerOn] = useState(restTimer);
   // The timer / volume / Finish card starts collapsed to a slim pill so
@@ -137,6 +146,10 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [effort, setEffort] = useState(null);
   const [savingEffort, setSavingEffort] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
+
+  // Keep the screen awake while a workout is being logged, so the phone
+  // does not auto-lock between sets. Released once it is finished.
+  useWakeLock(!completedSummary && !savedOffline);
 
   // Show the "Finish lives in the pill" nudge only until it has been seen
   // once on this device. localStorage read has to wait for mount (SSR has
@@ -509,27 +522,56 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               />
             </div>
           </Field>
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-medium text-muted">Rest timer after each set</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={restTimerOn}
-              aria-label="Rest timer"
-              onClick={() => {
-                setRestTimerOn((v) => !v);
-                if (restTimerOn) setShowRest(false);
-              }}
-              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition-colors ${
-                restTimerOn ? "border-accent bg-accent" : "border-border bg-surface-2"
-              }`}
-            >
-              <span
-                className={`inline-block h-[15px] w-[15px] rounded-full bg-white transition-transform ${
-                  restTimerOn ? "translate-x-[18px]" : "translate-x-[2px]"
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-muted">Rest timer after each set</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={restTimerOn}
+                aria-label="Rest timer"
+                onClick={() => {
+                  setRestTimerOn((v) => !v);
+                  if (restTimerOn) setShowRest(false);
+                }}
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition-colors ${
+                  restTimerOn ? "border-accent bg-accent" : "border-border bg-surface-2"
                 }`}
-              />
-            </button>
+              >
+                <span
+                  className={`inline-block h-[15px] w-[15px] rounded-full bg-white transition-transform ${
+                    restTimerOn ? "translate-x-[18px]" : "translate-x-[2px]"
+                  }`}
+                />
+              </button>
+            </div>
+            {restTimerOn ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="mr-1 text-xs text-dim">Starts at</span>
+                {REST_LENGTHS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => {
+                      setRestSeconds(s);
+                      try {
+                        localStorage.setItem("pref:restSeconds", String(s));
+                      } catch {
+                        /* ignore */
+                      }
+                      saveNotificationPrefs({ defaultRestSeconds: s }).catch(() => {});
+                    }}
+                    className={`rounded-field border px-2.5 py-1 text-xs font-semibold transition-colors ${
+                      restSeconds === s
+                        ? "border-accent bg-accent-soft text-accent"
+                        : "border-border text-muted hover:text-fg"
+                    }`}
+                  >
+                    {s}s
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

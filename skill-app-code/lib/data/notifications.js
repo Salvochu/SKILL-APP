@@ -11,6 +11,7 @@ export const DEFAULT_PREFS = {
   unfinishedWorkout: true,
   restTimerEnabled: true,
   inlineVideos: false,
+  defaultRestSeconds: 90,
 };
 
 function fromRow(row) {
@@ -25,6 +26,7 @@ function fromRow(row) {
     unfinishedWorkout: row.unfinished_workout ?? true,
     restTimerEnabled: row.rest_timer_enabled ?? true,
     inlineVideos: row.inline_videos ?? false,
+    defaultRestSeconds: row.default_rest_seconds ?? 90,
   };
 }
 

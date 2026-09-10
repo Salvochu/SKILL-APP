@@ -21,10 +21,13 @@ function mirror(prefs) {
     localStorage.setItem("notif:restTimerDone", prefs.restTimerDone ? "on" : "off");
     localStorage.setItem("notif:unfinished", prefs.unfinishedWorkout ? "on" : "off");
     localStorage.setItem("pref:restTimer", prefs.restTimerEnabled ? "on" : "off");
+    localStorage.setItem("pref:restSeconds", String(prefs.defaultRestSeconds ?? 90));
   } catch {
     // storage unavailable is fine
   }
 }
+
+const REST_PRESETS = [30, 45, 60, 90, 120, 150, 180];
 
 export default function NotificationSettings({ initialPrefs }) {
   const [prefs, setPrefs] = useState(initialPrefs);
@@ -220,12 +223,35 @@ export default function NotificationSettings({ initialPrefs }) {
       <div className="flex flex-col gap-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-dim">Workout</h2>
         <section className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
-          <Toggle
-            label="Rest timer"
-            body="Show a rest countdown after you log a set"
-            checked={prefs.restTimerEnabled}
-            onChange={(v) => patch({ restTimerEnabled: v })}
-          />
+          <div className="flex flex-col gap-3 bg-surface px-4 py-3.5">
+            <ToggleRow
+              label="Rest timer"
+              body="Show a rest countdown after you log a set"
+              checked={prefs.restTimerEnabled}
+              onChange={(v) => patch({ restTimerEnabled: v })}
+            />
+            {prefs.restTimerEnabled ? (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs text-dim">Starts at</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {REST_PRESETS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => patch({ defaultRestSeconds: s })}
+                      className={`rounded-field border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        (prefs.defaultRestSeconds ?? 90) === s
+                          ? "border-accent bg-accent-soft text-accent"
+                          : "border-border text-muted hover:text-fg"
+                      }`}
+                    >
+                      {s}s
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
           <Toggle
             label="Form videos in the logger"
             body="Keep a small video next to each exercise while you log, instead of tapping to open it. Handy while you are still learning the lifts."

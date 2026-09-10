@@ -27,6 +27,10 @@ export async function saveNotificationPrefs(patch) {
     const days = Array.isArray(patch.scheduledDays) ? patch.scheduledDays : [];
     row.scheduled_days = [...new Set(days.map(Number).filter((n) => n >= 0 && n <= 6))].sort();
   }
+  if ("defaultRestSeconds" in patch) {
+    const s = Math.round(Number(patch.defaultRestSeconds));
+    row.default_rest_seconds = Number.isFinite(s) ? Math.min(600, Math.max(15, s)) : 90;
+  }
 
   const { error } = await supabase
     .from("notification_prefs")
