@@ -130,7 +130,7 @@ async function ProgressBody({ searchParams }) {
   ];
   const shareMuscles = muscleTotals
     .slice(0, 4)
-    .map((g) => ({ name: g.parent, sets: g.sets }));
+    .map((g) => ({ name: g.label, sets: g.sets, parent: g.parent }));
   const shareCaption = journey
     ? `${journey.tier}, Level ${journey.level} on SKILL. Tracked with @salvador_skfitness`
     : "My training progress on SKILL. Tracked with @salvador_skfitness";

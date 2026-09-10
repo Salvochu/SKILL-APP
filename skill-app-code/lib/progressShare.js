@@ -164,7 +164,7 @@ export async function buildProgressShareBlob({
     const maxSets = Math.max(1, ...muscles.map((m) => m.sets));
 
     for (const m of muscles.slice(0, 4)) {
-      const hue = MUSCLE_HEX[String(m.name).toLowerCase()] || COLORS.muted;
+      const hue = MUSCLE_HEX[String(m.parent ?? m.name).toLowerCase()] || COLORS.muted;
 
       ctx.fillStyle = COLORS.track;
       roundRect(ctx, rowX, y - 34, rowW, 78, 18);

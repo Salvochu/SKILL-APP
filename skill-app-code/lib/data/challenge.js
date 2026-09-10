@@ -122,7 +122,7 @@ export const getChallengeCompletion = cache(async () => {
     targetSessions: CHALLENGE_TARGET_SESSIONS,
     perfectDays: 0,
     volumeKg: 0,
-    muscles: { intensity: {}, top: [] },
+    muscles: { top: [] },
   };
 
   const user = await getSessionUser();

@@ -5,6 +5,7 @@ import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getChallengeDay, CHALLENGE_DAYS } from "@/lib/challenge/curriculum";
 import { fromKg } from "@/lib/units";
 import ChallengeClimb from "@/components/challenge/ChallengeClimb";
+import ChallengeStart from "@/components/challenge/ChallengeStart";
 import ChallengeToday from "@/components/challenge/ChallengeToday";
 import ChallengeTimeline from "@/components/challenge/ChallengeTimeline";
 import ChallengeLearn from "@/components/challenge/ChallengeLearn";
@@ -51,6 +52,8 @@ export default async function ChallengePage() {
         completeDays={checklist.completeDays}
         streak={checklist.streak}
       />
+
+      <ChallengeStart challengeDay={challengeDay} />
 
       {completion.completed ? (
         <ChallengeComplete

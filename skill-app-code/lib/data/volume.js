@@ -1,6 +1,6 @@
 import "server-only";
 import { getServerSupabase } from "@/lib/data/session";
-import { MUSCLE_ORDER, MUSCLE_LIST } from "@/lib/exercises";
+import { MUSCLE_ORDER, MUSCLE_LIST, muscleShareLabel } from "@/lib/exercises";
 
 // Monday of the ISO week containing d, as a YYYY-MM-DD key. Same bucketing
 // as the streak math in lib/training.js.
@@ -86,76 +86,52 @@ export async function getWeeklyMuscleVolume() {
   };
 }
 
-// All-time weighted hard sets per parent muscle group, biggest first.
-// Same fractional-set convention as the weekly card (primary 1, secondary
-// 0.5), just with no week filter. Feeds the "most trained" block on the
-// progress share card.
-export async function getMuscleTrainingTotals() {
-  const supabase = await getServerSupabase();
-
-  const { data, error } = await supabase
-    .from("workout_sets")
-    .select("completed, is_warmup, exercise:exercises(exercise_muscles(role, muscle:muscles(parent)))");
-  if (error) throw new Error(`Failed to load volume: ${error.message}`);
-
-  const totals = new Map(MUSCLE_ORDER.map((p) => [p, 0]));
-  for (const s of data ?? []) {
+// Weighted hard sets by muscle, biggest first, as [{ label, parent,
+// sets }]. Legs and Arms are broken into their specific muscles
+// (Quads / Hamstrings / Biceps / Triceps / ...); Chest, Back, Shoulders
+// and Core stay whole. Fractional-set convention (primary 1, secondary
+// 0.5).
+function tallyToRows(rows) {
+  const tally = new Map(); // label -> { parent, sets }
+  for (const s of rows ?? []) {
     if (s.completed === false || s.is_warmup) continue;
     for (const t of s.exercise?.exercise_muscles ?? []) {
       const parent = t.muscle?.parent;
-      if (!parent || !totals.has(parent)) continue;
-      totals.set(parent, totals.get(parent) + (ROLE_WEIGHT[t.role] ?? 0));
+      if (!parent || !MUSCLE_ORDER.includes(parent)) continue;
+      const label = muscleShareLabel(t.muscle?.name, parent);
+      const cur = tally.get(label) ?? { parent, sets: 0 };
+      cur.sets += ROLE_WEIGHT[t.role] ?? 0;
+      tally.set(label, cur);
     }
   }
-
-  return MUSCLE_ORDER.map((parent) => ({ parent, sets: Math.round(totals.get(parent)) }))
-    .filter((g) => g.sets > 0)
+  return [...tally.entries()]
+    .map(([label, v]) => ({ label, parent: v.parent, sets: Math.round(v.sets) }))
+    .filter((r) => r.sets > 0)
     .sort((a, b) => b.sets - a.sets);
 }
 
-// Turn a { group: weightedSets } tally into { intensity, top }:
-// intensity is 0..1 per group (relative to the busiest group, with a
-// floor so a trained group is always visible), top is the groups by
-// volume, biggest first.
-export function shapeMuscleTally(tally) {
-  const entries = MUSCLE_ORDER.map((g) => [g, Math.round((tally[g] ?? 0) * 10) / 10]).filter(
-    ([, v]) => v > 0,
-  );
-  const max = entries.reduce((m, [, v]) => Math.max(m, v), 0) || 1;
-  const intensity = {};
-  // Relative to the busiest group, on a steep curve: the leaders light
-  // up, everything below roughly half the top volume stays visibly dim.
-  // Keeps the map readable instead of one big orange blob.
-  for (const [g, v] of entries) {
-    intensity[g] = Math.min(1, Math.pow(v / max, 1.7));
-  }
-  const top = entries
-    .map(([group, sets]) => ({ group, sets: Math.round(sets) }))
-    .sort((a, b) => b.sets - a.sets);
-  return { intensity, top };
+// All-time, for the Progress share card.
+export async function getMuscleTrainingTotals() {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from("workout_sets")
+    .select("completed, is_warmup, exercise:exercises(exercise_muscles(role, muscle:muscles(name, parent)))");
+  if (error) throw new Error(`Failed to load volume: ${error.message}`);
+  return tallyToRows(data);
 }
 
-// Weighted hard sets per parent muscle group for a specific set of
-// workout sessions (fractional-set convention, primary 1 / secondary
-// 0.5). Feeds the per-session share card and the challenge summary.
+// For a specific set of sessions - the workout-complete card and the
+// challenge summary. Returns { top: [{ group, parent, sets }] }.
 export async function getMuscleMapForSessions(sessionIds) {
   const ids = [...new Set((sessionIds ?? []).filter(Boolean))];
-  if (ids.length === 0) return { intensity: {}, top: [] };
+  if (ids.length === 0) return { top: [] };
 
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from("workout_sets")
-    .select("session_id, completed, is_warmup, exercise:exercises(exercise_muscles(role, muscle:muscles(parent)))")
+    .select("completed, is_warmup, exercise:exercises(exercise_muscles(role, muscle:muscles(name, parent)))")
     .in("session_id", ids);
   if (error) throw new Error(`Failed to load session muscles: ${error.message}`);
 
-  const tally = Object.fromEntries(MUSCLE_ORDER.map((p) => [p, 0]));
-  for (const s of data ?? []) {
-    if (s.completed === false || s.is_warmup) continue;
-    for (const t of s.exercise?.exercise_muscles ?? []) {
-      const parent = t.muscle?.parent;
-      if (parent && parent in tally) tally[parent] += ROLE_WEIGHT[t.role] ?? 0;
-    }
-  }
-  return shapeMuscleTally(tally);
+  return { top: tallyToRows(data).map((r) => ({ group: r.label, parent: r.parent, sets: r.sets })) };
 }

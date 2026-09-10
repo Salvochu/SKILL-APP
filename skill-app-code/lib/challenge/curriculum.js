@@ -142,8 +142,37 @@ export function getChallengeDay(day) {
   return CHALLENGE_DAYS.find((d) => d.day === day) ?? null;
 }
 
+// The "Before you start" setup steps, pinned at the top of the Challenge
+// tab (open on days 1-2, collapsed after).
+export const SETUP_STEPS = [
+  {
+    title: "Take your day 1 photos",
+    detail:
+      "Front, side and back. Same spot, same light, same time of day. You will compare them to your day 14 photos, and that is the real before and after.",
+  },
+  {
+    title: "Weigh in every morning",
+    detail:
+      "First thing, before food or water, and log it in the app. Do not read into one day. The daily number bounces around; the 14-day line is what tells the truth.",
+  },
+  {
+    title: "Three sessions, plus one cardio",
+    detail:
+      "Alternate Day A and Day B with a rest day between lifts, and add one easy 25-minute cardio each week. If life gets in the way, do two sessions. Never zero.",
+  },
+  {
+    title: "Follow the meal plan",
+    detail:
+      'It is in your welcome email, matched to your bodyweight. Portions, not calorie counting. Watch "How to read your meal plan" in Learn below before your first shop.',
+  },
+];
+
 // Short course, shown under the day timeline. `kind: "vsl"` gets the
 // "work with me" CTA at the end.
+export function getLesson(slug) {
+  return CHALLENGE_LESSONS.find((l) => l.slug === slug) ?? null;
+}
+
 export const CHALLENGE_LESSONS = [
   {
     slug: "start-here",

@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { computeWeekStreak, weekKeyOf } from "@/lib/training";
 import { currentWeek } from "@/lib/mesocycle";
 import { isChallengeDayComplete } from "@/lib/data/challenge";
+import { muscleShareLabel } from "@/lib/exercises";
 import {
   patternForExercise,
   epley1RM,
@@ -370,7 +371,7 @@ export async function getClientChallenge(clientId) {
     const { data: sets } = await admin
       .from("workout_sets")
       .select(
-        "weight, reps, completed, is_warmup, exercise:exercises(exercise_muscles(role, muscle:muscles(parent)))",
+        "weight, reps, completed, is_warmup, exercise:exercises(exercise_muscles(role, muscle:muscles(name, parent)))",
       )
       .in("session_id", sessionIds);
     for (const s of sets ?? []) {
@@ -379,7 +380,8 @@ export async function getClientChallenge(clientId) {
       for (const t of s.exercise?.exercise_muscles ?? []) {
         const p = t.muscle?.parent;
         if (!p) continue;
-        muscleTally[p] = (muscleTally[p] ?? 0) + (t.role === "primary" ? 1 : 0.5);
+        const label = muscleShareLabel(t.muscle?.name, p);
+        muscleTally[label] = (muscleTally[label] ?? 0) + (t.role === "primary" ? 1 : 0.5);
       }
     }
   }

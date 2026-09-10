@@ -81,7 +81,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-full">
         <div id="skill-splash" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/skill-logo.png" alt="" width={266} height={108} />
+          <img src="/skill-logo.png" alt="" width={520} height={199} />
         </div>
         {children}
         <SplashGate />

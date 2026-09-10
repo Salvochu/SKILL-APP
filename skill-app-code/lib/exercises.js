@@ -90,6 +90,20 @@ export function muscleKey(muscle) {
   return MUSCLE_ORDER.map((m) => m.toLowerCase()).includes(k) ? k : "core";
 }
 
+// Groups shown broken into their specific muscles on the share cards
+// (Legs -> Quads / Hamstrings / Glutes / ...; Arms -> Biceps / Triceps /
+// Forearms). Chest, Back, Shoulders and Core stay single.
+export const SPLIT_SHARE_PARENTS = new Set(["Legs", "Arms"]);
+
+// The label to show for a muscle on a share card: the specific muscle
+// for split groups, the group name otherwise. Trims the parenthetical
+// on names like "Lower back (spinal erectors)" -> "Lower back".
+export function muscleShareLabel(subName, parent) {
+  if (!SPLIT_SHARE_PARENTS.has(parent)) return parent;
+  const s = String(subName || "").replace(/\s*\(.*\)\s*$/, "").trim();
+  return s || parent;
+}
+
 // Equipment, in filter order.
 export const EQUIPMENT_ORDER = ["Barbell", "Dumbbell", "Machine", "Cable", "Bodyweight"];
 
