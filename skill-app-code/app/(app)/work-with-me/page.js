@@ -4,11 +4,12 @@ import { BOOKING_URL } from "@/lib/links";
 export const metadata = { title: "Work with Salvador" };
 
 const INCLUDED = [
-  "A program built around your body, your schedule and your equipment, delivered in this app",
-  "Weekly video check-ins on your form and your numbers",
-  "Direct access to Salvador between check-ins",
-  "Nutrition set up and adjusted as you go",
-  "Targets reviewed every week so progress never stalls",
+  "Your whole plan built from scratch around your body, your history, your schedule and the equipment you have",
+  "Nutrition targets set to your numbers and tracked in the app, adjusted every week as the scale and the mirror move",
+  "Form videos reviewed and sent back with fixes every week",
+  "A direct line to me between check-ins, replies within 24 hours",
+  "The SK Fitness client community, training alongside other people doing the same",
+  "A full weekly review, so the moment progress slows we change something",
 ];
 
 export default function WorkWithMePage() {
@@ -26,13 +27,14 @@ export default function WorkWithMePage() {
         <span className="text-xs font-semibold uppercase tracking-wider text-accent">1:1 Coaching</span>
         <h1 className="text-2xl font-bold text-fg">Train with Salvador directly</h1>
         <p className="text-sm text-muted">
-          The app gives you the plan and the tracking. 1:1 is the plan built entirely around you, plus
-          someone watching your numbers every week and adjusting so you never stall.
+          SKILL gives you a solid plan and the tracking to run it. 1:1 is a plan built entirely
+          around you, with someone watching your numbers every week and changing them the moment
+          you stall.
         </p>
       </header>
 
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">What&apos;s included</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">What you get</h2>
         <ul className="flex flex-col gap-2.5">
           {INCLUDED.map((item) => (
             <li key={item} className="flex items-start gap-2.5 text-sm text-fg">
@@ -43,16 +45,18 @@ export default function WorkWithMePage() {
         </ul>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
+      <p className="text-sm text-muted">
+        Everything runs in the SK Fitness coaching app: your plan, your nutrition, your check-ins,
+        your messages and the community, in one place. You get set up there when you start.
+      </p>
+
+      <section className="flex flex-col gap-2 rounded-card border border-accent/40 bg-accent-soft p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-accent">Investment</h2>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="tabular font-display text-2xl font-bold text-fg">&pound;350</span>
-          <span className="text-sm text-muted">per month, rolling</span>
+          <span className="text-sm text-muted">per month</span>
         </div>
-        <p className="text-sm text-fg">
-          Or <span className="tabular font-semibold">&pound;2,400</span> paid up front for six months
-          &mdash; the equivalent of two months free.
-        </p>
+        <p className="text-sm text-muted">Rolling. Cancel any time.</p>
       </section>
 
       <section className="flex flex-col gap-3">

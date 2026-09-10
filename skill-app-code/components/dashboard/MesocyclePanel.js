@@ -243,7 +243,7 @@ export default function MesocyclePanel({
             rel="noopener noreferrer"
             className="btn-shine flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
           >
-            Keep training &mdash; &pound;14.99/mo
+            Keep training for &pound;14.99/mo
           </a>
           <TapLink
             href="/work-with-me"

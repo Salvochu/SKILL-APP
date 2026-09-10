@@ -38,8 +38,8 @@ export default async function ChallengeEnded() {
 
       <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
         <p className="text-sm text-fg">
-          Keep training and everything stays with you &mdash; your streak, your level, your history &mdash;
-          and your plan rolls into the next block.
+          Keep training and everything stays with you. Your streak, your level, your history, and your
+          plan rolls into the next block.
         </p>
         <a
           href={KEEP_TRAINING_URL}
@@ -47,7 +47,7 @@ export default async function ChallengeEnded() {
           rel="noopener noreferrer"
           className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-2"
         >
-          Keep training &mdash; &pound;14.99/mo
+          Keep training for &pound;14.99/mo
         </a>
         <Link
           href="/work-with-me"

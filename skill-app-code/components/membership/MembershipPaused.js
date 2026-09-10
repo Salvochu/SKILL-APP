@@ -92,7 +92,7 @@ export default async function MembershipPaused() {
             rel="noopener noreferrer"
             className="btn-shine flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-bold text-black shadow-[0_10px_30px_-8px_rgba(252,118,5,0.65)] transition-transform active:scale-[0.99]"
           >
-            Keep training &mdash; &pound;14.99/mo
+            Keep training for &pound;14.99/mo
           </a>
           <a
             href={BOOKING_URL}
