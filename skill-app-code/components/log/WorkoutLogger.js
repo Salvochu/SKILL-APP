@@ -319,8 +319,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     );
   }
   function addExercise(exercise) {
+    // The picker closes itself once, after every pick is added.
     setRows((rs) => [...rs, makeExercise(exercise, 3, "", history[exercise.id])]);
-    setPickerOpen(false);
   }
   function removeExercise(key) {
     setRows((rs) => rs.filter((r) => r.key !== key));
@@ -781,7 +781,12 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       </div>
 
       {pickerOpen ? (
-        <ExercisePicker exercises={allExercises} onPick={addExercise} onClose={() => setPickerOpen(false)} />
+        <ExercisePicker
+          exercises={allExercises}
+          multiple
+          onPick={addExercise}
+          onClose={() => setPickerOpen(false)}
+        />
       ) : null}
       {swapKey ? (
         <ExercisePicker

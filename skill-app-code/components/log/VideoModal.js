@@ -5,7 +5,7 @@ import { loomEmbedUrl } from "@/lib/exercises";
 import { figureMuscleFor } from "@/lib/muscleImage";
 import MuscleFigure from "@/components/MuscleFigure";
 
-export default function VideoModal({ exercise, onClose }) {
+export default function VideoModal({ exercise, onClose, actionLabel = null, onAction = null }) {
   useEffect(() => {
     function onKey(e) {
       if (e.key === "Escape") onClose();
@@ -57,6 +57,16 @@ export default function VideoModal({ exercise, onClose }) {
             </div>
             <MuscleFigure muscles={exercise.muscles ?? []} compact />
           </div>
+        ) : null}
+
+        {onAction && actionLabel ? (
+          <button
+            type="button"
+            onClick={onAction}
+            className="mt-3 w-full rounded-field bg-accent px-4 py-3 text-center font-semibold text-black transition-colors hover:bg-accent-2"
+          >
+            {actionLabel}
+          </button>
         ) : null}
       </div>
     </div>

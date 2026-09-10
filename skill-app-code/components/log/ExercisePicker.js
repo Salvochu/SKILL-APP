@@ -12,11 +12,23 @@ function tagsFor(e) {
   return e.muscle ? [{ id: e.muscle, name: e.muscle, parent: e.muscle, role: "primary" }] : [];
 }
 
-export default function ExercisePicker({ exercises, onPick, onClose, title = "Add exercise" }) {
+// `multiple` turns the picker into a checklist: tap rows to select, then
+// confirm to add them all at once. Off (swap, or a single add) keeps the
+// tap-to-pick behaviour.
+export default function ExercisePicker({
+  exercises,
+  onPick,
+  onClose,
+  title = "Add exercise",
+  multiple = false,
+}) {
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("All");
   const [equipment, setEquipment] = useState("All");
   const [previewFor, setPreviewFor] = useState(null);
+  const [selected, setSelected] = useState(() => new Set());
+
+  const byId = useMemo(() => new Map(exercises.map((e) => [e.id, e])), [exercises]);
 
   useEffect(() => {
     function onKey(e) {
@@ -58,6 +70,27 @@ export default function ExercisePicker({ exercises, onPick, onClose, title = "Ad
     return scored.slice(0, 120).map((s) => s.e);
   }, [exercises, query, group, equipment]);
 
+  function toggle(id) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function pickRow(e) {
+    if (multiple) toggle(e.id);
+    else onPick(e);
+  }
+
+  function confirmMulti() {
+    [...selected].map((id) => byId.get(id)).filter(Boolean).forEach((e) => onPick(e));
+    onClose();
+  }
+
+  const swapping = /swap/i.test(title);
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface" role="dialog" aria-modal="true" aria-label={title}>
       <div className="flex flex-col gap-3 border-b border-border p-4 pt-[calc(0.75rem+env(safe-area-inset-top))]">
@@ -84,14 +117,22 @@ export default function ExercisePicker({ exercises, onPick, onClose, title = "Ad
           <ChipRow value={equipment} onChange={setEquipment} options={equipmentList} allLabel="All equipment" />
         ) : null}
       </div>
+
       <ul className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-2 overflow-y-auto p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-        {filtered.map((e) => (
+        {filtered.map((e) => {
+          const isSel = multiple && selected.has(e.id);
+          return (
             <li key={e.id} className="relative">
               <button
                 type="button"
-                onClick={() => onPick(e)}
-                className={`flex w-full items-center gap-3 rounded-card border border-border bg-bg/40 py-2.5 pr-3 text-left transition-colors hover:border-border-strong hover:bg-surface-2 active:bg-accent-soft ${
+                onClick={() => pickRow(e)}
+                aria-pressed={multiple ? isSel : undefined}
+                className={`flex w-full items-center gap-3 rounded-card border py-2.5 pr-3 text-left transition-colors ${
                   e.video_url ? "pl-[52px]" : "pl-3"
+                } ${
+                  isSel
+                    ? "border-accent bg-accent-soft"
+                    : "border-border bg-bg/40 hover:border-border-strong hover:bg-surface-2 active:bg-accent-soft"
                 }`}
               >
                 <span className="min-w-0 flex-1">
@@ -99,6 +140,15 @@ export default function ExercisePicker({ exercises, onPick, onClose, title = "Ad
                   <span className="block text-xs text-dim">{e.equipment}</span>
                 </span>
                 <MusclePill muscle={e.muscles?.find((m) => m.role === "primary")?.name ?? e.muscle} />
+                {multiple ? (
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                      isSel ? "border-accent bg-accent text-black" : "border-border-strong text-transparent"
+                    }`}
+                  >
+                    <IconCheck className="h-3 w-3" />
+                  </span>
+                ) : null}
               </button>
               {e.video_url ? (
                 <button
@@ -111,12 +161,53 @@ export default function ExercisePicker({ exercises, onPick, onClose, title = "Ad
                 </button>
               ) : null}
             </li>
-          ))}
+          );
+        })}
         {filtered.length === 0 ? (
           <li className="py-6 text-center text-sm text-muted">No exercises match those filters.</li>
         ) : null}
       </ul>
-      {previewFor ? <VideoModal exercise={previewFor} onClose={() => setPreviewFor(null)} /> : null}
+
+      {multiple ? (
+        <div className="border-t border-border bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <button
+            type="button"
+            onClick={confirmMulti}
+            disabled={selected.size === 0}
+            className="mx-auto flex w-full max-w-2xl items-center justify-center rounded-field bg-accent px-4 py-3 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-50"
+          >
+            {selected.size === 0
+              ? "Select exercises to add"
+              : `Add ${selected.size} exercise${selected.size === 1 ? "" : "s"}`}
+          </button>
+        </div>
+      ) : null}
+
+      {previewFor ? (
+        <VideoModal
+          exercise={previewFor}
+          onClose={() => setPreviewFor(null)}
+          actionLabel={
+            multiple
+              ? selected.has(previewFor.id)
+                ? "Remove from selection"
+                : "Add to workout"
+              : swapping
+                ? "Swap to this exercise"
+                : "Add exercise"
+          }
+          onAction={() => {
+            if (multiple) {
+              toggle(previewFor.id);
+              setPreviewFor(null);
+            } else {
+              onPick(previewFor);
+              setPreviewFor(null);
+              onClose();
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -125,6 +216,13 @@ function IconPlay(props) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
       <path d="M8 5v14l11-7z" />
+    </svg>
+  );
+}
+function IconCheck(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M5 13l4 4L19 7" />
     </svg>
   );
 }

@@ -45,8 +45,8 @@ export default function WorkoutBuilder({ allExercises, initial }) {
   const [error, setError] = useState(null);
 
   function addExercise(exercise) {
+    // The picker closes itself once, after every pick is added.
     setRows((rs) => [...rs, { key: nextKey(), exercise, sets: 3, reps: "" }]);
-    setPickerOpen(false);
   }
   function patchRow(key, patch) {
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -329,6 +329,7 @@ export default function WorkoutBuilder({ allExercises, initial }) {
       {pickerOpen ? (
         <ExercisePicker
           exercises={allExercises}
+          multiple
           onPick={addExercise}
           onClose={() => setPickerOpen(false)}
         />
