@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { loomEmbedUrl } from "@/lib/exercises";
+import { figureMuscleFor } from "@/lib/muscleImage";
 import MusclePill from "@/components/MusclePill";
 import MuscleFigure from "@/components/MuscleFigure";
 
@@ -65,10 +66,6 @@ export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
           )}
         </div>
 
-        {exercise.muscles?.length ? (
-          <MuscleFigure muscles={exercise.muscles} className="mt-4" />
-        ) : null}
-
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {(exercise.muscles && exercise.muscles.length
             ? exercise.muscles
@@ -97,12 +94,31 @@ export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
           <p className="mt-2 text-[11px] text-dim">Faded tags are assisting muscles.</p>
         ) : null}
 
-        {exercise.instructions ? (
-          <div className="mt-4 rounded-field bg-surface-2 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-dim">
-              How to perform
-            </p>
-            <p className="mt-1 text-sm text-fg">{exercise.instructions}</p>
+        {exercise.instructions || figureMuscleFor(exercise.muscles ?? []) ? (
+          <div
+            className={`mt-4 flex gap-3 rounded-field bg-surface-2 p-3 ${
+              exercise.instructions ? "" : "items-center"
+            }`}
+          >
+            <div className="min-w-0 flex-1">
+              {exercise.instructions ? (
+                <>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-dim">
+                    How to perform
+                  </p>
+                  <p className="mt-1 text-sm text-fg">{exercise.instructions}</p>
+                </>
+              ) : (
+                <p className="text-sm text-muted">
+                  Works your{" "}
+                  <span className="font-medium text-fg">
+                    {figureMuscleFor(exercise.muscles).name.toLowerCase()}
+                  </span>
+                  .
+                </p>
+              )}
+            </div>
+            <MuscleFigure muscles={exercise.muscles ?? []} compact />
           </div>
         ) : null}
 

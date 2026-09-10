@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { loomEmbedUrl } from "@/lib/exercises";
+import { figureMuscleFor } from "@/lib/muscleImage";
 import MuscleFigure from "@/components/MuscleFigure";
 
 export default function VideoModal({ exercise, onClose }) {
@@ -35,11 +36,27 @@ export default function VideoModal({ exercise, onClose }) {
             <div className="flex h-full items-center justify-center text-sm text-dim">Form video coming soon</div>
           )}
         </div>
-        {exercise.muscles?.length ? (
-          <MuscleFigure muscles={exercise.muscles} className="mt-4" />
-        ) : null}
-        {exercise.instructions ? (
-          <p className="mt-3 text-sm text-muted">{exercise.instructions}</p>
+        {exercise.instructions || figureMuscleFor(exercise.muscles ?? []) ? (
+          <div
+            className={`mt-3 flex gap-3 rounded-field bg-surface-2 p-3 ${
+              exercise.instructions ? "" : "items-center"
+            }`}
+          >
+            <div className="min-w-0 flex-1">
+              {exercise.instructions ? (
+                <p className="text-sm text-muted">{exercise.instructions}</p>
+              ) : (
+                <p className="text-sm text-muted">
+                  Works your{" "}
+                  <span className="font-medium text-fg">
+                    {figureMuscleFor(exercise.muscles).name.toLowerCase()}
+                  </span>
+                  .
+                </p>
+              )}
+            </div>
+            <MuscleFigure muscles={exercise.muscles ?? []} compact />
+          </div>
         ) : null}
       </div>
     </div>
