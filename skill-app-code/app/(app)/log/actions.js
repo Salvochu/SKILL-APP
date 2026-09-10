@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { getChallengeAccess } from "@/lib/data/challenge";
+import { getMembership } from "@/lib/data/profile";
 import { getProgressData } from "@/lib/data/progress";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getSessionPRs } from "@/lib/data/prs";
@@ -22,8 +23,11 @@ export async function saveWorkout(payload) {
   const user = await getSessionUser();
   if (!user) return { error: "Please sign in again to save this workout." };
 
-  // Backstop for the /log gates: a form already open before the
-  // challenge started, or after it lapsed, still cannot save.
+  // Backstop for the /log gates: a form already open when access was
+  // pulled still cannot save.
+  if ((await getMembership()) === "lapsed") {
+    return { error: "Your membership is paused. Resubscribe to log new workouts." };
+  }
   const challengeAccess = await getChallengeAccess();
   if (challengeAccess.isChallenge && !challengeAccess.started) {
     return { error: "Start your 14 days from the Challenge tab first." };

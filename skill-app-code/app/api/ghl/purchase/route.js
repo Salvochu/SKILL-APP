@@ -1,5 +1,9 @@
-import crypto from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  jsonResponse as json,
+  verifyGhlSignature,
+  extractContact,
+} from "@/lib/ghl/webhook";
 
 // GHL calls this when the $7 purchase workflow fires. It verifies the
 // request is really from GHL, creates a pre-confirmed Supabase user (no
@@ -28,116 +32,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // The mesocycle template the free challenge runs on (migration 0033).
 const CHALLENGE_TEMPLATE_ID = "main-character-14";
 const CHALLENGE_PRODUCT_ID = process.env.GHL_CHALLENGE_PRODUCT_ID || "main-character-challenge";
-
-// From GoHighLevel's Webhook Integration Guide. Overridable via env in
-// case GHL rotates it.
-const GHL_ED25519_PUBLIC_KEY =
-  process.env.GHL_WEBHOOK_PUBLIC_KEY ||
-  `-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEAi2HR1srL4o18O8BRa7gVJY7G7bupbN3H9AwJrHCDiOg=
------END PUBLIC KEY-----`;
-
-const json = (body, status = 200) =>
-  Response.json(body, { status, headers: { "cache-control": "no-store" } });
-
-// Constant-time compare of two short ASCII strings.
-function secretMatches(provided, expected) {
-  if (!provided || !expected) return false;
-  const a = Buffer.from(provided);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
-}
-
-function verifySignature(rawBody, req) {
-  if (process.env.GHL_WEBHOOK_SKIP_VERIFY === "1") return true; // local testing only
-
-  // Preferred path: a shared secret we set on both ends. GHL's workflow
-  // Custom Webhook action sends it as "Authorization: Bearer <secret>" or
-  // as an "x-webhook-secret" header. It does not sign its requests, so
-  // this is what actually gates the endpoint in production.
-  const expectedSecret = process.env.GHL_WEBHOOK_SECRET;
-  if (expectedSecret) {
-    const auth = req.headers.get("authorization") || "";
-    const bearer = auth.replace(/^Bearer\s+/i, "");
-    const headerSecret = req.headers.get("x-webhook-secret");
-    if (secretMatches(bearer, expectedSecret) || secretMatches(headerSecret, expectedSecret)) {
-      return true;
-    }
-    // A secret is configured but the request did not carry it: reject,
-    // regardless of any signature header.
-    return false;
-  }
-
-  const ed = req.headers.get("x-ghl-signature");
-  if (ed && ed !== "N/A") {
-    try {
-      return crypto.verify(
-        null,
-        Buffer.from(rawBody, "utf8"),
-        GHL_ED25519_PUBLIC_KEY,
-        Buffer.from(ed, "base64"),
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  // Legacy RSA-SHA256 header, deprecated by GHL in 2026.
-  const rsa = req.headers.get("x-wh-signature");
-  const rsaKey = process.env.GHL_WEBHOOK_PUBLIC_KEY_RSA;
-  if (rsa && rsaKey) {
-    try {
-      const v = crypto.createVerify("SHA256");
-      v.update(rawBody);
-      v.end();
-      return v.verify(rsaKey, Buffer.from(rsa, "base64"));
-    } catch {
-      return false;
-    }
-  }
-  return false;
-}
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// GHL payloads vary (native contact webhook vs a hand-built custom body),
-// so try the common shapes, then fall back to the first email-looking
-// string anywhere in the object.
-function extractContact(payload) {
-  const p = payload || {};
-  const candidates = [
-    p.email,
-    p.contact_email,
-    p.contactEmail,
-    p.customData?.email,
-    p.contact?.email,
-    p.data?.email,
-  ];
-  let email = candidates.find((e) => typeof e === "string" && EMAIL_RE.test(e.trim()));
-  if (!email) email = deepFindEmail(p);
-  email = email?.trim().toLowerCase() || null;
-
-  const first = p.first_name || p.firstName || p.contact?.firstName || p.customData?.first_name;
-  const last = p.last_name || p.lastName || p.contact?.lastName || p.customData?.last_name;
-  const name =
-    p.name || p.full_name || p.fullName || [first, last].filter(Boolean).join(" ") || null;
-
-  return { email, name: name || null };
-}
-
-function deepFindEmail(obj, seen = new Set()) {
-  if (!obj || typeof obj !== "object" || seen.has(obj)) return null;
-  seen.add(obj);
-  for (const value of Object.values(obj)) {
-    if (typeof value === "string" && EMAIL_RE.test(value.trim())) return value;
-    if (value && typeof value === "object") {
-      const found = deepFindEmail(value, seen);
-      if (found) return found;
-    }
-  }
-  return null;
-}
 
 function productIdsIn(payload) {
   return [
@@ -171,7 +65,7 @@ function classifyPurchase(payload) {
 export async function POST(request) {
   const rawBody = await request.text();
 
-  if (!verifySignature(rawBody, request)) {
+  if (!verifyGhlSignature(rawBody, request)) {
     return json({ error: "signature verification failed" }, 401);
   }
 
@@ -271,8 +165,11 @@ async function applyPlan(supabase, userId, plan, name) {
     return;
   }
 
-  // plan === "challenge": never downgrade an existing member or the coach.
-  if (profile?.membership !== "member" && profile?.membership !== "coach") {
+  // plan === "challenge": never overwrite an existing member, a lapsed
+  // member (they belong on the £14.99 path, not the free challenge) or
+  // the coach.
+  const KEEP = new Set(["member", "coach", "lapsed"]);
+  if (!KEEP.has(profile?.membership)) {
     await supabase
       .from("profiles")
       .upsert({ user_id: userId, membership: "challenge", ...namePatch }, { onConflict: "user_id" });

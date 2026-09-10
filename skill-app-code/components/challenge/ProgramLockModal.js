@@ -2,10 +2,27 @@
 
 import { KEEP_TRAINING_URL } from "@/lib/links";
 
-// Shown when a challenge user reaches for a paid feature (starting or
-// logging another program). Not a punishment: the challenge stays free
-// and complete, this only gates what comes after it.
-export default function ProgramLockModal({ onClose }) {
+// Shown when someone reaches for a paid feature (starting or logging
+// another program): a challenge user mid-14-days, or a member whose
+// subscription has lapsed. Not a punishment - it only gates what comes
+// next, and progress is saved either way.
+const COPY = {
+  challenge: {
+    eyebrow: "Part of a SKILL membership",
+    title: "Finish your free 14 days first",
+    body: "The full training library unlocks when you continue with a membership. Your challenge stays free and your progress is saved either way.",
+    dismiss: "Keep doing the challenge",
+  },
+  lapsed: {
+    eyebrow: "Your membership is paused",
+    title: "Resubscribe to start a program",
+    body: "Your history, level and saved workouts are all still here. Pick up where you left off the moment you resubscribe.",
+    dismiss: "Not now",
+  },
+};
+
+export default function ProgramLockModal({ onClose, mode = "challenge" }) {
+  const c = COPY[mode] ?? COPY.challenge;
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -16,15 +33,10 @@ export default function ProgramLockModal({ onClose }) {
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="relative flex w-full max-w-sm flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
         <span className="text-xs font-semibold uppercase tracking-wider text-accent">
-          Part of a SKILL membership
+          {c.eyebrow}
         </span>
-        <h3 className="font-display text-lg font-semibold text-fg">
-          Finish your free 14 days first
-        </h3>
-        <p className="text-sm text-muted">
-          The full training library unlocks when you continue with a membership.
-          Your challenge stays free and your progress is saved either way.
-        </p>
+        <h3 className="font-display text-lg font-semibold text-fg">{c.title}</h3>
+        <p className="text-sm text-muted">{c.body}</p>
         <div className="mt-1 flex flex-col gap-2">
           <a
             href={KEEP_TRAINING_URL}
@@ -39,7 +51,7 @@ export default function ProgramLockModal({ onClose }) {
             onClick={onClose}
             className="w-full rounded-field border border-border px-4 py-2.5 text-sm font-medium text-fg hover:bg-surface-2"
           >
-            Keep doing the challenge
+            {c.dismiss}
           </button>
         </div>
       </div>

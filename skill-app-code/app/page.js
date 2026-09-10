@@ -11,5 +11,11 @@ export const instant = false;
 // challenge tab instead of the dashboard.
 export default async function Home() {
   const membership = await getMembership().catch(() => null);
-  redirect(membership === "challenge" ? "/challenge" : "/dashboard");
+  redirect(
+    membership === "challenge"
+      ? "/challenge"
+      : membership === "lapsed"
+        ? "/paused"
+        : "/dashboard",
+  );
 }

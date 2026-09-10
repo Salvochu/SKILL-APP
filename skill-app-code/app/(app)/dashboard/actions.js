@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { getMesocycleOverview } from "@/lib/data/mesocycles";
 import { getChallengeAccess } from "@/lib/data/challenge";
+import { getMembership } from "@/lib/data/profile";
 import { VARIANT_ORDER } from "@/lib/exercises";
 
 // The mesocycle state is read on the dashboard and the log screen; after
@@ -30,6 +31,14 @@ export async function startMesocycle(templateId, variant, sessionsPerWeek) {
   // per account. It is never a program you pick or restart from the app.
   if (templateId === "main-character-14") {
     return { error: "The 14-Day Challenge can't be started from here." };
+  }
+  // A lapsed membership is read-only until they resubscribe.
+  if ((await getMembership()) === "lapsed") {
+    return {
+      locked: true,
+      lockMode: "lapsed",
+      error: "Your membership is paused. Resubscribe to start a program.",
+    };
   }
   // Challenge accounts run the challenge and nothing else. Starting any
   // other program unlocks with a membership (whether the 14 days are

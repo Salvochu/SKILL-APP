@@ -72,6 +72,31 @@ export async function proxy(request) {
     return NextResponse.redirect(url);
   }
 
+  // A lapsed paid membership locks the whole app behind /paused (the
+  // resubscribe screen). One indexed lookup, only on an authenticated
+  // in-app route. Server Actions still re-check, per the auth guide.
+  if (user && !isPublicRoute) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("membership")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const lapsed = profile?.membership === "lapsed";
+
+    if (lapsed && pathname !== "/paused") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/paused";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    if (!lapsed && pathname === "/paused") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return response;
 }
 

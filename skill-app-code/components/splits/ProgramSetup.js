@@ -21,7 +21,7 @@ export default function ProgramSetup({ template, activeProgram = null, advanced 
   const [sessionsPerWeek, setSessionsPerWeek] = useState(null);
   const [starting, setStarting] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [locked, setLocked] = useState(false);
+  const [locked, setLocked] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function ProgramSetup({ template, activeProgram = null, advanced 
     const result = await startMesocycle(template.id, variant, sessionsPerWeek);
     setStarting(false);
     if (result?.locked) {
-      setLocked(true);
+      setLocked(result.lockMode ?? "challenge");
       return;
     }
     if (result?.error) {
@@ -219,7 +219,7 @@ export default function ProgramSetup({ template, activeProgram = null, advanced 
 
       </section>
 
-      {locked ? <ProgramLockModal onClose={() => { setLocked(false); onCancel?.(); }} /> : null}
+      {locked ? <ProgramLockModal mode={locked} onClose={() => { setLocked(null); onCancel?.(); }} /> : null}
 
       {confirming ? (
         <ConfirmModal
