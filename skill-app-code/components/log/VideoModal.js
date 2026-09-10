@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { loomEmbedUrl } from "@/lib/exercises";
+import MuscleFigure from "@/components/MuscleFigure";
 
 export default function VideoModal({ exercise, onClose }) {
   useEffect(() => {
@@ -34,6 +35,9 @@ export default function VideoModal({ exercise, onClose }) {
             <div className="flex h-full items-center justify-center text-sm text-dim">Form video coming soon</div>
           )}
         </div>
+        {exercise.muscles?.length ? (
+          <MuscleFigure muscles={exercise.muscles} className="mt-4" />
+        ) : null}
         {exercise.instructions ? (
           <p className="mt-3 text-sm text-muted">{exercise.instructions}</p>
         ) : null}

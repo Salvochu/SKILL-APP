@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { loomEmbedUrl } from "@/lib/exercises";
 import MusclePill from "@/components/MusclePill";
+import MuscleFigure from "@/components/MuscleFigure";
 
 // Bottom-sheet detail for one exercise: form video, how-to, quick log link.
 export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
@@ -63,6 +64,10 @@ export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
             </div>
           )}
         </div>
+
+        {exercise.muscles?.length ? (
+          <MuscleFigure muscles={exercise.muscles} className="mt-4" />
+        ) : null}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {(exercise.muscles && exercise.muscles.length
