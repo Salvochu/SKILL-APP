@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { signUp } from "./actions";
-import Wordmark from "@/components/Wordmark";
+import AuthShell from "@/components/auth/AuthShell";
 
 // Same reasoning as app/login/page.js: reads searchParams, low traffic,
 // so it opts out of the static-shell requirement instead of adding a
@@ -12,64 +12,48 @@ export default async function SignUpPage({ searchParams }) {
   const error = typeof params?.error === "string" ? params.error : null;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-8 px-6">
-      <div className="flex flex-col gap-2">
-        <Wordmark height="2rem" />
-        <p className="text-sm text-muted">Create your account.</p>
-      </div>
-
+    <AuthShell
+      title="Train like a Main Character"
+      subtitle="Create your account to get started."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link href="/login" className="font-medium text-accent hover:underline">
+            Sign in
+          </Link>
+        </>
+      }
+    >
       {error ? (
-        <p className="rounded-field border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+        <p className="mb-4 rounded-field border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
           {error}
         </p>
       ) : null}
 
       <form action={signUp} className="flex flex-col gap-4">
-        <Field label="Email">
-          <input
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className="rounded-field border border-border bg-surface px-3 py-2 text-fg placeholder:text-dim focus:border-accent"
-          />
-        </Field>
-        <Field label="Password">
+        <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
+          Email
+          <input name="email" type="email" required autoComplete="email" className="auth-input" />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
+          Password
           <input
             name="password"
             type="password"
             required
             minLength={8}
             autoComplete="new-password"
-            className="rounded-field border border-border bg-surface px-3 py-2 text-fg placeholder:text-dim focus:border-accent"
+            className="auth-input"
           />
-          <span className="text-xs font-normal text-dim">
-            At least 8 characters.
-          </span>
-        </Field>
+          <span className="text-xs font-normal text-dim">At least 8 characters.</span>
+        </label>
         <button
           type="submit"
-          className="mt-1 rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2"
+          className="btn-shine mt-1 rounded-field bg-accent px-4 py-3 font-bold text-black shadow-[0_10px_30px_-10px_rgba(252,118,5,0.7)] transition-transform active:scale-[0.99]"
         >
           Sign up
         </button>
       </form>
-
-      <p className="text-sm text-muted">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-accent hover:underline">
-          Sign in
-        </Link>
-      </p>
-    </main>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
-      {label}
-      {children}
-    </label>
+    </AuthShell>
   );
 }

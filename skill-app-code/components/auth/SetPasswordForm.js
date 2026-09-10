@@ -51,7 +51,7 @@ export default function SetPasswordForm() {
           minLength={8}
           autoComplete="new-password"
           autoFocus
-          className="rounded-field border border-border bg-surface px-3 py-2 text-fg placeholder:text-dim focus:border-accent"
+          className="auth-input"
         />
         <span className="text-xs font-normal text-dim">At least 8 characters.</span>
       </label>
@@ -65,12 +65,12 @@ export default function SetPasswordForm() {
       <button
         type="submit"
         disabled={status === "saving"}
-        className="rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+        className="btn-shine rounded-field bg-accent px-4 py-3 font-bold text-black shadow-[0_10px_30px_-10px_rgba(252,118,5,0.7)] transition-transform active:scale-[0.99] disabled:opacity-60"
       >
         {status === "saving" ? "Saving..." : "Set password and sign in"}
       </button>
 
-      <Link href="/login" className="text-sm text-muted hover:text-fg">
+      <Link href="/login" className="text-center text-sm text-muted hover:text-fg">
         Back to sign in
       </Link>
     </form>

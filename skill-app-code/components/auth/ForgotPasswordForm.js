@@ -24,7 +24,7 @@ export default function ForgotPasswordForm() {
   if (status === "sent") {
     return (
       <div className="flex flex-col gap-3">
-        <p className="rounded-field border border-border bg-surface px-3 py-2.5 text-sm text-muted">
+        <p className="rounded-field border border-border bg-black/30 px-3 py-2.5 text-sm text-muted">
           If <span className="text-fg">{email}</span> has an account, a link to set a new
           password is on its way. Check your inbox and spam.
         </p>
@@ -46,17 +46,17 @@ export default function ForgotPasswordForm() {
           required
           autoComplete="email"
           autoFocus
-          className="rounded-field border border-border bg-surface px-3 py-2 text-fg placeholder:text-dim focus:border-accent"
+          className="auth-input"
         />
       </label>
       <button
         type="submit"
         disabled={status === "sending"}
-        className="rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+        className="btn-shine rounded-field bg-accent px-4 py-3 font-bold text-black shadow-[0_10px_30px_-10px_rgba(252,118,5,0.7)] transition-transform active:scale-[0.99] disabled:opacity-60"
       >
         {status === "sending" ? "Sending..." : "Send reset link"}
       </button>
-      <Link href="/login" className="text-sm text-muted hover:text-fg">
+      <Link href="/login" className="text-center text-sm text-muted hover:text-fg">
         Back to sign in
       </Link>
     </form>
