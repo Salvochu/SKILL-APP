@@ -14,14 +14,35 @@ const CHALLENGE_DAYS = 14;
 // Days past the 14 before training locks. The dashboard fork shows from
 // day 14; the hard lock is a few days later.
 const GRACE_DAYS = 3;
+// How long a challenge account has to get set up before their 14 days
+// "should" start. Nothing is taken away when it passes: the clock still
+// only starts when they tap "Start my 14 days", so there is nothing to
+// milk. The window just drives the prep-screen copy and the email line.
+const PREP_HOURS = 48;
 
-// For a free-challenge account: how far through (or past) the 14 days
-// they are, and whether logging new workouts is now locked. Members and
-// the coach are never locked.
+// For a free-challenge account: which phase of the 14 days they are in.
+//
+//   state "none"   not a challenge account (members, the coach)
+//   state "prep"   bought, clock not started yet (started_at is null)
+//   state "active" inside the 14 days (+ a few days' grace)
+//   state "lapsed" past the 14 days without converting
+//
+// `started` is false only in "prep". `lapsed` is kept as its own flag
+// for the existing call sites. Members and the coach are never locked.
 export const getChallengeAccess = cache(async () => {
   const membership = await getMembership();
   if (membership !== "challenge") {
-    return { isChallenge: false, lapsed: false, challengeDay: null, challengeDays: CHALLENGE_DAYS };
+    return {
+      isChallenge: false,
+      state: "none",
+      started: true,
+      lapsed: false,
+      challengeDay: null,
+      challengeDays: CHALLENGE_DAYS,
+      prepEndsAt: null,
+      prepExpired: false,
+      startByLabel: null,
+    };
   }
 
   const user = await getSessionUser();
@@ -29,30 +50,61 @@ export const getChallengeAccess = cache(async () => {
 
   const { data: run } = await supabase
     .from("user_mesocycles")
-    .select("start_date, template:mesocycle_templates(kind)")
+    .select("started_at, start_date, created_at, template:mesocycle_templates(kind)")
     .eq("user_id", user.id)
     .eq("status", "active")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  // Count from the challenge run's start date; fall back to the account
-  // age if the run is missing (webhook miss that onboarding never fixed).
-  const startMs =
-    run?.template?.kind === "challenge" && run.start_date
-      ? Date.parse(`${run.start_date}T00:00:00Z`)
-      : user?.created_at
-        ? Date.parse(user.created_at)
-        : Date.now();
+  const isChallengeRun = run?.template?.kind === "challenge";
+
+  // Prep window: the challenge run exists but has not been started.
+  if (isChallengeRun && !run.started_at) {
+    const createdMs = run.created_at ? Date.parse(run.created_at) : Date.now();
+    const prepEndsAt = createdMs + PREP_HOURS * 3600000;
+    const prepExpired = Date.now() >= prepEndsAt;
+    // "Aim to start by Friday" - the last weekday inside the window.
+    const startByLabel = prepExpired
+      ? null
+      : new Date(prepEndsAt).toLocaleDateString("en-GB", { weekday: "long" });
+    return {
+      isChallenge: true,
+      state: "prep",
+      started: false,
+      lapsed: false,
+      challengeDay: 0,
+      challengeDays: CHALLENGE_DAYS,
+      prepEndsAt,
+      prepExpired,
+      startByLabel,
+    };
+  }
+
+  // Started. Count from started_at (or start_date for a run created
+  // before this column existed); fall back to the account age if the
+  // run is missing entirely (a webhook miss onboarding never fixed).
+  const basis = isChallengeRun ? run.started_at || run.start_date : null;
+  const startMs = basis
+    ? Date.parse(`${basis}T00:00:00Z`)
+    : user?.created_at
+      ? Date.parse(user.created_at)
+      : Date.now();
   const todayMs = Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
   const daysSince = Math.max(0, Math.floor((todayMs - startMs) / DAY_MS));
   const challengeDay = daysSince + 1;
+  const lapsed = challengeDay > CHALLENGE_DAYS + GRACE_DAYS;
 
   return {
     isChallenge: true,
+    state: lapsed ? "lapsed" : "active",
+    started: true,
     challengeDay,
     challengeDays: CHALLENGE_DAYS,
-    lapsed: challengeDay > CHALLENGE_DAYS + GRACE_DAYS,
+    lapsed,
+    prepEndsAt: null,
+    prepExpired: false,
+    startByLabel: null,
   };
 });
 

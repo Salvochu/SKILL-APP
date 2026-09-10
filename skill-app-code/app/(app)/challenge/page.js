@@ -5,6 +5,7 @@ import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getChallengeDay, CHALLENGE_DAYS } from "@/lib/challenge/curriculum";
 import { fromKg } from "@/lib/units";
 import ChallengeClimb from "@/components/challenge/ChallengeClimb";
+import ChallengePrep from "@/components/challenge/ChallengePrep";
 import ChallengeStart from "@/components/challenge/ChallengeStart";
 import ChallengeToday from "@/components/challenge/ChallengeToday";
 import ChallengeTimeline from "@/components/challenge/ChallengeTimeline";
@@ -22,6 +23,7 @@ export default async function ChallengePage() {
   if (membership !== "challenge") redirect("/dashboard");
 
   const access = await getChallengeAccess();
+  if (!access.started) return <ChallengePrep startByLabel={access.startByLabel} />;
   if (access.lapsed) return <ChallengeEnded />;
 
   const [checklist, meso, completion, unit] = await Promise.all([

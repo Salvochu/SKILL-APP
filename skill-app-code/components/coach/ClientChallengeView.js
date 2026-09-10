@@ -26,9 +26,11 @@ export default function ClientChallengeView({ clientId, data }) {
 
       {!data.started ? (
         <div className="rounded-card border border-dashed border-border bg-surface p-8 text-center text-sm text-muted">
-          {data.membership === "challenge"
-            ? "Signed up, but hasn't started the 14 days yet."
-            : "This client isn't on the 14-Day Challenge."}
+          {data.membership !== "challenge"
+            ? "This client isn't on the 14-Day Challenge."
+            : data.prep
+              ? "Getting set up. Their 14 days start when they tap start in the app."
+              : "Signed up, but hasn't started the 14 days yet."}
         </div>
       ) : (
         <>

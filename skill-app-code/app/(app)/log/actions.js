@@ -22,9 +22,13 @@ export async function saveWorkout(payload) {
   const user = await getSessionUser();
   if (!user) return { error: "Please sign in again to save this workout." };
 
-  // Backstop for the /log paywall: a form already open when the
-  // challenge lapsed still cannot save.
-  if ((await getChallengeAccess()).lapsed) {
+  // Backstop for the /log gates: a form already open before the
+  // challenge started, or after it lapsed, still cannot save.
+  const challengeAccess = await getChallengeAccess();
+  if (challengeAccess.isChallenge && !challengeAccess.started) {
+    return { error: "Start your 14 days from the Challenge tab first." };
+  }
+  if (challengeAccess.lapsed) {
     return { error: "Your 14-day challenge has ended. Keep training to log new workouts." };
   }
 

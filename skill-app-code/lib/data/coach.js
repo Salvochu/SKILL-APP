@@ -329,15 +329,19 @@ export async function getClientChallenge(clientId) {
 
   const { data: run } = await admin
     .from("user_mesocycles")
-    .select("id, start_date, status")
+    .select("id, start_date, started_at, status")
     .eq("user_id", clientId)
     .eq("template_id", "main-character-14")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
   if (!run) return { name, membership: prof?.membership ?? null, started: false };
+  // Bought but still in the prep window: no clock, no checklist yet.
+  if (!run.started_at) {
+    return { name, membership: prof?.membership ?? null, started: false, prep: true };
+  }
 
-  const startMs = Date.parse(`${run.start_date}T00:00:00Z`);
+  const startMs = Date.parse(`${(run.started_at || run.start_date)}T00:00:00Z`);
   const todayMs = Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
   const challengeDay = Math.max(1, Math.floor((todayMs - startMs) / DAY_MS) + 1);
 

@@ -10,6 +10,7 @@ import { setsForWeek } from "@/lib/mesocycle";
 import { fromKg } from "@/lib/units";
 import WorkoutLogger from "@/components/log/WorkoutLogger";
 import ChallengeEnded from "@/components/challenge/ChallengeEnded";
+import ChallengePrep from "@/components/challenge/ChallengePrep";
 import ChallengeProgramLocked from "@/components/challenge/ChallengeProgramLocked";
 
 // The challenge runs on this split; a challenge account can log its days
@@ -24,6 +25,11 @@ export const instant = false;
 
 export default async function LogPage({ searchParams }) {
   const challengeAccess = await getChallengeAccess();
+  // A challenge account that has not started its 14 days yet sets that
+  // in motion from the Challenge tab, not by logging a stray workout.
+  if (challengeAccess.isChallenge && !challengeAccess.started) {
+    return <ChallengePrep startByLabel={challengeAccess.startByLabel} />;
+  }
   // A lapsed challenge account cannot start new workouts.
   if (challengeAccess.lapsed) {
     return <ChallengeEnded />;

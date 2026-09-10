@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { saveChallengeSetup } from "@/app/(app)/dashboard/actions";
 import { completeOnboarding } from "@/app/(app)/profile/actions";
@@ -17,7 +16,6 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
   const [name, setName] = useState(initialName);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [result, setResult] = useState(null); // { mesoId, variant }
 
   if (dismissed || (!latched && !show)) return null;
 
@@ -32,7 +30,6 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
       setError(res.error);
       return;
     }
-    setResult({ mesoId: res.mesoId, variant: res.variant });
     setStep(2);
   }
 
@@ -163,32 +160,16 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
               You&apos;re set{firstName ? `, ${firstName}` : ""}
             </h2>
             <p className="text-sm text-muted">
-              Day 1 is <span className="font-semibold text-fg">Day A</span>. Keep the weight manageable,
-              watch the form video for each lift, and log every set.
+              Next: watch the welcome video, take your day 1 photos and do your food shop.
+              Your 14 days begin when you tap <span className="font-semibold text-fg">Start my 14 days</span>,
+              so start on a day you can train.
             </p>
-            {result?.mesoId ? (
-              <Link
-                href={`/log?meso=${result.mesoId}&split=main-character-14&day=foundations-a&variant=${encodeURIComponent(result.variant || "Full Gym")}`}
-                onClick={() => setDismissed(true)}
-                className="w-full rounded-field bg-accent px-4 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-2"
-              >
-                Start Day A
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={leave}
-                className="w-full rounded-field bg-accent px-4 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-2"
-              >
-                Go to my challenge
-              </button>
-            )}
             <button
               type="button"
               onClick={leave}
-              className="self-center text-xs font-medium text-dim hover:text-fg"
+              className="w-full rounded-field bg-accent px-4 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-2"
             >
-              I&apos;ll start from my challenge tab
+              Get set up and start
             </button>
           </>
         )}
