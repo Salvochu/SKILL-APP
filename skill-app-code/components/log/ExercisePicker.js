@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import MusclePill from "@/components/MusclePill";
 import VideoModal from "@/components/log/VideoModal";
-import { MUSCLE_ORDER, sortEquipment, muscleKey } from "@/lib/exercises";
+import { MUSCLE_ORDER, sortEquipment, muscleKey, exerciseSearchScore } from "@/lib/exercises";
 
 // Every muscle an exercise touches, primary first; falls back to the
 // parent-group name when a row has no tags.
@@ -41,47 +41,51 @@ export default function ExercisePicker({ exercises, onPick, onClose, title = "Ad
   );
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return exercises
-      .filter((e) => {
-        if (group !== "All" && !tagsFor(e).some((m) => m.parent === group)) return false;
-        if (equipment !== "All" && e.equipment !== equipment) return false;
-        if (q && !e.name.toLowerCase().includes(q)) return false;
-        return true;
-      })
-      .slice(0, 80);
+    const q = query.trim();
+    const scored = [];
+    for (const e of exercises) {
+      if (group !== "All" && !tagsFor(e).some((m) => m.parent === group)) continue;
+      if (equipment !== "All" && e.equipment !== equipment) continue;
+      if (q) {
+        const score = exerciseSearchScore(e.name, q);
+        if (score == null) continue;
+        scored.push({ e, score });
+      } else {
+        scored.push({ e, score: 0 });
+      }
+    }
+    if (q) scored.sort((a, b) => a.score - b.score || a.e.name.localeCompare(b.e.name));
+    return scored.slice(0, 120).map((s) => s.e);
   }, [exercises, query, group, equipment]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={title}>
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative flex max-h-[88vh] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-surface sm:rounded-2xl">
-        <div className="flex flex-col gap-3 border-b border-border p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-fg">{title}</h2>
-            <button type="button" onClick={onClose} aria-label="Close" className="rounded-field p-1.5 text-dim hover:text-fg">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
-            </button>
-          </div>
-          <input
-            type="search"
-            autoFocus
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search exercises"
-            className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
-          />
-          {groups.length > 0 ? (
-            <ChipRow value={group} onChange={setGroup} options={groups} allLabel="All muscles" dots />
-          ) : null}
-          {equipmentList.length > 0 ? (
-            <ChipRow value={equipment} onChange={setEquipment} options={equipmentList} allLabel="All equipment" />
-          ) : null}
+    <div className="fixed inset-0 z-50 flex flex-col bg-surface" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="flex flex-col gap-3 border-b border-border p-4 pt-[calc(0.75rem+env(safe-area-inset-top))]">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-fg">{title}</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="-mr-1.5 rounded-field p-1.5 text-dim hover:text-fg">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
         </div>
-        <ul className="flex flex-col gap-2 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4">
-          {filtered.map((e) => (
+        <input
+          type="search"
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search exercises"
+          className="w-full rounded-field border border-border bg-bg px-3 py-2.5 text-sm text-fg placeholder:text-dim focus:border-accent"
+        />
+        {groups.length > 0 ? (
+          <ChipRow value={group} onChange={setGroup} options={groups} allLabel="All muscles" dots />
+        ) : null}
+        {equipmentList.length > 0 ? (
+          <ChipRow value={equipment} onChange={setEquipment} options={equipmentList} allLabel="All equipment" />
+        ) : null}
+      </div>
+      <ul className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-2 overflow-y-auto p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+        {filtered.map((e) => (
             <li key={e.id} className="relative">
               <button
                 type="button"
@@ -108,11 +112,10 @@ export default function ExercisePicker({ exercises, onPick, onClose, title = "Ad
               ) : null}
             </li>
           ))}
-          {filtered.length === 0 ? (
-            <li className="py-6 text-center text-sm text-muted">No exercises match those filters.</li>
-          ) : null}
-        </ul>
-      </div>
+        {filtered.length === 0 ? (
+          <li className="py-6 text-center text-sm text-muted">No exercises match those filters.</li>
+        ) : null}
+      </ul>
       {previewFor ? <VideoModal exercise={previewFor} onClose={() => setPreviewFor(null)} /> : null}
     </div>
   );

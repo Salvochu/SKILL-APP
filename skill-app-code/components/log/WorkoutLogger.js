@@ -248,6 +248,15 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     [rows],
   );
 
+  const totalSets = useMemo(
+    () =>
+      rows.reduce(
+        (n, r) => n + r.sets.filter((set) => set.completed && !set.warmup).length,
+        0,
+      ),
+    [rows],
+  );
+
   function patchRow(key, patch) {
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   }
@@ -366,7 +375,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       }
       clearDraft();
       setSaving(false);
-      setCompletedSummary({ sessionId: result.sessionId, durationMin, totalVolume });
+      setCompletedSummary({ sessionId: result.sessionId, durationMin, totalVolume, totalSets });
     } catch (err) {
       if (isLikelyNetworkError(err)) {
         // No connection right now, most likely at the gym. Keep the
@@ -668,6 +677,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
             <span className="clock text-sm font-semibold text-fg">{formatElapsed(elapsedSeconds)}</span>
             <span className="text-dim" aria-hidden="true">·</span>
             <span className="tabular text-sm font-semibold text-fg">{Math.round(totalVolume)} {U}</span>
+            <span className="text-dim" aria-hidden="true">·</span>
+            <span className="tabular text-sm font-semibold text-fg">{totalSets} {totalSets === 1 ? "set" : "sets"}</span>
             <IconChevron className="h-3.5 w-3.5 shrink-0 -rotate-90 text-dim" />
           </button>
         </>
@@ -710,6 +721,10 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               <span className="text-xs text-muted">Total volume</span>
               <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} {U}</span>
             </div>
+            <div className="flex items-baseline justify-between">
+              <span className="text-xs text-muted">Sets logged</span>
+              <span className="tabular text-sm font-semibold text-fg">{totalSets}</span>
+            </div>
             <button
               type="button"
               onClick={onSave}
@@ -742,7 +757,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   );
 }
 
-function ShareCard({ summary, timeLabel, effortLabel, unit = "kg", muscles = null }) {
+function ShareCard({ summary, timeLabel, unit = "kg", muscles = null }) {
   const [status, setStatus] = useState("idle"); // idle | preparing | shared | downloaded | copied
 
   const caption = `Just logged ${Math.round(summary.totalVolume)} ${unit} in ${timeLabel} with SKILL. @salvador_skfitness`;
@@ -753,8 +768,8 @@ function ShareCard({ summary, timeLabel, effortLabel, unit = "kg", muscles = nul
     try {
       blob = await buildShareImageBlob({
         volumeLabel: `${Math.round(summary.totalVolume)} ${unit}`,
+        setsLabel: String(summary.totalSets ?? 0),
         timeLabel,
-        effortLabel,
         topMuscles: muscles?.top ?? [],
       });
     } catch {
@@ -1097,8 +1112,9 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
       ) : null}
 
       <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
-        <div className={`grid gap-3 ${showLevel ? "grid-cols-3" : "grid-cols-2"}`}>
+        <div className={`grid gap-3 ${showLevel ? "grid-cols-2" : "grid-cols-3"}`}>
           <Metric label="Volume" value={`${Math.round(summary.totalVolume)} ${unit}`} />
+          <Metric label="Sets" value={summary.totalSets ?? 0} />
           <Metric label="Time" value={timeLabel} />
           {showLevel ? (
             <Metric
@@ -1174,7 +1190,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
         {effort ? <p className="text-center text-xs text-accent">{EFFORT_LABELS[effort]}</p> : null}
       </section>
 
-      <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} muscles={extras?.muscles} />
+      <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} muscles={extras?.muscles} />
 
       <button
         type="button"

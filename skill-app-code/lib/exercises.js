@@ -128,3 +128,91 @@ export function loomEmbedUrl(videoUrl) {
   const match = videoUrl.match(/loom\.com\/(?:share|embed)\/([0-9a-f]{16,})/i);
   return match ? `https://www.loom.com/embed/${match[1]}` : null;
 }
+
+// Typo-tolerant exercise search. Returns a score (lower is better) or
+// null for no match. Handles missing letters, transpositions and small
+// misspellings so "benchpres", "sqaut" and "tricep" all land.
+function normalizeSearch(s) {
+  return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+// Damerau-Levenshtein (optimal string alignment). Names and query words
+// are short, so the full matrix is cheap.
+function editDistance(a, b) {
+  const m = a.length;
+  const n = b.length;
+  if (Math.abs(m - n) > 4) return 99;
+  const d = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) d[i][0] = i;
+  for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return d[m][n];
+}
+
+// Common gym shorthand, expanded on the query side so "db bench", "ohp"
+// and "rdl" resolve to the full exercise names.
+const SEARCH_ABBREV = {
+  db: "dumbbell",
+  bb: "barbell",
+  kb: "kettlebell",
+  bw: "bodyweight",
+  ohp: "overhead press",
+  rdl: "romanian deadlift",
+  sldl: "stiff leg deadlift",
+  bss: "bulgarian split squat",
+};
+
+export function exerciseSearchScore(name, query) {
+  const n = normalizeSearch(name);
+  const q = normalizeSearch(query)
+    .split(" ")
+    .map((w) => SEARCH_ABBREV[w] ?? w)
+    .join(" ");
+  if (!q) return 0;
+  if (n === q) return 0;
+  if (n.startsWith(q)) return 1;
+  if (n.includes(q)) return 2;
+
+  // Whole string with spaces removed: catches concatenations and typos
+  // where the user roughly typed the full name ("legpress", "benchpres",
+  // "deadlfit", "hipthrust").
+  const nj = n.replace(/ /g, "");
+  const qj = q.replace(/ /g, "");
+  if (nj === qj) return 0.5;
+  if (nj.startsWith(qj)) return 1.5;
+  if (nj.includes(qj)) return 2.5;
+  if (qj.length >= 4 && Math.abs(nj.length - qj.length) <= 3) {
+    const tol = qj.length <= 6 ? 1 : qj.length <= 10 ? 2 : 3;
+    const dj = editDistance(nj, qj);
+    if (dj <= tol) return 3 + dj;
+  }
+
+  const nWords = n.split(" ");
+  const qWords = q.split(" ");
+  let total = 0;
+  for (const qw of qWords) {
+    let best = Infinity;
+    for (const nw of nWords) {
+      if (nw === qw || nw.startsWith(qw)) {
+        best = Math.min(best, 0.6);
+      } else if (nw.includes(qw)) {
+        best = Math.min(best, 1.5);
+      } else if (qw.length >= 3) {
+        const tol = qw.length <= 4 ? 1 : qw.length <= 7 ? 2 : 3;
+        const dist = editDistance(nw, qw);
+        if (dist <= tol) best = Math.min(best, 2 + dist);
+      }
+    }
+    if (best === Infinity) return null;
+    total += best;
+  }
+  return 5 + total;
+}
