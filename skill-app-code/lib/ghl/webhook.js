@@ -88,6 +88,14 @@ function deepFindEmail(obj, seen = new Set()) {
   return null;
 }
 
+// A plausible human age, same bounds as the in-app profile form
+// (app/(app)/profile/actions.js). Anything else (missing, "", out of
+// range) comes back null rather than a bad number on the profile.
+function toAge(v) {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 13 && n <= 100 ? Math.round(n) : null;
+}
+
 // GHL payloads vary (native contact webhook vs a hand-built custom body),
 // so try the common shapes, then fall back to the first email-looking
 // string anywhere in the object.
@@ -110,5 +118,7 @@ export function extractContact(payload) {
   const name =
     p.name || p.full_name || p.fullName || [first, last].filter(Boolean).join(" ") || null;
 
-  return { email, name: name || null };
+  const age = toAge(p.age ?? p.customData?.age ?? p.contact?.age ?? p.contact?.customFields?.age);
+
+  return { email, name: name || null, age };
 }

@@ -20,7 +20,7 @@ const STEPS = [
 // once on a new account's first Dashboard visit (OnboardingGate.js).
 // Every question is skippable, individually or all at once: this is
 // meant to make a good profile easy to fill in, not to gate the app.
-export default function OnboardingQuiz({ show = false }) {
+export default function OnboardingQuiz({ show = false, initialName = "", initialAge = "" }) {
   // Latch on the first render where onboarding is needed. Finishing the
   // quiz flips `show` to false server-side, but the flow (including the
   // handoff screen) must stay mounted until the user dismisses it.
@@ -29,13 +29,21 @@ export default function OnboardingQuiz({ show = false }) {
   const [done, setDone] = useState(false);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({
-    fullName: "",
-    age: "",
+    fullName: initialName,
+    age: initialAge,
     country: "",
     fitnessGoal: "",
     experienceLevel: "",
     phone: "",
   });
+  // A name or age already on file (e.g. a challenge graduate, or one GHL
+  // sent over from the opt-in form) does not need asking again - skip
+  // straight past whichever question that is.
+  const skip = new Set([
+    initialName.trim() ? "fullName" : null,
+    String(initialAge).trim() ? "age" : null,
+  ]);
+  const steps = STEPS.filter((s) => !skip.has(s.key));
   const [dial, setDial] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -111,8 +119,8 @@ export default function OnboardingQuiz({ show = false }) {
     );
   }
 
-  const current = STEPS[step];
-  const isLast = step === STEPS.length - 1;
+  const current = steps[step];
+  const isLast = step === steps.length - 1;
 
   function setAnswer(value) {
     setAnswers((a) => ({ ...a, [current.key]: value }));
@@ -173,7 +181,7 @@ export default function OnboardingQuiz({ show = false }) {
       <div className="relative flex max-h-[90vh] w-full max-w-md flex-col gap-5 overflow-y-auto rounded-t-2xl border border-border bg-surface p-6 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex gap-1">
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <span key={s.key} className={`h-1 w-6 rounded-full ${i <= step ? "bg-accent" : "bg-surface-2"}`} />
             ))}
           </div>
@@ -184,7 +192,7 @@ export default function OnboardingQuiz({ show = false }) {
 
         <div className="flex flex-col gap-1">
           <span className="text-xs font-semibold uppercase tracking-wider text-dim">
-            Question {step + 1} of {STEPS.length}
+            Question {step + 1} of {steps.length}
           </span>
           <h2 className="font-display text-xl font-semibold text-fg">{current.question}</h2>
         </div>

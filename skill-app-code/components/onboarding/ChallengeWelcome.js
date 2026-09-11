@@ -68,7 +68,7 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
             <ul className="flex flex-col gap-3">
               <HowItWorks n="1">
                 Three full-body sessions plus one cardio each week, alternating Day A and Day B. That is
-                6 to 8 workouts across your 14 days.
+                8 sessions across your 14 days: 6 lifts and 2 cardio.
               </HowItWorks>
               <HowItWorks n="2">
                 Your Challenge tab has a plan for every one of the 14 days, a short video for each, and

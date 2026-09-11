@@ -29,6 +29,10 @@ export function sessionLabel(kind) {
 
 // kind: "train" | "cardio" | "rest"
 // dayTemplateId: which foundations day to open in the logger (train only)
+// Matches the printed "14-Day Main Character Training Plan" PDF exactly:
+// Day A, Cardio, Rest, Day B, Rest, Day A, Rest / Day B, Cardio, Rest, Day
+// A, Rest, Day B, Photo Day. 6 training days total, 1 cardio a week, a
+// rest (or cardio) day always falls between two lifting days.
 export const CHALLENGE_DAYS = [
   {
     day: 1,
@@ -40,13 +44,20 @@ export const CHALLENGE_DAYS = [
   },
   {
     day: 2,
-    kind: "rest",
-    title: "Rest day",
-    what: "No lifting. Get a 20 to 30 minute walk in and hit your protein target. This is where you recover and grow.",
+    kind: "cardio",
+    title: "Cardio",
+    what: "20 to 30 minutes, easy enough to hold a conversation. Walk, incline treadmill, bike, rower or stairs, your pick.",
     loomId: null,
   },
   {
     day: 3,
+    kind: "rest",
+    title: "Rest day",
+    what: "No lifting. Get your steps in and hit your protein target. This is where you recover and grow.",
+    loomId: null,
+  },
+  {
+    day: 4,
     kind: "train",
     dayTemplateId: "foundations-b",
     title: "Day B",
@@ -54,14 +65,14 @@ export const CHALLENGE_DAYS = [
     loomId: null,
   },
   {
-    day: 4,
-    kind: "cardio",
-    title: "Cardio",
-    what: "25 minutes easy. Incline walk, bike or row at a pace where you can still hold a conversation.",
+    day: 5,
+    kind: "rest",
+    title: "Rest day",
+    what: "Walk, protein, sleep. Take a quick progress photo in the same light as your Day 1 one.",
     loomId: null,
   },
   {
-    day: 5,
+    day: 6,
     kind: "train",
     dayTemplateId: "foundations-a",
     title: "Day A",
@@ -69,71 +80,62 @@ export const CHALLENGE_DAYS = [
     loomId: null,
   },
   {
-    day: 6,
+    day: 7,
     kind: "rest",
     title: "Rest day",
-    what: "Walk, protein, sleep. Take a quick progress photo in the same light as your Day 1 one.",
-    loomId: null,
-  },
-  {
-    day: 7,
-    kind: "train",
-    dayTemplateId: "foundations-b",
-    title: "Day B",
-    what: "Deadlift, Overhead Press, Lat Pulldown, Plank. Halfway. Beat something from Day 3.",
+    what: "Full rest or an easy walk. Week 1 done. Check your meal plan for the week ahead and do your food shop.",
     loomId: null,
   },
   {
     day: 8,
-    kind: "rest",
-    title: "Rest day",
-    what: "Full rest or an easy walk. Check your meal plan for the week ahead and do your food shop.",
+    kind: "train",
+    dayTemplateId: "foundations-b",
+    title: "Day B",
+    what: "Deadlift, Overhead Press, Lat Pulldown, Plank. Week 2. Beat a number from Day 4.",
     loomId: null,
   },
   {
     day: 9,
-    kind: "train",
-    dayTemplateId: "foundations-a",
-    title: "Day A",
-    what: "Back Squat, Bench Press, Barbell Row, Plank. Week 2. The weights should feel more familiar now, push a little.",
+    kind: "cardio",
+    title: "Cardio",
+    what: "20 to 30 minutes, same as Day 2. Keep it conversational.",
     loomId: null,
   },
   {
     day: 10,
-    kind: "cardio",
-    title: "Cardio",
-    what: "25 minutes easy, same as Day 4. Keep it conversational.",
+    kind: "rest",
+    title: "Rest day",
+    what: "Walk and protein. A few days left. Do not let the finish line make you sloppy.",
     loomId: null,
   },
   {
     day: 11,
     kind: "train",
-    dayTemplateId: "foundations-b",
-    title: "Day B",
-    what: "Deadlift, Overhead Press, Lat Pulldown, Plank. Beat a number from Day 7.",
+    dayTemplateId: "foundations-a",
+    title: "Day A",
+    what: "Back Squat, Bench Press, Barbell Row, Plank. Beat a number from Day 6.",
     loomId: null,
   },
   {
     day: 12,
     kind: "rest",
     title: "Rest day",
-    what: "Walk and protein. Two days left. Do not let the finish line make you sloppy.",
+    what: "Walk, protein, sleep. One more session to go.",
     loomId: null,
   },
   {
     day: 13,
     kind: "train",
-    dayTemplateId: "foundations-a",
-    title: "Day A",
-    what: "Back Squat, Bench Press, Barbell Row, Plank. Last full session. Give it everything, still stopping 1 to 2 reps short.",
+    dayTemplateId: "foundations-b",
+    title: "Day B",
+    what: "Deadlift, Overhead Press, Lat Pulldown, Plank. Last session. Give it everything, still stopping 1 to 2 reps short.",
     loomId: null,
   },
   {
     day: 14,
-    kind: "train",
-    dayTemplateId: "foundations-b",
-    title: "Day B, then your photo",
-    what: "Deadlift, Overhead Press, Lat Pulldown, Plank. Then take your Day 14 photo next to your Day 1 one. That is the real result.",
+    kind: "rest",
+    title: "Photo Day",
+    what: "No training today. Take your Day 14 photo next to your Day 1 one. That is the real result.",
     loomId: null,
   },
 ];
@@ -158,7 +160,7 @@ export const SETUP_STEPS = [
   {
     title: "Three sessions, plus one cardio",
     detail:
-      "Alternate Day A and Day B with a rest day between lifts, and add one easy 25-minute cardio each week. If life gets in the way, do two sessions. Never zero.",
+      "Alternate Day A and Day B with a rest day between lifts, and add one easy 20 to 30 minute cardio session each week. If life gets in the way, do two sessions. Never zero.",
   },
   {
     title: "Follow the meal plan",

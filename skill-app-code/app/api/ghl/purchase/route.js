@@ -81,7 +81,7 @@ export async function POST(request) {
     return json({ ok: true, skipped: "not the target product" });
   }
 
-  const { email, name } = extractContact(payload);
+  const { email, name, age } = extractContact(payload);
   if (!email) {
     return json({ error: "no email found in payload" }, 422);
   }
@@ -121,7 +121,7 @@ export async function POST(request) {
   const userId = linkData?.user?.id ?? null;
   if (userId) {
     try {
-      await applyPlan(supabase, userId, plan, name);
+      await applyPlan(supabase, userId, plan, name, age);
     } catch (err) {
       console.error("ghl/purchase applyPlan failed:", err?.message);
     }
@@ -146,22 +146,25 @@ export async function POST(request) {
 
 // Set the membership flag and, for a challenge sign-up, start the 14-day
 // plan. Runs through the admin client (RLS bypassed).
-async function applyPlan(supabase, userId, plan, name) {
+async function applyPlan(supabase, userId, plan, name, age) {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("membership, full_name")
+    .select("membership, full_name, age")
     .eq("user_id", userId)
     .maybeSingle();
 
-  // Carry the name GHL sent over onto the profile if it has none yet, so
-  // the app can greet them without asking again.
+  // Carry the name and age GHL sent over onto the profile if it has none
+  // yet, so the app can greet them and skip re-asking without a second
+  // trip to the questionnaire.
   const cleanName = String(name || "").trim().slice(0, 80);
   const namePatch = cleanName && !profile?.full_name?.trim() ? { full_name: cleanName } : {};
+  const agePatch = age != null && profile?.age == null ? { age } : {};
+  const patch = { ...namePatch, ...agePatch };
 
   if (plan === "member") {
     await supabase
       .from("profiles")
-      .upsert({ user_id: userId, membership: "member", ...namePatch }, { onConflict: "user_id" });
+      .upsert({ user_id: userId, membership: "member", ...patch }, { onConflict: "user_id" });
     return;
   }
 
@@ -172,9 +175,9 @@ async function applyPlan(supabase, userId, plan, name) {
   if (!KEEP.has(profile?.membership)) {
     await supabase
       .from("profiles")
-      .upsert({ user_id: userId, membership: "challenge", ...namePatch }, { onConflict: "user_id" });
-  } else if (Object.keys(namePatch).length) {
-    await supabase.from("profiles").upsert({ user_id: userId, ...namePatch }, { onConflict: "user_id" });
+      .upsert({ user_id: userId, membership: "challenge", ...patch }, { onConflict: "user_id" });
+  } else if (Object.keys(patch).length) {
+    await supabase.from("profiles").upsert({ user_id: userId, ...patch }, { onConflict: "user_id" });
   }
 
   // Start the 14-day plan once per account: never if they have ever run
