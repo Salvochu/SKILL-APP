@@ -5,44 +5,43 @@ import { getServerSupabase } from "@/lib/data/session";
 // recent session that included it. Keyed by exercise id. The Log screen
 // uses this for the "last time" readout and the next-target suggestion.
 //
-// One query over the user's sets (RLS-scoped). Fine at launch volume; if
-// a user's history grows into the thousands of sets, swap this for a
-// "latest set per exercise" view.
+// Bounded to the most recent 60 sessions (walked newest-first, using the
+// user_id/started_at index) rather than scanning every set the user has
+// ever logged. 60 sessions comfortably covers every exercise still in
+// rotation; something last done further back than that shows no "last
+// time" hint, same as a brand-new exercise.
 export async function getRecentPerformance() {
   const supabase = await getServerSupabase();
-  const { data: raw, error } = await supabase
-    .from("workout_sets")
+  const { data: sessions, error } = await supabase
+    .from("workout_sessions")
     .select(
-      "exercise_id, set_number, reps, weight, rir, completed, is_warmup, session:workout_sessions!inner(id, started_at)",
-    );
+      "id, started_at, workout_sets(exercise_id, set_number, reps, weight, rir, completed, is_warmup)",
+    )
+    .order("started_at", { ascending: false })
+    .limit(60);
   if (error) throw new Error(`Failed to load history: ${error.message}`);
 
-  // The "last time" readout is about working sets, so warm-ups are left out.
-  const data = (raw ?? []).filter((r) => !r.is_warmup);
-
-  // Pass 1: find the latest session per exercise.
-  const latest = new Map(); // exerciseId -> { sessionId, startedAt }
-  for (const row of data ?? []) {
-    const s = row.session;
-    if (!s?.started_at) continue;
-    const cur = latest.get(row.exercise_id);
-    if (!cur || s.started_at > cur.startedAt) {
-      latest.set(row.exercise_id, { sessionId: s.id, startedAt: s.started_at });
-    }
-  }
-
-  // Pass 2: collect that session's sets.
+  // Sessions arrive newest-first, so the first session a given exercise
+  // shows up in is its latest one; rows for that exercise from any older
+  // session in the batch are skipped.
+  const chosenSession = new Map(); // exerciseId -> sessionId
   const out = {};
-  for (const row of data ?? []) {
-    const win = latest.get(row.exercise_id);
-    if (!win || row.session?.id !== win.sessionId) continue;
-    (out[row.exercise_id] ||= { date: win.startedAt.slice(0, 10), sets: [] }).sets.push({
-      setNumber: row.set_number,
-      weight: row.weight == null ? null : Number(row.weight),
-      reps: row.reps == null ? null : Number(row.reps),
-      rir: row.rir == null ? null : Number(row.rir),
-      completed: row.completed !== false,
-    });
+  for (const session of sessions ?? []) {
+    for (const row of session.workout_sets ?? []) {
+      // The "last time" readout is about working sets, so warm-ups are left out.
+      if (row.is_warmup) continue;
+      const known = chosenSession.get(row.exercise_id);
+      if (known === undefined) chosenSession.set(row.exercise_id, session.id);
+      else if (known !== session.id) continue;
+
+      (out[row.exercise_id] ||= { date: session.started_at.slice(0, 10), sets: [] }).sets.push({
+        setNumber: row.set_number,
+        weight: row.weight == null ? null : Number(row.weight),
+        reps: row.reps == null ? null : Number(row.reps),
+        rir: row.rir == null ? null : Number(row.rir),
+        completed: row.completed !== false,
+      });
+    }
   }
   for (const entry of Object.values(out)) {
     entry.sets.sort((a, b) => a.setNumber - b.setNumber);

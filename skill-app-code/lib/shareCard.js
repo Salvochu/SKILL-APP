@@ -122,8 +122,8 @@ function drawHandle(ctx, cx, y, glyph) {
 
 export async function buildShareImageBlob({
   volumeLabel,
-  setsLabel,
   timeLabel,
+  effortLabel,
   topMuscles = [],
 }) {
   const canvas = document.createElement("canvas");
@@ -155,10 +155,10 @@ export async function buildShareImageBlob({
 
   const stats = [
     ["Volume", volumeLabel],
-    ["Sets", setsLabel],
     ["Time", timeLabel],
   ];
-  const cols = [0.19, 0.5, 0.81];
+  if (effortLabel) stats.push(["Effort", effortLabel]);
+  const cols = stats.length === 3 ? [0.19, 0.5, 0.81] : [0.28, 0.72];
   stats.forEach(([label, value], i) => {
     drawStat(ctx, WIDTH * cols[i], 1050, label, value);
   });

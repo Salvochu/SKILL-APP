@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import MusclePill from "@/components/MusclePill";
 import VideoModal from "@/components/log/VideoModal";
 import { MUSCLE_ORDER, sortEquipment, muscleKey, exerciseSearchScore } from "@/lib/exercises";
@@ -84,6 +84,36 @@ export default function ExercisePicker({
     else onPick(e);
   }
 
+  // Press and hold a row to open its video preview, same destination as
+  // the play button. A timer starts on press; if it fires before the
+  // press is released, the click that follows is swallowed so it does
+  // not also pick/select the row.
+  const pressTimer = useRef(null);
+  const longPressed = useRef(false);
+  const LONG_PRESS_MS = 450;
+
+  function startLongPress(e) {
+    if (!e.video_url) return;
+    longPressed.current = false;
+    pressTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      setPreviewFor(e);
+    }, LONG_PRESS_MS);
+  }
+  function cancelLongPress() {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  }
+  function handleRowClick(e) {
+    if (longPressed.current) {
+      longPressed.current = false;
+      return;
+    }
+    pickRow(e);
+  }
+
   function confirmMulti() {
     [...selected].map((id) => byId.get(id)).filter(Boolean).forEach((e) => onPick(e));
     onClose();
@@ -125,7 +155,11 @@ export default function ExercisePicker({
             <li key={e.id} className="relative">
               <button
                 type="button"
-                onClick={() => pickRow(e)}
+                onClick={() => handleRowClick(e)}
+                onPointerDown={() => startLongPress(e)}
+                onPointerUp={cancelLongPress}
+                onPointerLeave={cancelLongPress}
+                onPointerCancel={cancelLongPress}
                 aria-pressed={multiple ? isSel : undefined}
                 className={`flex w-full items-center gap-3 rounded-card border py-2.5 pr-3 text-left transition-colors ${
                   e.video_url ? "pl-[52px]" : "pl-3"
