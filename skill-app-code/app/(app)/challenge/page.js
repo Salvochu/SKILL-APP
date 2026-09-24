@@ -77,7 +77,7 @@ export default async function ChallengePage() {
 
       <ChallengeTimeline challengeDay={challengeDay} byDay={checklist.byDay} />
 
-      <ChallengeLearn />
+      <ChallengeLearn variant={variant} />
     </div>
   );
 }

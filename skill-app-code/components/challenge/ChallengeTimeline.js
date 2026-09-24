@@ -55,15 +55,21 @@ export default function ChallengeTimeline({ challengeDay, byDay = {}, readOnly =
                   <IconChevron className="h-4 w-4 shrink-0 text-dim transition-transform group-open:rotate-90" />
                 </summary>
                 <div className="border-t border-border">
-                  <p className="px-4 py-3 text-sm leading-relaxed text-muted">{d.what}</p>
                   {started ? (
-                    <div className="border-t border-border">
-                      <ChallengeChecklist day={d.day} kind={d.kind} items={byDay[d.day] ?? {}} locked={readOnly} />
-                    </div>
+                    <>
+                      <p className="px-4 py-3 text-sm leading-relaxed text-muted">{d.what}</p>
+                      <div className="border-t border-border">
+                        <ChallengeChecklist day={d.day} kind={d.kind} items={byDay[d.day] ?? {}} locked={readOnly} />
+                      </div>
+                    </>
                   ) : (
-                    <p className="border-t border-border px-4 py-3 text-xs text-dim">
-                      Opens on day {d.day}.
-                    </p>
+                    // Future days stay a locked preview: the kind ("Full-body
+                    // session" etc.) is visible in the summary row above so
+                    // the week's shape is still readable, but the specific
+                    // lifts and the callback to an earlier day's numbers
+                    // ("beat a number from Day X") stay hidden until it's
+                    // actually that day.
+                    <p className="px-4 py-3 text-xs text-dim">Opens on day {d.day}.</p>
                   )}
                 </div>
               </details>

@@ -5,14 +5,17 @@ import { useState } from "react";
 // A Loom video. Renders a lightweight poster until tapped, then swaps in
 // the real iframe (so a page with several videos does not load them all
 // up front). `id` is the share-link's last path segment; when it is
-// null the slot shows a "filming" placeholder instead.
-export default function LoomEmbed({ id, title = "Watch", className = "" }) {
+// null the slot shows a "filming" placeholder instead. `orientation`
+// picks the box shape: "vertical" (default, 9:16 - the daily check-ins
+// and the welcome video) or "horizontal" (16:9 - the Learn lessons).
+export default function LoomEmbed({ id, title = "Watch", className = "", orientation = "vertical" }) {
   const [playing, setPlaying] = useState(false);
+  const aspect = orientation === "horizontal" ? "aspect-video" : "aspect-[9/16]";
 
   if (!id) {
     return (
       <div
-        className={`flex aspect-video w-full flex-col items-center justify-center gap-1.5 rounded-field border border-dashed border-border bg-surface text-center ${className}`}
+        className={`flex ${aspect} w-full flex-col items-center justify-center gap-1.5 rounded-field border border-dashed border-border bg-surface text-center ${className}`}
       >
         <IconFilm className="h-6 w-6 text-dim" />
         <span className="text-xs font-medium text-muted">Video coming soon</span>
@@ -23,7 +26,7 @@ export default function LoomEmbed({ id, title = "Watch", className = "" }) {
 
   if (playing) {
     return (
-      <div className={`relative aspect-video w-full overflow-hidden rounded-field border border-border bg-black ${className}`}>
+      <div className={`relative ${aspect} w-full overflow-hidden rounded-field border border-border bg-black ${className}`}>
         <iframe
           src={`https://www.loom.com/embed/${id}?autoplay=1&hide_owner=true&hide_share=true&hideEmbedTopBar=true`}
           title={title}
@@ -39,7 +42,7 @@ export default function LoomEmbed({ id, title = "Watch", className = "" }) {
     <button
       type="button"
       onClick={() => setPlaying(true)}
-      className={`group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-field border border-border bg-gradient-to-b from-surface-2 to-surface transition-colors hover:border-border-strong ${className}`}
+      className={`group relative flex ${aspect} w-full items-center justify-center overflow-hidden rounded-field border border-border bg-gradient-to-b from-surface-2 to-surface transition-colors hover:border-border-strong ${className}`}
       aria-label={`Play video: ${title}`}
     >
       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-black shadow-lg transition-transform group-hover:scale-105">
