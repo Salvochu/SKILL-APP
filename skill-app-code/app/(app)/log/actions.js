@@ -10,6 +10,7 @@ import { getSessionPRs } from "@/lib/data/prs";
 import { getStrengthScoreDelta } from "@/lib/data/strength";
 import { getSessionJourneyDelta } from "@/lib/data/journey";
 import { getMuscleMapForSessions } from "@/lib/data/volume";
+import { setChecklistItem } from "@/app/(app)/challenge/actions";
 
 // Save a logged workout: one workout_sessions row plus its workout_sets.
 // The session is re-authorised here rather than trusting the client.
@@ -141,6 +142,19 @@ export async function saveWorkout(payload) {
   // clear their cache for the next navigation.
   revalidatePath("/dashboard");
   revalidatePath("/progress");
+
+  // "Did today's session" is one of the daily checklist boxes - tick it
+  // for a same-day save (a backdated session does not map cleanly to a
+  // specific challenge day, so it stays manual). Best effort: never let
+  // this block the actual save.
+  if (challengeAccess.isChallenge && challengeAccess.started && date === today) {
+    try {
+      await setChecklistItem(challengeAccess.challengeDay, "session", true);
+    } catch {
+      // ignore - the workout itself already saved fine
+    }
+  }
+
   return { ok: true, sessionId: session.id };
 }
 

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
 /*
   SKILL theme. Dark by default, with an opt-in light mode (class "light" on
   <html>). Shares the SK Fitness visual language: near-black surfaces, warm
@@ -327,8 +331,8 @@ h4 {
   animation: progress-stripes-move 1.1s linear infinite;
 }
 @keyframes progress-stripes-move {
-  from { background-position: 28px 0; }
-  to { background-position: 0 0; }
+  from { background-position: 0 0; }
+  to { background-position: 28px 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .progress-stripes { animation: none; }

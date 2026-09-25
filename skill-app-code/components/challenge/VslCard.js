@@ -14,7 +14,7 @@ export default function VslCard({ lesson, loomId, locked, lockedLabel }) {
     <article className="overflow-hidden rounded-card border border-accent/40 bg-surface">
       <div className="flex flex-col gap-1 p-4">
         <span className="text-xs font-semibold uppercase tracking-wider text-accent">
-          Watch this before day 14
+          Watch this on day 14
         </span>
         <h3 className="font-display text-base font-semibold text-fg">{lesson.title}</h3>
         <p className="text-sm text-muted">{lesson.blurb}</p>

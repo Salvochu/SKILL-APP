@@ -1,6 +1,8 @@
 "use server";
 
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
+import { getChallengeAccess } from "@/lib/data/challenge";
+import { setChecklistItem } from "@/app/(app)/challenge/actions";
 
 const num = (v, lo, hi) => {
   const s = typeof v === "string" ? v.trim() : "";
@@ -53,6 +55,21 @@ export async function logBodyEntry(formData) {
     { onConflict: "user_id,logged_at" },
   );
   if (error) return { error: error.message };
+
+  // Weighing in is one of the daily checklist boxes on the Challenge
+  // tab - tick it automatically for a same-day entry (a backdated one
+  // does not map cleanly to a specific challenge day, so it stays
+  // manual). Best effort: never let this block the actual save.
+  if (weight != null && date === new Date().toISOString().slice(0, 10)) {
+    try {
+      const access = await getChallengeAccess();
+      if (access.isChallenge && access.started) {
+        await setChecklistItem(access.challengeDay, "weight", true);
+      }
+    } catch {
+      // ignore - the body log itself already saved fine
+    }
+  }
 
   return { ok: true };
 }

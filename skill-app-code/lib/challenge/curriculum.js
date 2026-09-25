@@ -12,9 +12,9 @@
 // The five checklist items, same every day. `session` relabels on rest
 // days (see `sessionLabel`). Order here is the order shown.
 export const CHECKLIST_ITEMS = [
+  { key: "weight", label: "Logged my weight (weigh daily)" },
   { key: "session", label: "Did today's session" },
   { key: "meal", label: "Stuck to the meal plan" },
-  { key: "weight", label: "Logged my weight (weigh daily)" },
   { key: "steps", label: "10k steps" },
   { key: "video", label: "Watched today's video" },
 ];
@@ -213,18 +213,18 @@ export const CHALLENGE_LESSONS = [
     kind: "lesson",
   },
   {
-    slug: "eating-out",
-    title: "Eating out without derailing",
-    blurb: "A simple plan for the night out, the work dinner, the one meal you didn't cook yourself.",
-    loomId: "781bebbb033d45f4b358743004487dee",
-    orientation: "horizontal",
-    kind: "lesson",
-  },
-  {
     slug: "supplements",
     title: "Supplements: what actually matters",
     blurb: "The short list worth your money, and the long list that is not.",
     loomId: "89e1f9443f4c477bb0bb156698730126",
+    orientation: "horizontal",
+    kind: "lesson",
+  },
+  {
+    slug: "eating-out",
+    title: "Eating out without derailing",
+    blurb: "A simple plan for the night out, the work dinner, the one meal you didn't cook yourself.",
+    loomId: "781bebbb033d45f4b358743004487dee",
     orientation: "horizontal",
     kind: "lesson",
   },

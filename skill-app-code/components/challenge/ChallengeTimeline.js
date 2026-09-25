@@ -4,12 +4,17 @@ import { isChallengeDayComplete } from "@/lib/data/challenge";
 
 // The whole 14 days as a list. Past and current days open to their
 // checklist so a day can be backfilled; future days show a preview only.
+// The section itself is collapsible (open by default) - the page is long
+// once this and Learn are both expanded, so it's worth tucking away.
 export default function ChallengeTimeline({ challengeDay, byDay = {}, readOnly = false }) {
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-dim">
-        The 14 days
-      </h2>
+    <details open className="group flex flex-col gap-2 [&_summary::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
+          The 14 days
+        </h2>
+        <IconSectionChevron className="h-4 w-4 shrink-0 text-dim transition-transform group-open:rotate-90" />
+      </summary>
       <ul className="flex flex-col gap-2">
         {CHALLENGE_DAYS.map((d) => {
           const started = d.day <= challengeDay;
@@ -58,9 +63,15 @@ export default function ChallengeTimeline({ challengeDay, byDay = {}, readOnly =
                   {started ? (
                     <>
                       <p className="px-4 py-3 text-sm leading-relaxed text-muted">{d.what}</p>
-                      <div className="border-t border-border">
-                        <ChallengeChecklist day={d.day} kind={d.kind} items={byDay[d.day] ?? {}} locked={readOnly} />
-                      </div>
+                      {isToday ? (
+                        <p className="border-t border-border px-4 py-3 text-xs text-dim">
+                          Today&apos;s checklist is in the card above.
+                        </p>
+                      ) : (
+                        <div className="border-t border-border">
+                          <ChallengeChecklist day={d.day} kind={d.kind} items={byDay[d.day] ?? {}} locked={readOnly} />
+                        </div>
+                      )}
                     </>
                   ) : (
                     // Future days stay a locked preview: the kind ("Full-body
@@ -77,7 +88,7 @@ export default function ChallengeTimeline({ challengeDay, byDay = {}, readOnly =
           );
         })}
       </ul>
-    </section>
+    </details>
   );
 }
 
@@ -85,6 +96,14 @@ function kindHint(kind) {
   if (kind === "train") return "Full-body session";
   if (kind === "cardio") return "Easy cardio";
   return "Rest and recover";
+}
+
+function IconSectionChevron(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
 }
 
 function IconChevron(props) {

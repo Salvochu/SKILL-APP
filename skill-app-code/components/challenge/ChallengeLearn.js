@@ -17,10 +17,13 @@ export default function ChallengeLearn({ variant = "Full Gym", challengeDay = 1,
   const lessons = CHALLENGE_LESSONS.filter((l) => l.slug !== "start-here");
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-dim">
-        Learn
-      </h2>
+    <details open className="group flex flex-col gap-3 [&_summary::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
+          Learn
+        </h2>
+        <IconChevron className="h-4 w-4 shrink-0 text-dim transition-transform group-open:rotate-90" />
+      </summary>
       <div className="flex flex-col gap-3">
         {lessons.map((lesson) => {
           const loomId = lesson.loomIdByVariant
@@ -66,6 +69,14 @@ export default function ChallengeLearn({ variant = "Full Gym", challengeDay = 1,
           );
         })}
       </div>
-    </section>
+    </details>
+  );
+}
+
+function IconChevron(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
   );
 }

@@ -12,6 +12,18 @@ export default function ChallengeChecklist({ day, kind, items: initial = {}, loc
   const [, startTransition] = useTransition();
   const [error, setError] = useState(null);
 
+  // Something outside this component can also tick a box now (logging
+  // weight, saving a workout, pressing play on today's video), each
+  // followed by a router.refresh() rather than this component's own
+  // optimistic path - so re-sync when the server sends a new `initial`.
+  // Adjusted during render (not an effect) per React's guidance for
+  // resetting state from a changed prop: https://react.dev/learn/you-might-not-need-an-effect
+  const [prevInitial, setPrevInitial] = useState(initial);
+  if (initial !== prevInitial) {
+    setPrevInitial(initial);
+    setItems(initial);
+  }
+
   function toggle(key) {
     if (locked) return;
     const next = !items[key];

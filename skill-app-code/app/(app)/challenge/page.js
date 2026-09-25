@@ -42,7 +42,7 @@ export default async function ChallengePage() {
   const volumeLabel = `${volDisplay.toLocaleString("en-GB")} ${unit}`;
 
   return (
-    <div className="flex flex-col gap-6 py-2">
+    <div id="top" className="flex flex-col gap-6 py-2">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-fg">Your challenge</h1>
         <p className="text-sm text-muted">14 days. Show up every one of them.</p>
@@ -78,6 +78,10 @@ export default async function ChallengePage() {
       <ChallengeTimeline challengeDay={challengeDay} byDay={checklist.byDay} />
 
       <ChallengeLearn variant={variant} challengeDay={challengeDay} totalDays={total} />
+
+      <a href="#top" className="self-center text-xs font-medium text-dim hover:text-fg">
+        Back to top
+      </a>
     </div>
   );
 }
