@@ -79,9 +79,21 @@ export default async function ChallengePage() {
 
       <ChallengeLearn variant={variant} challengeDay={challengeDay} totalDays={total} />
 
-      <a href="#top" className="self-center text-xs font-medium text-dim hover:text-fg">
+      <a
+        href="#top"
+        className="inline-flex items-center gap-1.5 self-center rounded-full border border-accent/40 bg-accent-soft px-4 py-2 text-xs font-semibold uppercase tracking-wider text-accent transition-colors hover:bg-accent hover:text-black"
+      >
+        <IconUp className="h-3.5 w-3.5" />
         Back to top
       </a>
     </div>
+  );
+}
+
+function IconUp(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 19V5M5 12l7-7 7 7" />
+    </svg>
   );
 }
