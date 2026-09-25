@@ -44,7 +44,7 @@ export default function ProgramLockModal({ onClose, mode = "challenge" }) {
             rel="noreferrer"
             className="btn-shine flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
           >
-            Continue for &pound;14.99/mo
+            Continue for &pound;7.99/mo
           </a>
           <button
             type="button"

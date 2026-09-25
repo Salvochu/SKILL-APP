@@ -41,7 +41,6 @@ export const getChallengeAccess = cache(async () => {
       challengeDays: CHALLENGE_DAYS,
       prepEndsAt: null,
       prepExpired: false,
-      startByLabel: null,
     };
   }
 
@@ -64,10 +63,6 @@ export const getChallengeAccess = cache(async () => {
     const createdMs = run.created_at ? Date.parse(run.created_at) : Date.now();
     const prepEndsAt = createdMs + PREP_HOURS * 3600000;
     const prepExpired = Date.now() >= prepEndsAt;
-    // "Aim to start by Friday" - the last weekday inside the window.
-    const startByLabel = prepExpired
-      ? null
-      : new Date(prepEndsAt).toLocaleDateString("en-GB", { weekday: "long" });
     return {
       isChallenge: true,
       state: "prep",
@@ -77,7 +72,6 @@ export const getChallengeAccess = cache(async () => {
       challengeDays: CHALLENGE_DAYS,
       prepEndsAt,
       prepExpired,
-      startByLabel,
     };
   }
 
@@ -104,7 +98,6 @@ export const getChallengeAccess = cache(async () => {
     lapsed,
     prepEndsAt: null,
     prepExpired: false,
-    startByLabel: null,
   };
 });
 

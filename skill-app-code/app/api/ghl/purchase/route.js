@@ -48,7 +48,7 @@ function productIdsIn(payload) {
 
 // "challenge" -> free 14-day challenge sign-up, "member" -> paid app
 // purchase or subscription, null -> ignore (not one of our products).
-// GHL_EXPECTED_PRODUCT_ID accepts a comma-separated list, so the £14.99
+// GHL_EXPECTED_PRODUCT_ID accepts a comma-separated list, so the £7.99
 // subscription and any older paid product both count.
 function classifyPurchase(payload) {
   const ids = productIdsIn(payload);
@@ -169,7 +169,7 @@ async function applyPlan(supabase, userId, plan, name, age) {
   }
 
   // plan === "challenge": never overwrite an existing member, a lapsed
-  // member (they belong on the £14.99 path, not the free challenge) or
+  // member (they belong on the £7.99 path, not the free challenge) or
   // the coach.
   const KEEP = new Set(["member", "coach", "lapsed"]);
   if (!KEEP.has(profile?.membership)) {

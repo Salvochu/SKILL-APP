@@ -23,7 +23,7 @@ export default async function ChallengePage() {
   if (membership !== "challenge") redirect("/dashboard");
 
   const access = await getChallengeAccess();
-  if (!access.started) return <ChallengePrep startByLabel={access.startByLabel} />;
+  if (!access.started) return <ChallengePrep />;
   if (access.lapsed) return <ChallengeEnded />;
 
   const [checklist, meso, completion, unit] = await Promise.all([

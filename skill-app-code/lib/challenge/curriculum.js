@@ -231,7 +231,7 @@ export const CHALLENGE_LESSONS = [
   {
     slug: "main-character",
     title: "How to get lean like a Main Character",
-    blurb: "The full picture beyond 14 days, and how 1:1 coaching works if you want me in your corner.",
+    blurb: "The full picture beyond 14 days…",
     orientation: "horizontal",
     loomId: "61bff9df0ff4413c99602bc6d78eadde",
     kind: "vsl",

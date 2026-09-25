@@ -18,6 +18,7 @@ export default function LoomEmbed({
   orientation = "vertical",
   locked = false,
   lockedLabel = "Unlocks soon",
+  onPlay,
 }) {
   const [playing, setPlaying] = useState(false);
   const aspect = orientation === "horizontal" ? "aspect-video" : "aspect-[9/16]";
@@ -62,7 +63,10 @@ export default function LoomEmbed({
   return (
     <button
       type="button"
-      onClick={() => setPlaying(true)}
+      onClick={() => {
+        setPlaying(true);
+        onPlay?.();
+      }}
       className={`group relative flex ${aspect} w-full items-center justify-center overflow-hidden rounded-field border border-border bg-gradient-to-b from-surface-2 to-surface transition-colors hover:border-border-strong ${className}`}
       aria-label={`Play video: ${title}`}
     >

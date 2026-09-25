@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveChallengeSetup } from "@/app/(app)/dashboard/actions";
-import { completeOnboarding } from "@/app/(app)/profile/actions";
 
 // First-run flow for a free challenge sign-up. Short: welcome + how it
 // works, one equipment question, then straight to Day 1. Same modal
@@ -36,11 +35,6 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
   function leave() {
     setDismissed(true);
     router.push("/challenge");
-    router.refresh();
-  }
-  async function skip() {
-    setDismissed(true);
-    await completeOnboarding();
     router.refresh();
   }
 
@@ -99,13 +93,6 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
               className="w-full rounded-field bg-accent px-4 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-2"
             >
               Set me up
-            </button>
-            <button
-              type="button"
-              onClick={skip}
-              className="self-center text-xs font-medium text-dim hover:text-fg"
-            >
-              I&apos;ll look around first
             </button>
           </>
         ) : step === 1 ? (

@@ -14,8 +14,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 //   totalDays    14
 //   completeDays number[]  days where the checklist is fully ticked
 //   streak       consecutive complete days
-const VB_W = 300;
-const VB_H = 360;
+// The path's own coordinate space (unchanged - getPointAtLength reads
+// this, unaffected by the <g> transform below). PAD is added around it
+// on every side so the current-day bloom (r=BLOOM_R) always has room to
+// fade out before it would otherwise be clipped by the SVG's own edge -
+// on early days the trail's start sits close to the bottom-left corner,
+// which used to cut the glow off hard instead of letting it fade.
+const PATH_W = 300;
+const PATH_H = 360;
+const PAD = 40;
+const BLOOM_R = 38;
+const VB_W = PATH_W + PAD * 2;
+const VB_H = PATH_H + PAD * 2;
 const PATH_D = "M 40 330 Q 46 278 110 264 T 214 218 T 92 166 T 44 116 T 172 82 T 150 34";
 
 export default function ChallengeClimb({ day = 1, totalDays = 14, completeDays = [], streak = 0 }) {
@@ -109,108 +119,110 @@ export default function ChallengeClimb({ day = 1, totalDays = 14, completeDays =
           </filter>
         </defs>
 
-        {geom ? (
-          <ellipse
-            cx={geom.points[curDay - 1].x}
-            cy={geom.points[curDay - 1].y}
-            rx="90"
-            ry="90"
-            fill="url(#cc-bloom-grad)"
-            className="cc-bloom"
+        <g transform={`translate(${PAD}, ${PAD})`}>
+          {geom ? (
+            <ellipse
+              cx={geom.points[curDay - 1].x}
+              cy={geom.points[curDay - 1].y}
+              rx={BLOOM_R}
+              ry={BLOOM_R}
+              fill="url(#cc-bloom-grad)"
+              className="cc-bloom"
+            />
+          ) : null}
+
+          <path
+            ref={trackRef}
+            d={PATH_D}
+            fill="none"
+            stroke="#2b2016"
+            strokeWidth="5"
+            strokeLinecap="round"
           />
-        ) : null}
 
-        <path
-          ref={trackRef}
-          d={PATH_D}
-          fill="none"
-          stroke="#2b2016"
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
+          {geom ? (
+            <>
+              <path
+                d={PATH_D}
+                fill="none"
+                stroke="url(#cc-trail)"
+                strokeWidth="9"
+                strokeLinecap="round"
+                opacity="0.35"
+                filter="url(#cc-soft)"
+                className="cc-trail-draw"
+                style={{
+                  strokeDasharray: geom.length,
+                  strokeDashoffset: geom.length - geom.upto,
+                  ["--cc-len"]: geom.length,
+                  animationDelay: "260ms",
+                }}
+              />
+              <path
+                d={PATH_D}
+                fill="none"
+                stroke="url(#cc-trail)"
+                strokeWidth="5"
+                strokeLinecap="round"
+                className="cc-trail-draw"
+                style={{
+                  strokeDasharray: geom.length,
+                  strokeDashoffset: geom.length - geom.upto,
+                  ["--cc-len"]: geom.length,
+                  animationDelay: "200ms",
+                }}
+              />
 
-        {geom ? (
-          <>
-            <path
-              d={PATH_D}
-              fill="none"
-              stroke="url(#cc-trail)"
-              strokeWidth="9"
-              strokeLinecap="round"
-              opacity="0.35"
-              filter="url(#cc-soft)"
-              className="cc-trail-draw"
-              style={{
-                strokeDasharray: geom.length,
-                strokeDashoffset: geom.length - geom.upto,
-                ["--cc-len"]: geom.length,
-                animationDelay: "260ms",
-              }}
-            />
-            <path
-              d={PATH_D}
-              fill="none"
-              stroke="url(#cc-trail)"
-              strokeWidth="5"
-              strokeLinecap="round"
-              className="cc-trail-draw"
-              style={{
-                strokeDasharray: geom.length,
-                strokeDashoffset: geom.length - geom.upto,
-                ["--cc-len"]: geom.length,
-                animationDelay: "200ms",
-              }}
-            />
+              {geom.points.map((p, i) => {
+                const n = i + 1;
+                const done = doneSet.has(n);
+                const current = n === curDay;
+                const missed = n < curDay && !done;
+                const finish = n === totalDays;
+                return (
+                  <g
+                    key={n}
+                    className="cc-node"
+                    style={{ animationDelay: `${180 + i * 70}ms`, transformOrigin: `${p.x}px ${p.y}px` }}
+                  >
+                    {current ? (
+                      <>
+                        <circle cx={p.x} cy={p.y} r="9" fill="none" stroke="#ffb454" strokeWidth="2" className="cc-halo" style={{ transformOrigin: `${p.x}px ${p.y}px` }} />
+                        <circle cx={p.x} cy={p.y} r="9" fill="none" stroke="#ffb454" strokeWidth="2" className="cc-halo cc-halo-2" style={{ transformOrigin: `${p.x}px ${p.y}px` }} />
+                        <circle cx={p.x} cy={p.y} r="7.5" fill="url(#cc-node)" filter="url(#cc-soft)" />
+                        <Pill x={p.x} y={p.y} w={PATH_W} label={`DAY ${curDay}`} />
+                      </>
+                    ) : done ? (
+                      <>
+                        <circle cx={p.x} cy={p.y} r="7" fill="url(#cc-node)" filter="url(#cc-soft)" />
+                        <path
+                          d={`M ${p.x - 3.2} ${p.y + 0.2} l 2.3 2.4 l 4.4 -4.8`}
+                          fill="none"
+                          stroke="#1a1206"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </>
+                    ) : missed ? (
+                      <circle cx={p.x} cy={p.y} r="5.5" fill="#140f0a" stroke="#4a382a" strokeWidth="2" strokeDasharray="1.5 3" />
+                    ) : finish ? (
+                      <g>
+                        <line x1={p.x} y1={p.y + 5} x2={p.x} y2={p.y - 17} stroke="#6b5540" strokeWidth="1.6" strokeLinecap="round" />
+                        <path d={`M ${p.x} ${p.y - 17} l 13 4 l -13 5 z`} fill="#4a382a" />
+                        <circle cx={p.x} cy={p.y} r="4" fill="#140f0a" stroke="#4a382a" strokeWidth="1.5" />
+                      </g>
+                    ) : (
+                      <circle cx={p.x} cy={p.y} r="4" fill="#100c08" stroke="#3a2c1e" strokeWidth="1.5" />
+                    )}
+                  </g>
+                );
+              })}
 
-            {geom.points.map((p, i) => {
-              const n = i + 1;
-              const done = doneSet.has(n);
-              const current = n === curDay;
-              const missed = n < curDay && !done;
-              const finish = n === totalDays;
-              return (
-                <g
-                  key={n}
-                  className="cc-node"
-                  style={{ animationDelay: `${180 + i * 70}ms`, transformOrigin: `${p.x}px ${p.y}px` }}
-                >
-                  {current ? (
-                    <>
-                      <circle cx={p.x} cy={p.y} r="9" fill="none" stroke="#ffb454" strokeWidth="2" className="cc-halo" style={{ transformOrigin: `${p.x}px ${p.y}px` }} />
-                      <circle cx={p.x} cy={p.y} r="9" fill="none" stroke="#ffb454" strokeWidth="2" className="cc-halo cc-halo-2" style={{ transformOrigin: `${p.x}px ${p.y}px` }} />
-                      <circle cx={p.x} cy={p.y} r="7.5" fill="url(#cc-node)" filter="url(#cc-soft)" />
-                      <Pill x={p.x} y={p.y} w={VB_W} label={`DAY ${curDay}`} />
-                    </>
-                  ) : done ? (
-                    <>
-                      <circle cx={p.x} cy={p.y} r="7" fill="url(#cc-node)" filter="url(#cc-soft)" />
-                      <path
-                        d={`M ${p.x - 3.2} ${p.y + 0.2} l 2.3 2.4 l 4.4 -4.8`}
-                        fill="none"
-                        stroke="#1a1206"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </>
-                  ) : missed ? (
-                    <circle cx={p.x} cy={p.y} r="5.5" fill="#140f0a" stroke="#4a382a" strokeWidth="2" strokeDasharray="1.5 3" />
-                  ) : finish ? (
-                    <g>
-                      <line x1={p.x} y1={p.y + 5} x2={p.x} y2={p.y - 17} stroke="#6b5540" strokeWidth="1.6" strokeLinecap="round" />
-                      <path d={`M ${p.x} ${p.y - 17} l 13 4 l -13 5 z`} fill="#4a382a" />
-                      <circle cx={p.x} cy={p.y} r="4" fill="#140f0a" stroke="#4a382a" strokeWidth="1.5" />
-                    </g>
-                  ) : (
-                    <circle cx={p.x} cy={p.y} r="4" fill="#100c08" stroke="#3a2c1e" strokeWidth="1.5" />
-                  )}
-                </g>
-              );
-            })}
-
-            <Spark samples={geom.samples} />
-          </>
-        ) : null}
+              <Spark samples={geom.samples} />
+            </>
+          ) : null}
+        </g>
       </svg>
     </div>
   );

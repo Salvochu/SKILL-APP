@@ -31,6 +31,7 @@ export default function ChallengeChecklist({ day, kind, items: initial = {}, loc
 
   const doneCount = CHECKLIST_ITEMS.filter((i) => items[i.key]).length;
   const allDone = doneCount === CHECKLIST_ITEMS.length;
+  const pct = Math.round((doneCount / CHECKLIST_ITEMS.length) * 100);
 
   return (
     <div className="flex flex-col">
@@ -44,6 +45,14 @@ export default function ChallengeChecklist({ day, kind, items: initial = {}, loc
           {allDone ? "Day complete" : `${doneCount} / ${CHECKLIST_ITEMS.length}`}
         </span>
       </div>
+      <div className="px-4 pb-3">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
+          <div
+            className="progress-stripes h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
       <ul className="flex flex-col">
         {CHECKLIST_ITEMS.map((item) => {
           const on = Boolean(items[item.key]);
@@ -55,7 +64,9 @@ export default function ChallengeChecklist({ day, kind, items: initial = {}, loc
                 onClick={() => toggle(item.key)}
                 disabled={locked}
                 aria-pressed={on}
-                className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-sm transition-colors disabled:cursor-default enabled:hover:bg-surface-2"
+                className={`flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-sm transition-colors disabled:cursor-default enabled:hover:bg-surface-2 ${
+                  on ? "bg-accent-soft" : ""
+                }`}
               >
                 <span
                   className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] border transition-colors ${

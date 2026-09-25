@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import TapLink from "@/components/TapLink";
 import ExportRow from "@/components/menu/ExportRow";
 import { getIsCoach } from "@/lib/data/coach";
+import { getMembership } from "@/lib/data/profile";
+import { getChallengeAccess } from "@/lib/data/challenge";
 
 export const metadata = { title: "Menu" };
 
@@ -66,9 +68,16 @@ async function CoachEntry() {
   );
 }
 
-// Everyone who is not the coach gets the 1:1 upsell here.
+// Everyone who is not the coach gets the 1:1 upsell here - except an
+// active challenge account before Day 14, same threshold as the VSL
+// (components/challenge/VslCard.js): no early sales pitch before
+// they've done the free 14 days.
 async function WorkWithMeEntry() {
   if (await getIsCoach()) return null;
+  if ((await getMembership()) === "challenge") {
+    const access = await getChallengeAccess();
+    if (!access.challengeDay || access.challengeDay < access.challengeDays) return null;
+  }
   return (
     <div className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-accent/40">
       <TapLink href="/work-with-me" className="block bg-accent-soft transition-colors hover:bg-accent-soft/70">

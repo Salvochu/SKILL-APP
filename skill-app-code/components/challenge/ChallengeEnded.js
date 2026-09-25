@@ -47,7 +47,7 @@ export default async function ChallengeEnded() {
           rel="noopener noreferrer"
           className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-2"
         >
-          Keep training for &pound;14.99/mo
+          Keep training for &pound;7.99/mo
         </a>
         <Link
           href="/work-with-me"

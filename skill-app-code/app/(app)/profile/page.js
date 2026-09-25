@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getProfile } from "@/lib/data/profile";
+import { getProfile, getMembership } from "@/lib/data/profile";
+import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import ProfileForm from "@/components/profile/ProfileForm";
 import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
+import ChallengeEquipmentCard from "@/components/profile/ChallengeEquipmentCard";
 import SignOutCard from "@/components/profile/SignOutCard";
 import DangerZone from "@/components/profile/DangerZone";
 
@@ -23,6 +25,10 @@ export default function ProfilePage() {
         <ProfileSection />
       </Suspense>
 
+      <Suspense fallback={null}>
+        <ChallengeEquipmentSection />
+      </Suspense>
+
       <ChangePasswordForm />
       <SignOutCard />
       <DangerZone />
@@ -34,4 +40,12 @@ async function ProfileSection() {
   const profile = await getProfile();
   if (!profile) redirect("/login");
   return <ProfileForm initial={profile} />;
+}
+
+async function ChallengeEquipmentSection() {
+  const membership = await getMembership();
+  if (membership !== "challenge") return null;
+  const meso = await getActiveMesocycle();
+  const variant = meso?.variant && meso.variant !== "Standard" ? meso.variant : "Full Gym";
+  return <ChallengeEquipmentCard variant={variant} />;
 }

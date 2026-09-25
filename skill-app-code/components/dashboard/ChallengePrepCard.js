@@ -3,7 +3,7 @@ import Link from "next/link";
 // Dashboard stand-in for the active-program panel while a challenge
 // account is still in the prep window. The real "Start my 14 days"
 // button lives on the Challenge tab; this just points them there.
-export default function ChallengePrepCard({ startByLabel = null }) {
+export default function ChallengePrepCard() {
   return (
     <div className="challenge-start relative flex flex-col gap-4 overflow-hidden rounded-card border border-accent/30 p-5">
       <div
@@ -20,8 +20,7 @@ export default function ChallengePrepCard({ startByLabel = null }) {
         </span>
         <span className="text-sm text-muted">
           Watch the welcome video, take your day 1 photos and do your food shop.
-          Then start when you can train.
-          {startByLabel ? ` Aim to begin by ${startByLabel}.` : ""}
+          Then start when you can train. Aim to begin within 48 hours of signing up.
         </span>
       </div>
       <Link

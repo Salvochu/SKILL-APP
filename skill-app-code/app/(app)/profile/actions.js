@@ -118,6 +118,39 @@ export async function setAdvancedTracking(enabled) {
   return { ok: true };
 }
 
+// Lets a challenge account change which equipment version of the
+// program they get after onboarding (ChallengeWelcome only asks once,
+// but gym access can change mid-challenge).
+export async function updateChallengeVariant(equipment) {
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
+  if (!user) return { error: "Please sign in again." };
+
+  const variant = equipment === "Dumbbells" ? "Dumbbells" : "Full Gym";
+
+  const { data: run } = await supabase
+    .from("user_mesocycles")
+    .select("id, template:mesocycle_templates(kind)")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!run || run.template?.kind !== "challenge") {
+    return { error: "No active challenge to update." };
+  }
+
+  const { error } = await supabase
+    .from("user_mesocycles")
+    .update({ variant })
+    .eq("id", run.id)
+    .eq("user_id", user.id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  return { ok: true, variant };
+}
+
 // Permanently deletes the signed-in user's account: their login and,
 // via "on delete cascade" on every table's user_id, all of their logged
 // workouts and their profile row. Irreversible, the confirm step lives

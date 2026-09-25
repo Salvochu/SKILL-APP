@@ -28,7 +28,7 @@ export default async function LogPage({ searchParams }) {
   // A challenge account that has not started its 14 days yet sets that
   // in motion from the Challenge tab, not by logging a stray workout.
   if (challengeAccess.isChallenge && !challengeAccess.started) {
-    return <ChallengePrep startByLabel={challengeAccess.startByLabel} />;
+    return <ChallengePrep />;
   }
   // A lapsed challenge account cannot start new workouts.
   if (challengeAccess.lapsed) {

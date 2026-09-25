@@ -16,7 +16,7 @@ export default async function MesocycleSection() {
   // Prep window: the challenge run exists but the clock is not running.
   // Show the "get set up and start" nudge instead of the program panel.
   if (access.isChallenge && !access.started) {
-    return <ChallengePrepCard startByLabel={access.startByLabel} />;
+    return <ChallengePrepCard />;
   }
 
   const summary = active?.isComplete ? await getMesocycleSummary(active.id) : null;

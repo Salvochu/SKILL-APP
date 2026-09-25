@@ -7,7 +7,7 @@ import { getLesson } from "@/lib/challenge/curriculum";
 // account is still getting set up. The 14-day clock has not started: it
 // begins only when they tap "Start my 14 days", so someone who buys at
 // night or cannot train today loses no days.
-export default function ChallengePrep({ startByLabel = null }) {
+export default function ChallengePrep() {
   const welcome = getLesson("start-here");
 
   return (
@@ -19,10 +19,7 @@ export default function ChallengePrep({ startByLabel = null }) {
         <h1 className="text-2xl font-bold text-fg">Get set up, then start</h1>
         <p className="text-sm text-muted">
           Your 14 days begin the moment you tap start, so start on a day you can
-          actually train.{" "}
-          {startByLabel
-            ? `Aim to begin by ${startByLabel}.`
-            : "Whenever you are ready this week is fine."}
+          actually train. Aim to begin within 48 hours of signing up.
         </p>
       </header>
 
