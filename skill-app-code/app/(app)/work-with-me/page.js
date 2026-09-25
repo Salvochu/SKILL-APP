@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BOOKING_URL } from "@/lib/links";
+import { BOOKING_URL, COACHING_PAYMENT_URL } from "@/lib/links";
 
 export const metadata = { title: "Work with Salvador" };
 
@@ -71,6 +71,14 @@ export default function WorkWithMePage() {
           className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-2"
         >
           Book your free call
+        </a>
+        <a
+          href={COACHING_PAYMENT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-center text-sm font-medium text-muted underline-offset-2 hover:text-fg hover:underline"
+        >
+          Already sure? Get started at &pound;350/mo
         </a>
       </section>
     </div>

@@ -8,9 +8,30 @@ import { useState } from "react";
 // null the slot shows a "filming" placeholder instead. `orientation`
 // picks the box shape: "vertical" (default, 9:16 - the daily check-ins
 // and the welcome video) or "horizontal" (16:9 - the Learn lessons).
-export default function LoomEmbed({ id, title = "Watch", className = "", orientation = "vertical" }) {
+// `locked`, with `lockedLabel`, shows a lock placeholder instead of the
+// video regardless of `id` - used for the VSL, which only unlocks on
+// Day 14 (see ChallengeLearn.js).
+export default function LoomEmbed({
+  id,
+  title = "Watch",
+  className = "",
+  orientation = "vertical",
+  locked = false,
+  lockedLabel = "Unlocks soon",
+}) {
   const [playing, setPlaying] = useState(false);
   const aspect = orientation === "horizontal" ? "aspect-video" : "aspect-[9/16]";
+
+  if (locked) {
+    return (
+      <div
+        className={`flex ${aspect} w-full flex-col items-center justify-center gap-1.5 rounded-field border border-dashed border-border bg-surface text-center ${className}`}
+      >
+        <IconLock className="h-6 w-6 text-dim" />
+        <span className="text-xs font-medium text-muted">{lockedLabel}</span>
+      </div>
+    );
+  }
 
   if (!id) {
     return (
@@ -55,6 +76,14 @@ export default function LoomEmbed({ id, title = "Watch", className = "", orienta
   );
 }
 
+function IconLock(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="4" y="11" width="16" height="9" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  );
+}
 function IconPlay(props) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
