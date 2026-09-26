@@ -3,18 +3,25 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveChallengeSetup } from "@/app/(app)/dashboard/actions";
+import { subscribeToPush } from "@/lib/pushClient";
 
 // First-run flow for a free challenge sign-up. Short: welcome + how it
-// works, one equipment question, then straight to Day 1. Same modal
-// shape as OnboardingQuiz.
+// works, one equipment question, a reminders prompt, then straight to
+// Day 1. Same modal shape as OnboardingQuiz. The reminders step matters
+// more here than anywhere else in the app: the streak-nudge cron
+// (app/api/push/reminders/route.js) can only reach someone who has
+// actually subscribed, and a 14-day challenge has no time to catch that
+// later in Settings.
 export default function ChallengeWelcome({ show = false, initialName = "" }) {
   const router = useRouter();
   const [latched] = useState(show);
   const [dismissed, setDismissed] = useState(false);
-  const [step, setStep] = useState(0); // 0 welcome, 1 equipment, 2 done
+  const [step, setStep] = useState(0); // 0 welcome, 1 equipment, 2 reminders, 3 done
   const [name, setName] = useState(initialName);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [notifBusy, setNotifBusy] = useState(false);
+  const [notifError, setNotifError] = useState(null);
 
   if (dismissed || (!latched && !show)) return null;
 
@@ -30,6 +37,24 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
       return;
     }
     setStep(2);
+  }
+
+  async function enableReminders() {
+    setNotifBusy(true);
+    setNotifError(null);
+    const res = await subscribeToPush();
+    setNotifBusy(false);
+    if (!res.ok) {
+      setNotifError(
+        res.error === "unsupported"
+          ? "Notifications aren't supported on this browser."
+          : res.error === "denied"
+            ? "Notifications are blocked. You can turn them on later in Settings."
+            : "Could not turn on notifications. You can try again later in Settings.",
+      );
+      return;
+    }
+    setStep(3);
   }
 
   function leave() {
@@ -134,6 +159,35 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
               className="self-center text-xs font-medium text-dim hover:text-fg"
             >
               Back
+            </button>
+          </>
+        ) : step === 2 ? (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wider text-dim">One more thing</span>
+              <h2 className="font-display text-xl font-semibold text-fg">Get reminders</h2>
+              <p className="text-sm text-muted">
+                A nudge if your streak is about to break, so 14 days do not slip by without
+                you noticing. Off anytime in Settings.
+              </p>
+            </div>
+
+            {notifError ? <p className="text-sm text-danger">{notifError}</p> : null}
+
+            <button
+              type="button"
+              onClick={enableReminders}
+              disabled={notifBusy}
+              className="w-full rounded-field bg-accent px-4 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+            >
+              {notifBusy ? "..." : "Turn on reminders"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              className="self-center text-xs font-medium text-dim hover:text-fg"
+            >
+              Not now
             </button>
           </>
         ) : (

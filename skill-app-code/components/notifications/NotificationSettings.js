@@ -2,16 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { saveNotificationPrefs } from "@/app/(app)/settings/actions";
+import { pushSupported, getPushSubscription, subscribeToPush, unsubscribeFromPush } from "@/lib/pushClient";
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
-}
 
 // Keep the client-read prefs in localStorage so the workout logger,
 // RestTimer and the unfinished-workout prompt can check them without a
@@ -37,22 +30,12 @@ export default function NotificationSettings({ initialPrefs }) {
   useEffect(() => {
     mirror(initialPrefs);
     async function check() {
-      if (
-        typeof window === "undefined" ||
-        !("serviceWorker" in navigator) ||
-        !("PushManager" in window) ||
-        !VAPID_PUBLIC_KEY
-      ) {
+      if (!pushSupported()) {
         setPush("unsupported");
         return;
       }
-      try {
-        const reg = await navigator.serviceWorker.ready;
-        const sub = await reg.pushManager.getSubscription();
-        setPush(sub ? "on" : "off");
-      } catch {
-        setPush("unsupported");
-      }
+      const sub = await getPushSubscription();
+      setPush(sub ? "on" : "off");
     }
     check();
   }, [initialPrefs]);
@@ -68,45 +51,24 @@ export default function NotificationSettings({ initialPrefs }) {
   async function enablePush() {
     setPush("busy");
     setError(null);
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setError("Notifications are blocked. Allow them in your browser settings, then try again.");
-        setPush("off");
-        return;
-      }
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-      const res = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscription: sub.toJSON() }),
-      });
-      if (!res.ok) throw new Error("save failed");
-      setPush("on");
-    } catch {
-      setError("Could not turn on notifications. Try again.");
+    const res = await subscribeToPush();
+    if (!res.ok) {
+      setError(
+        res.error === "denied"
+          ? "Notifications are blocked. Allow them in your browser settings, then try again."
+          : "Could not turn on notifications. Try again.",
+      );
       setPush("off");
+      return;
     }
+    setPush("on");
   }
 
   async function disablePush() {
     setPush("busy");
     setError(null);
     try {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) {
-        await fetch("/api/push/subscribe", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: sub.endpoint }),
-        });
-        await sub.unsubscribe();
-      }
+      await unsubscribeFromPush();
       setPush("off");
     } catch {
       setError("Could not turn off notifications.");
