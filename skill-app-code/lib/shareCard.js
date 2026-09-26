@@ -81,7 +81,7 @@ function drawMuscleBars(ctx, cx, top, rows, totalSets) {
     ctx.fill();
 
     ctx.font = `700 24px ${SYS_FONT}`;
-    ctx.fillStyle = COLORS.fg;
+    ctx.fillStyle = "#000000";
     ctx.textAlign = "left";
     ctx.fillText(label, x0 + 20, y + 23);
   });
@@ -117,12 +117,12 @@ function drawTrainedWith(ctx, cx, y, logo) {
 // Small "@salvador_skfitness" with the Instagram glyph, centred at (cx, y).
 function drawHandle(ctx, cx, y, glyph) {
   const handle = "@salvador_skfitness";
-  ctx.font = `600 28px ${SYS_FONT}`;
+  ctx.font = `600 22px ${SYS_FONT}`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   const tW = ctx.measureText(handle).width;
-  const gW = glyph ? 32 : 0;
-  const gap = glyph ? 13 : 0;
+  const gW = glyph ? 26 : 0;
+  const gap = glyph ? 11 : 0;
   const x = cx - (tW + gap + gW) / 2;
   if (glyph) ctx.drawImage(glyph, x, y - gW / 2, gW, gW);
   ctx.fillStyle = COLORS.muted;

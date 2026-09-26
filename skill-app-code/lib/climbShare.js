@@ -114,11 +114,13 @@ export async function buildClimbShareBlob({
   ctx.fillRect(0, 0, W, H);
 
   // Sized so the trail's lowest point clears the handle at the bottom
-  // (verified live: previously the two nearly touched) and its topmost
-  // point clears the streak pill above it.
-  const scale = 2.365;
+  // and its topmost point clears the streak pill above it - GLOW_R is
+  // kept under that top gap (see below) so the glow fades to nothing on
+  // its own before it would reach the pill, rather than being clipped
+  // (a hard clip reads as its own visible cut, just relocated).
+  const scale = 2.074;
   const offsetX = W / 2 - 115 * scale;
-  const offsetY = 870;
+  const offsetY = 965.5;
   const T = (x, y) => ({ x: offsetX + x * scale, y: offsetY + y * scale });
   const trail = TRAIL.map(([x, y]) => T(x, y));
   const nodes = NODES.map((p) => T(p.x, p.y));
@@ -128,19 +130,12 @@ export async function buildClimbShareBlob({
   const curFrac = curIdx / (totalDays - 1);
   const curTrailI = Math.round(curFrac * (trail.length - 1));
 
-  // Clipped to the trail's own area so it never bleeds up into the
-  // streak pill above it, regardless of which day (and therefore how
-  // close to the top) is current.
-  const glow = ctx.createRadialGradient(cur.x, cur.y, 0, cur.x, cur.y, 260);
-  glow.addColorStop(0, "rgba(252,118,5,0.32)");
+  const GLOW_R = 150;
+  const glow = ctx.createRadialGradient(cur.x, cur.y, 0, cur.x, cur.y, GLOW_R);
+  glow.addColorStop(0, "rgba(252,118,5,0.36)");
   glow.addColorStop(1, "rgba(252,118,5,0)");
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(0, 900, W, H - 900);
-  ctx.clip();
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
-  ctx.restore();
 
   drawTrainedWith(ctx, W / 2, 300, logo);
 

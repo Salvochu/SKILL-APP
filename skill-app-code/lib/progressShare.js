@@ -82,12 +82,12 @@ function drawTrainedWith(ctx, cx, y, logo) {
 
 function drawHandle(ctx, cx, y, glyph) {
   const handle = "@salvador_skfitness";
-  ctx.font = `600 28px ${SYS_FONT}`;
+  ctx.font = `600 22px ${SYS_FONT}`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   const tW = ctx.measureText(handle).width;
-  const gW = glyph ? 32 : 0;
-  const gap = glyph ? 13 : 0;
+  const gW = glyph ? 26 : 0;
+  const gap = glyph ? 11 : 0;
   const x = cx - (tW + gap + gW) / 2;
   if (glyph) ctx.drawImage(glyph, x, y - gW / 2, gW, gW);
   ctx.fillStyle = COLORS.muted;
@@ -202,31 +202,31 @@ export async function buildProgressShareBlob({
       const hue = MUSCLE_HEX[String(m.parent ?? m.name).toLowerCase()] || COLORS.muted;
 
       ctx.fillStyle = COLORS.track;
-      roundRect(ctx, rowX, y - 40, rowW, 96, 22);
+      roundRect(ctx, rowX, y - 30, rowW, 72, 16);
       ctx.fill();
 
       // Keep the fill clear of the right-hand set count so it stays legible.
-      const fillW = Math.max(64, Math.min(rowW - 260, (m.sets / maxSets) * (rowW - 260)));
+      const fillW = Math.max(52, Math.min(rowW - 210, (m.sets / maxSets) * (rowW - 210)));
       ctx.fillStyle = hexA(hue, 0.26);
-      roundRect(ctx, rowX, y - 40, fillW, 96, 22);
+      roundRect(ctx, rowX, y - 30, fillW, 72, 16);
       ctx.fill();
 
       ctx.fillStyle = hue;
       ctx.beginPath();
-      ctx.arc(rowX + 42, y + 8, 11, 0, Math.PI * 2);
+      ctx.arc(rowX + 34, y + 6, 9, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.textAlign = "left";
       ctx.fillStyle = COLORS.fg;
-      ctx.font = `600 38px ${SYS_FONT}`;
-      ctx.fillText(clip(ctx, m.name, 420), rowX + 72, y + 18);
+      ctx.font = `600 32px ${SYS_FONT}`;
+      ctx.fillText(clip(ctx, m.name, 420), rowX + 60, y + 14);
 
       ctx.textAlign = "right";
       ctx.fillStyle = COLORS.fg;
-      ctx.font = `700 38px ${SYS_FONT}`;
-      ctx.fillText(`${m.sets} sets`, rowX + rowW - 32, y + 18);
+      ctx.font = `700 32px ${SYS_FONT}`;
+      ctx.fillText(`${m.sets} sets`, rowX + rowW - 26, y + 14);
 
-      y += 132;
+      y += 100;
     }
   }
 
