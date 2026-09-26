@@ -13,6 +13,7 @@ const COLORS = {
   accent: "#fc7605",
   fg: "#ffffff",
   muted: "#9a938c",
+  faint: "#6f6961",
 };
 
 async function loadBlobImage(url) {
@@ -22,10 +23,10 @@ async function loadBlobImage(url) {
 }
 
 function loadImage(src) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = () => resolve(null);
     img.src = src;
   });
 }
@@ -41,6 +42,21 @@ function drawCover(ctx, img, x, y, w, h) {
   ctx.clip();
   ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
   ctx.restore();
+}
+
+// "TRAIN WITH" over the SKILL logo - no @handle here, unlike the other
+// cards: this one is about the person's own result, not an invitation.
+function drawTrainedWith(ctx, cx, y, logo) {
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.font = `600 22px ${SYS_FONT}`;
+  ctx.fillStyle = COLORS.faint;
+  ctx.fillText("TRAIN WITH", cx, y);
+  if (logo) {
+    const w = 150;
+    const h = w * (logo.height / logo.width);
+    ctx.drawImage(logo, cx - w / 2, y + 12, w, h);
+  }
 }
 
 export async function buildPhotoCompareBlob({ beforeUrl, afterUrl, beforeLabel, afterLabel, deltaLines = [] }) {
@@ -75,24 +91,21 @@ export async function buildPhotoCompareBlob({ beforeUrl, afterUrl, beforeLabel, 
   ctx.fillText(beforeLabel, pad + colW / 2, imgTop + imgH + 44);
   ctx.fillText(afterLabel, pad + colW + gap + colW / 2, imgTop + imgH + 44);
 
-  let y = imgTop + imgH + 100;
-  ctx.font = `500 32px ${SYS_FONT}`;
-  for (const line of deltaLines.slice(0, 3)) {
-    ctx.fillStyle = COLORS.muted;
-    ctx.fillText(line, WIDTH / 2, y);
-    y += 46;
+  // Delta stats in one horizontal row rather than stacked lines, so they
+  // read as a single result at a glance instead of a list.
+  const lines = deltaLines.slice(0, 3);
+  if (lines.length) {
+    const rowY = imgTop + imgH + 110;
+    const segW = WIDTH / lines.length;
+    ctx.font = `700 34px ${SYS_FONT}`;
+    ctx.fillStyle = COLORS.fg;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, segW * i + segW / 2, rowY);
+    });
   }
 
-  try {
-    const logo = await loadImage("/skill-logo.png");
-    const logoW = 220;
-    const logoH = logoW * (logo.height / logo.width);
-    ctx.drawImage(logo, (WIDTH - logoW) / 2, HEIGHT - logoH - 44, logoW, logoH);
-  } catch {
-    ctx.fillStyle = COLORS.accent;
-    ctx.font = `800 44px ${SYS_FONT}`;
-    ctx.fillText("SKILL", WIDTH / 2, HEIGHT - 50);
-  }
+  const logo = await loadImage("/skill-logo.png");
+  drawTrainedWith(ctx, WIDTH / 2, HEIGHT - 70, logo);
 
   before.close?.();
   after.close?.();

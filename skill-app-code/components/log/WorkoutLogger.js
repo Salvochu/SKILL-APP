@@ -818,6 +818,7 @@ function ShareCard({ summary, timeLabel, effortLabel, unit = "kg", muscles = nul
         timeLabel,
         effortLabel,
         topMuscles: muscles?.top ?? [],
+        totalSets: muscles?.totalSets ?? 0,
       });
     } catch {
       // Image generation failed (e.g. the logo did not load); fall back

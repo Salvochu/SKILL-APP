@@ -169,7 +169,7 @@ export async function getPostSaveSummary(sessionId, userMesocycleId) {
     sessionId ? getSessionPRs(sessionId) : Promise.resolve([]),
     sessionId ? getStrengthScoreDelta(sessionId) : Promise.resolve(null),
     sessionId ? getSessionJourneyDelta(sessionId) : Promise.resolve(null),
-    sessionId ? getMuscleMapForSessions([sessionId]) : Promise.resolve({ top: [] }),
+    sessionId ? getMuscleMapForSessions([sessionId]) : Promise.resolve({ top: [], totalSets: 0 }),
   ]);
   return {
     workoutCount: progress.workouts ?? 0,

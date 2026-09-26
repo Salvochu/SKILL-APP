@@ -47,8 +47,12 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 // The muscles trained most, as short horizontal bars. `rows` is
-// [{ group|name, sets }], biggest first.
-function drawMuscleBars(ctx, cx, top, rows) {
+// [{ group|name, sets }], biggest first. `totalSets` (the session's own
+// working-set count) turns the right-hand label into "X/Y sets" - how
+// much of the session actually touched this muscle, not just a raw
+// count. A muscle trained via secondary role weighting can show a
+// fractional share, so the numbers across rows will not sum to Y.
+function drawMuscleBars(ctx, cx, top, rows, totalSets) {
   const barW = 560;
   const x0 = cx - barW / 2;
   const rowH = 78;
@@ -84,7 +88,8 @@ function drawMuscleBars(ctx, cx, top, rows) {
     ctx.font = `600 24px ${SYS_FONT}`;
     ctx.fillStyle = COLORS.muted;
     ctx.textAlign = "right";
-    ctx.fillText(`${Math.round(r.sets)} sets`, x0 + barW, y + 23);
+    const setsLabel = totalSets ? `${Math.round(r.sets)}/${totalSets} sets` : `${Math.round(r.sets)} sets`;
+    ctx.fillText(setsLabel, x0 + barW, y + 23);
   });
   ctx.textAlign = "center";
 }
@@ -125,6 +130,7 @@ export async function buildShareImageBlob({
   timeLabel,
   effortLabel,
   topMuscles = [],
+  totalSets = 0,
 }) {
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
@@ -164,7 +170,7 @@ export async function buildShareImageBlob({
   });
 
   const rows = topMuscles.slice(0, 3);
-  if (rows.length) drawMuscleBars(ctx, WIDTH / 2, 1360, rows);
+  if (rows.length) drawMuscleBars(ctx, WIDTH / 2, 1360, rows, totalSets);
 
   drawHandle(ctx, WIDTH / 2, HEIGHT - 150, glyph);
 

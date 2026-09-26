@@ -121,10 +121,12 @@ export async function getMuscleTrainingTotals() {
 }
 
 // For a specific set of sessions - the workout-complete card and the
-// challenge summary. Returns { top: [{ group, parent, sets }] }.
+// challenge summary. Returns { top: [{ group, parent, sets }], totalSets }.
+// `totalSets` is the plain count of working sets logged (no warmups, no
+// muscle weighting) - the denominator the share card uses for "X/Y sets".
 export async function getMuscleMapForSessions(sessionIds) {
   const ids = [...new Set((sessionIds ?? []).filter(Boolean))];
-  if (ids.length === 0) return { top: [] };
+  if (ids.length === 0) return { top: [], totalSets: 0 };
 
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
@@ -133,5 +135,9 @@ export async function getMuscleMapForSessions(sessionIds) {
     .in("session_id", ids);
   if (error) throw new Error(`Failed to load session muscles: ${error.message}`);
 
-  return { top: tallyToRows(data).map((r) => ({ group: r.label, parent: r.parent, sets: r.sets })) };
+  const totalSets = (data ?? []).filter((s) => s.completed !== false && !s.is_warmup).length;
+  return {
+    top: tallyToRows(data).map((r) => ({ group: r.label, parent: r.parent, sets: r.sets })),
+    totalSets,
+  };
 }
