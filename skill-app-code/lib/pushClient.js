@@ -23,6 +23,26 @@ export function pushSupported() {
   );
 }
 
+// iOS only supports web push for a Home Screen install (Safari tabs never
+// get PushManager), so the onboarding prompt needs to tell an iPhone
+// visitor to add the app first rather than showing a button that can only
+// fail with "unsupported".
+export function isIOS() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  if (/iPad|iPhone|iPod/.test(ua)) return true;
+  // iPadOS 13+ reports as a Mac; touch points is the tell.
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+}
+
+export function isStandalone() {
+  if (typeof window === "undefined") return false;
+  return (
+    window.navigator.standalone === true ||
+    window.matchMedia?.("(display-mode: standalone)").matches === true
+  );
+}
+
 export async function getPushSubscription() {
   if (!pushSupported()) return null;
   try {

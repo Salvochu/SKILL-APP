@@ -165,6 +165,18 @@ async function applyPlan(supabase, userId, plan, name, age) {
     await supabase
       .from("profiles")
       .upsert({ user_id: userId, membership: "member", ...patch }, { onConflict: "user_id" });
+
+    // A challenge account that just bought in still has its 14-day run
+    // marked active, which would leave the dashboard showing the
+    // "Day 14 of 14 / keep training" fork to someone who just paid.
+    // Closing it out here drops it out of getActiveMesocycle so the
+    // dashboard falls through to its normal "pick a program" state.
+    await supabase
+      .from("user_mesocycles")
+      .update({ status: "completed" })
+      .eq("user_id", userId)
+      .eq("template_id", CHALLENGE_TEMPLATE_ID)
+      .eq("status", "active");
     return;
   }
 
