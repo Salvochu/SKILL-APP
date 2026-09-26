@@ -5,15 +5,18 @@ import { getMembership } from "@/lib/data/profile";
 import { CHECKLIST_KEYS } from "@/lib/challenge/curriculum";
 import { getMuscleMapForSessions } from "@/lib/data/volume";
 
-const CHALLENGE_TEMPLATE_ID = "main-character-14";
+// Exported for the reminders cron (app/api/push/reminders/route.js),
+// which recomputes this same day/streak math in bulk with the admin
+// client rather than calling the request-scoped functions below.
+export const CHALLENGE_TEMPLATE_ID = "main-character-14";
 // Sessions in the 14-day plan (6 lifts + cardio ticks); "done" at 6.
 const CHALLENGE_TARGET_SESSIONS = 6;
 
 const DAY_MS = 86400000;
-const CHALLENGE_DAYS = 14;
+export const CHALLENGE_DAYS = 14;
 // Days past the 14 before training locks. The dashboard fork shows from
 // day 14; the hard lock is a few days later.
-const GRACE_DAYS = 3;
+export const GRACE_DAYS = 3;
 // How long a challenge account has to get set up before their 14 days
 // "should" start. Nothing is taken away when it passes: the clock still
 // only starts when they tap "Start my 14 days", so there is nothing to

@@ -1,9 +1,15 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPush, pushConfigured } from "@/lib/push";
+import { CHALLENGE_TEMPLATE_ID, CHALLENGE_DAYS, GRACE_DAYS, isChallengeDayComplete } from "@/lib/data/challenge";
 
 // The one scheduled job. Runs daily (Vercel Cron, Authorization: Bearer
-// CRON_SECRET) and sends each user at most one push, chosen by priority
-// from what their notification_prefs allow:
+// CRON_SECRET) and sends each user at most one push.
+//
+// A challenge account (membership === "challenge") gets its own ladder,
+// entirely separate from the one below - a 14-day countdown needs its
+// own urgency, not the weekly-recap/scheduled-day logic built for an
+// ongoing subscriber. See pickChallengeNudge. Everyone else keeps the
+// original priority order, chosen by what their notification_prefs allow:
 //   1. Weekly recap        (Mondays)
 //   2. Scheduled reminder   (their chosen weekdays)
 //   3. Streak at risk       (Sundays, streak alive, nothing logged this week)
@@ -40,13 +46,112 @@ export async function GET(request) {
   const lastWeek = thisWeek - 7 * DAY;
   const todayStart = new Date(now).setUTCHours(0, 0, 0, 0);
 
-  const [{ data: subs }, { data: prefsRows }, { data: sessions }] = await Promise.all([
+  const [{ data: subs }, { data: prefsRows }, { data: sessions }, { data: profileRows }] = await Promise.all([
     admin.from("push_subscriptions").select("user_id, endpoint, p256dh, auth"),
     admin.from("notification_prefs").select("*"),
     admin.from("workout_sessions").select("id, user_id, started_at"),
+    admin.from("profiles").select("user_id, membership").eq("membership", "challenge"),
   ]);
 
   const prefsByUser = new Map((prefsRows ?? []).map((p) => [p.user_id, p]));
+  const challengeUserIdList = (profileRows ?? []).map((p) => p.user_id);
+  const challengeUserIds = new Set(challengeUserIdList);
+
+  // Bulk version of lib/data/challenge.js's getChallengeAccess/
+  // getChallengeChecklist - those are request-scoped (they read the
+  // signed-in user's own cookies), so a cron processing every account at
+  // once recomputes the same day/streak math directly with the admin
+  // client instead.
+  const challengeByUser = new Map(); // user_id -> { challengeDay, started, lapsed, streak, todayComplete }
+  if (challengeUserIdList.length) {
+    const [{ data: runs }, { data: checklistRows }] = await Promise.all([
+      admin
+        .from("user_mesocycles")
+        .select("user_id, started_at, start_date, created_at")
+        .eq("template_id", CHALLENGE_TEMPLATE_ID)
+        .eq("status", "active")
+        .in("user_id", challengeUserIdList),
+      admin
+        .from("challenge_checklist")
+        .select("user_id, day, items")
+        .in("user_id", challengeUserIdList),
+    ]);
+
+    const completeDaysByUser = new Map(); // user_id -> Set<day>
+    for (const row of checklistRows ?? []) {
+      if (!isChallengeDayComplete(row.items)) continue;
+      if (!completeDaysByUser.has(row.user_id)) completeDaysByUser.set(row.user_id, new Set());
+      completeDaysByUser.get(row.user_id).add(row.day);
+    }
+
+    const todayMs = Date.parse(`${new Date(now).toISOString().slice(0, 10)}T00:00:00Z`);
+    for (const run of runs ?? []) {
+      // Still in "prep" (never tapped Start my 14 days): no daily streak
+      // concept yet, nothing to nudge.
+      if (!run.started_at) continue;
+      const startMs = Date.parse(`${run.started_at}T00:00:00Z`);
+      const daysSince = Math.max(0, Math.floor((todayMs - startMs) / DAY));
+      const challengeDay = daysSince + 1;
+      const lapsed = challengeDay > CHALLENGE_DAYS + GRACE_DAYS;
+
+      const complete = completeDaysByUser.get(run.user_id) ?? new Set();
+      let streak = 0;
+      for (let d = Math.min(challengeDay, CHALLENGE_DAYS); d >= 1; d--) {
+        if (complete.has(d)) streak++;
+        else if (d < challengeDay) break;
+      }
+
+      challengeByUser.set(run.user_id, {
+        challengeDay,
+        started: true,
+        lapsed,
+        streak,
+        todayComplete: complete.has(challengeDay),
+      });
+    }
+  }
+
+  // A 14-day countdown, not an ongoing habit: at-risk streak, then a
+  // gentle re-engagement once it has actually broken, then a last call
+  // during the grace window before the account locks. Pure reminders,
+  // no upgrade pitch here - that ask lives in the app itself once the
+  // challenge is actually finished.
+  function pickChallengeNudge(userId) {
+    const c = challengeByUser.get(userId);
+    if (!c || !c.started || c.lapsed) return null;
+
+    if (c.challengeDay > CHALLENGE_DAYS) {
+      const daysLeft = CHALLENGE_DAYS + GRACE_DAYS - c.challengeDay;
+      return {
+        title: "Your 14 days are up",
+        body:
+          daysLeft > 0
+            ? `You've still got ${daysLeft} day${daysLeft === 1 ? "" : "s"} before training pauses. Come back and keep your streak.`
+            : "Today's your last chance before training pauses. Come back and keep your streak.",
+        url: "/challenge",
+      };
+    }
+
+    if (c.todayComplete) return null;
+
+    if (c.streak > 0) {
+      return {
+        title: `Day ${c.challengeDay} of 14`,
+        body: `Don't lose your ${c.streak}-day streak, log today before it resets.`,
+        url: "/challenge",
+      };
+    }
+
+    if (c.challengeDay > 1) {
+      return {
+        title: `Day ${c.challengeDay} of 14`,
+        body: "Yesterday slipped, but there's plenty of challenge left. Let's get back on it.",
+        url: "/challenge",
+      };
+    }
+
+    return null;
+  }
 
   // Per-user session stats.
   const stats = new Map(); // user_id -> { last, trainedToday, thisWeekCount, lastWeekCount, lastWeekIds, trainedLastWeek, trainedPrevWeek }
@@ -100,6 +205,10 @@ export async function GET(request) {
   };
 
   function pick(userId) {
+    if (challengeUserIds.has(userId)) {
+      return pickChallengeNudge(userId);
+    }
+
     const p = prefsByUser.get(userId) ?? {};
     const st = stats.get(userId) ?? EMPTY_STATS;
 
