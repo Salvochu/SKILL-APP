@@ -81,15 +81,21 @@ function drawMuscleBars(ctx, cx, top, rows, totalSets) {
     ctx.fill();
 
     ctx.font = `700 24px ${SYS_FONT}`;
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = COLORS.fg;
     ctx.textAlign = "left";
     ctx.fillText(label, x0 + 20, y + 23);
+  });
 
-    ctx.font = `600 24px ${SYS_FONT}`;
-    ctx.fillStyle = COLORS.muted;
-    ctx.textAlign = "right";
+  // Set counts drawn as their own pass, outside and to the right of the
+  // bars, rather than inside them - a short bar for a lightly-trained
+  // muscle left the label crowding its own fill.
+  ctx.font = `600 20px ${SYS_FONT}`;
+  ctx.fillStyle = COLORS.muted;
+  ctx.textAlign = "left";
+  rows.forEach((r, i) => {
+    const y = top + i * rowH;
     const setsLabel = totalSets ? `${Math.round(r.sets)}/${totalSets} sets` : `${Math.round(r.sets)} sets`;
-    ctx.fillText(setsLabel, x0 + barW, y + 23);
+    ctx.fillText(setsLabel, x0 + barW + 16, y + 23);
   });
   ctx.textAlign = "center";
 }

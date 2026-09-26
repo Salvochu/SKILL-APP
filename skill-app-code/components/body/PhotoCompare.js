@@ -44,19 +44,11 @@ export default function PhotoCompare({ dates, bodyByDate, unit, onClose }) {
 
   const deltaLines = useMemo(() => {
     const lines = [];
-    const d1 = new Date(beforeDate);
-    const d2 = new Date(afterDate);
-    const days = Math.abs(Math.round((d2 - d1) / 86400000));
-    if (days) lines.push(`${days} day${days === 1 ? "" : "s"} apart`);
     const b1 = bodyByDate?.[beforeDate];
     const b2 = bodyByDate?.[afterDate];
     if (b1?.weight != null && b2?.weight != null) {
       const d = Math.round((b2.weight - b1.weight) * 10) / 10;
       lines.push(`${d > 0 ? "+" : ""}${d} ${unit}`);
-    }
-    if (b1?.fat != null && b2?.fat != null) {
-      const d = Math.round((b2.fat - b1.fat) * 10) / 10;
-      lines.push(`${d > 0 ? "+" : ""}${d}% body fat`);
     }
     return lines;
   }, [beforeDate, afterDate, bodyByDate, unit]);
