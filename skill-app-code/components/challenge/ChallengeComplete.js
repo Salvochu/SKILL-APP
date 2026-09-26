@@ -1,66 +1,19 @@
-"use client";
-
-import { useState } from "react";
-import { buildChallengeShareBlob } from "@/lib/challengeShare";
+import ClimbShareButton from "@/components/challenge/ClimbShareButton";
 
 // Shown on the Challenge tab once the 14-day plan is finished: the badge,
-// the numbers, and a share button that renders the PNG.
+// the numbers, and a share button that renders the climb card as a PNG
+// (the same visual as the hero at the top of the tab, not a separate
+// stats-card design - see components/challenge/ClimbShareButton.js).
 export default function ChallengeComplete({
+  day,
+  totalDays = 14,
+  streak = 0,
   sessions = 0,
   targetSessions = 6,
   perfectDays = 0,
   volumeLabel = "0",
   topMuscles = [],
 }) {
-  const [status, setStatus] = useState("idle"); // idle | preparing | shared | downloaded
-
-  async function onShare() {
-    setStatus("preparing");
-    let blob = null;
-    try {
-      blob = await buildChallengeShareBlob({
-        sessions,
-        targetSessions,
-        perfectDays,
-        volumeLabel,
-        topMuscles,
-      });
-    } catch {
-      /* fall through to text share */
-    }
-    const caption = `14 days done. ${sessions} sessions, ${perfectDays}/14 perfect days with SKILL. @salvador_skfitness`;
-    const file = blob ? new File([blob], "skill-challenge.png", { type: "image/png" }) : null;
-
-    if (file && typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], text: caption });
-        setStatus("shared");
-        return;
-      } catch {
-        setStatus("idle");
-        return;
-      }
-    }
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "skill-challenge.png";
-      a.click();
-      URL.revokeObjectURL(url);
-      setStatus("downloaded");
-      return;
-    }
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({ text: caption });
-      } catch {
-        /* cancelled */
-      }
-    }
-    setStatus("idle");
-  }
-
   return (
     <section className="overflow-hidden rounded-card border border-accent/40 bg-gradient-to-b from-accent-soft to-transparent">
       <div className="flex flex-col items-center gap-1 px-5 pt-6 text-center">
@@ -90,20 +43,14 @@ export default function ChallengeComplete({
       ) : null}
 
       <div className="p-5 pt-4">
-        <button
-          type="button"
-          onClick={onShare}
-          disabled={status === "preparing"}
-          className="btn-shine flex w-full items-center justify-center gap-2 rounded-field bg-accent px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
-        >
-          {status === "preparing"
-            ? "Preparing..."
-            : status === "shared"
-              ? "Shared"
-              : status === "downloaded"
-                ? "Saved to your photos"
-                : "Share your result"}
-        </button>
+        <ClimbShareButton
+          day={day}
+          totalDays={totalDays}
+          streak={streak}
+          headline="Challenge complete."
+          caption={`14 days done. ${sessions} sessions, ${perfectDays}/14 perfect days with SKILL. @salvador_skfitness`}
+          label="Share your result"
+        />
       </div>
     </section>
   );

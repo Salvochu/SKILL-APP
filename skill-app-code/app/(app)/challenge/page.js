@@ -11,6 +11,7 @@ import ChallengeToday from "@/components/challenge/ChallengeToday";
 import ChallengeTimeline from "@/components/challenge/ChallengeTimeline";
 import ChallengeLearn from "@/components/challenge/ChallengeLearn";
 import ChallengeComplete from "@/components/challenge/ChallengeComplete";
+import WeekCheckIn from "@/components/challenge/WeekCheckIn";
 import ChallengeEnded from "@/components/challenge/ChallengeEnded";
 
 export const metadata = { title: "Challenge" };
@@ -59,12 +60,17 @@ export default async function ChallengePage() {
 
       {completion.completed ? (
         <ChallengeComplete
+          day={challengeDay}
+          totalDays={total}
+          streak={checklist.streak}
           sessions={completion.sessions}
           targetSessions={completion.targetSessions}
           perfectDays={completion.perfectDays}
           volumeLabel={volumeLabel}
           topMuscles={completion.muscles.top}
         />
+      ) : challengeDay === 7 ? (
+        <WeekCheckIn totalDays={total} streak={checklist.streak} />
       ) : null}
 
       <ChallengeToday
