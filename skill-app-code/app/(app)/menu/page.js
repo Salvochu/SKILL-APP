@@ -23,6 +23,13 @@ const SETTINGS = {
   tint: "#fc7605",
 };
 
+// Same contact address already used for push notifications (lib/push.js) -
+// one real, monitored inbox rather than a separate support system.
+const SUPPORT_EMAIL = "hello@salvadorskfitness.com";
+const REPORT_ISSUE_HREF = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+  "SKILL app issue",
+)}&body=${encodeURIComponent("What happened?\n\n\nWhat were you trying to do?\n\n")}`;
+
 export default function MenuPage() {
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -47,6 +54,14 @@ export default function MenuPage() {
         <TapLink href={SETTINGS.href} className="block transition-colors hover:bg-surface-2">
           <MenuRow label={SETTINGS.label} body={SETTINGS.body} icon={SETTINGS.icon} tint={SETTINGS.tint} />
         </TapLink>
+        <a href={REPORT_ISSUE_HREF} className="block transition-colors hover:bg-surface-2">
+          <MenuRow
+            label="Report an issue"
+            body="Found a bug? Let me know"
+            icon={IconFlag}
+            tint="#9a938c"
+          />
+        </a>
       </div>
     </div>
   );
@@ -178,6 +193,14 @@ function IconHistory(props) {
       <path d="M3 12a9 9 0 1 0 3-6.7" />
       <path d="M3 4v5h5" />
       <path d="M12 7v5l4 2" />
+    </svg>
+  );
+}
+function IconFlag(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M5 3v18" />
+      <path d="M5 4h11l-2.5 4L16 12H5" />
     </svg>
   );
 }
