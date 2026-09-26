@@ -206,12 +206,38 @@ export async function buildClimbShareBlob({
     const isCurrent = n === curIdx + 1;
     const isFinish = n === totalDays;
 
-    // The flag draws for the finish node regardless of whether it is
-    // also the current day (day 14 is both, once someone actually gets
-    // there) - `current`/`finish` used to be an either/or, which meant
-    // reaching day 14 replaced the flag with the plain glow dot instead
-    // of showing both together.
-    if (isFinish) {
+    // The flag and the current-day glow both apply to day 14 once
+    // someone actually gets there - each combination below is its own
+    // clean layout rather than one drawn on top of the other, since the
+    // flag's normal pole (rooted at the node) ran straight through the
+    // glow dot when both were current.
+    if (isFinish && isCurrent) {
+      // Pole starts clear of the glow's outer ring, flag stands above it.
+      const baseY = p.y - 34;
+      ctx.beginPath();
+      ctx.moveTo(p.x, baseY);
+      ctx.lineTo(p.x, baseY - 52);
+      ctx.strokeStyle = C.accent;
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p.x, baseY - 52);
+      ctx.lineTo(p.x + 32, baseY - 42);
+      ctx.lineTo(p.x, baseY - 32);
+      ctx.closePath();
+      ctx.fillStyle = C.accent;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 26, 0, Math.PI * 2);
+      ctx.fillStyle = C.accent;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 34, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,180,84,0.7)";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    } else if (isFinish) {
       ctx.beginPath();
       ctx.moveTo(p.x, p.y + 14);
       ctx.lineTo(p.x, p.y - 46);
@@ -225,9 +251,7 @@ export async function buildClimbShareBlob({
       ctx.closePath();
       ctx.fillStyle = done ? C.accent : "#4a382a";
       ctx.fill();
-    }
-
-    if (isCurrent) {
+    } else if (isCurrent) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, 26, 0, Math.PI * 2);
       ctx.fillStyle = C.accent;
@@ -237,7 +261,7 @@ export async function buildClimbShareBlob({
       ctx.strokeStyle = "rgba(255,180,84,0.7)";
       ctx.lineWidth = 4;
       ctx.stroke();
-    } else if (!isFinish) {
+    } else {
       ctx.beginPath();
       ctx.arc(p.x, p.y, done ? 18 : 12, 0, Math.PI * 2);
       ctx.fillStyle = done ? C.accent : "#1a1409";
