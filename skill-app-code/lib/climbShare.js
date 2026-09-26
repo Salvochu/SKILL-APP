@@ -113,9 +113,12 @@ export async function buildClimbShareBlob({
   ctx.fillStyle = C.bg;
   ctx.fillRect(0, 0, W, H);
 
-  const scale = 2.6;
+  // Sized so the trail's lowest point clears the handle at the bottom
+  // (verified live: previously the two nearly touched) and its topmost
+  // point clears the streak pill above it.
+  const scale = 2.365;
   const offsetX = W / 2 - 115 * scale;
-  const offsetY = 940;
+  const offsetY = 870;
   const T = (x, y) => ({ x: offsetX + x * scale, y: offsetY + y * scale });
   const trail = TRAIL.map(([x, y]) => T(x, y));
   const nodes = NODES.map((p) => T(p.x, p.y));
@@ -125,7 +128,7 @@ export async function buildClimbShareBlob({
   const curFrac = curIdx / (totalDays - 1);
   const curTrailI = Math.round(curFrac * (trail.length - 1));
 
-  const glow = ctx.createRadialGradient(cur.x, cur.y, 0, cur.x, cur.y, 340);
+  const glow = ctx.createRadialGradient(cur.x, cur.y, 0, cur.x, cur.y, 320);
   glow.addColorStop(0, "rgba(252,118,5,0.32)");
   glow.addColorStop(1, "rgba(252,118,5,0)");
   ctx.fillStyle = glow;
