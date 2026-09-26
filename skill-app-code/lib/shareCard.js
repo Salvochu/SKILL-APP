@@ -89,13 +89,13 @@ function drawMuscleBars(ctx, cx, top, rows) {
   ctx.textAlign = "center";
 }
 
-// "TRAINED WITH" over the SKILL logo, centred at (cx, y = label baseline).
+// "TRAIN WITH" over the SKILL logo, centred at (cx, y = label baseline).
 function drawTrainedWith(ctx, cx, y, logo) {
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
   ctx.font = `600 24px ${SYS_FONT}`;
   ctx.fillStyle = COLORS.faint;
-  ctx.fillText("TRAINED WITH", cx, y);
+  ctx.fillText("TRAIN WITH", cx, y);
   if (logo) {
     const w = 190;
     const h = w * (logo.height / logo.width);

@@ -70,7 +70,7 @@ function drawTrainedWith(ctx, cx, y, logo) {
   ctx.textBaseline = "alphabetic";
   ctx.font = `600 24px ${SYS}`;
   ctx.fillStyle = C.faint;
-  ctx.fillText("TRAINED WITH", cx, y);
+  ctx.fillText("TRAIN WITH", cx, y);
   if (logo) {
     const w = 170;
     const h = w * (logo.height / logo.width);
@@ -80,12 +80,12 @@ function drawTrainedWith(ctx, cx, y, logo) {
 
 function drawHandle(ctx, cx, y, glyph) {
   const handle = "@salvador_skfitness";
-  ctx.font = `600 28px ${SYS}`;
+  ctx.font = `600 22px ${SYS}`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   const tW = ctx.measureText(handle).width;
-  const gW = glyph ? 32 : 0;
-  const gap = glyph ? 13 : 0;
+  const gW = glyph ? 26 : 0;
+  const gap = glyph ? 11 : 0;
   const x = cx - (tW + gap + gW) / 2;
   if (glyph) ctx.drawImage(glyph, x, y - gW / 2, gW, gW);
   ctx.fillStyle = C.muted;
@@ -128,11 +128,19 @@ export async function buildClimbShareBlob({
   const curFrac = curIdx / (totalDays - 1);
   const curTrailI = Math.round(curFrac * (trail.length - 1));
 
-  const glow = ctx.createRadialGradient(cur.x, cur.y, 0, cur.x, cur.y, 320);
+  // Clipped to the trail's own area so it never bleeds up into the
+  // streak pill above it, regardless of which day (and therefore how
+  // close to the top) is current.
+  const glow = ctx.createRadialGradient(cur.x, cur.y, 0, cur.x, cur.y, 260);
   glow.addColorStop(0, "rgba(252,118,5,0.32)");
   glow.addColorStop(1, "rgba(252,118,5,0)");
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 900, W, H - 900);
+  ctx.clip();
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
+  ctx.restore();
 
   drawTrainedWith(ctx, W / 2, 300, logo);
 
@@ -164,18 +172,21 @@ export async function buildClimbShareBlob({
   }
 
   const pillLabel = `${streak} day${streak === 1 ? "" : "s"} streak`;
+  const pillH = 76;
   ctx.font = `700 30px ${SYS}`;
   const pillW = ctx.measureText(pillLabel).width + 90;
   const pillY = headline ? 800 : 760;
-  roundRect(ctx, W / 2 - pillW / 2, pillY, pillW, 76, 38);
+  roundRect(ctx, W / 2 - pillW / 2, pillY, pillW, pillH, pillH / 2);
   ctx.fillStyle = "rgba(252,118,5,0.14)";
   ctx.fill();
   ctx.lineWidth = 3;
   ctx.strokeStyle = "rgba(252,118,5,0.4)";
-  roundRect(ctx, W / 2 - pillW / 2, pillY, pillW, 76, 38);
+  roundRect(ctx, W / 2 - pillW / 2, pillY, pillW, pillH, pillH / 2);
   ctx.stroke();
   ctx.fillStyle = C.accent;
-  ctx.fillText(pillLabel, W / 2 + 20, pillY + 50);
+  ctx.textBaseline = "middle";
+  ctx.fillText(pillLabel, W / 2, pillY + pillH / 2);
+  ctx.textBaseline = "alphabetic";
 
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
