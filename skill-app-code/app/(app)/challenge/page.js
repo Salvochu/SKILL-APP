@@ -73,9 +73,14 @@ export default async function ChallengePage() {
         mesoId={meso?.id ?? null}
         variant={variant}
         items={checklist.byDay[challengeDay] ?? {}}
+        itemsAt={checklist.byDayAt[challengeDay] ?? {}}
       />
 
-      <ChallengeTimeline challengeDay={challengeDay} byDay={checklist.byDay} />
+      <ChallengeTimeline
+        challengeDay={challengeDay}
+        byDay={checklist.byDay}
+        byDayAt={checklist.byDayAt}
+      />
 
       <ChallengeLearn variant={variant} challengeDay={challengeDay} totalDays={total} />
 

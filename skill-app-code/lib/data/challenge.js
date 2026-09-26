@@ -121,7 +121,7 @@ export function isChallengeDayComplete(items) {
 // (consecutive complete days ending at yesterday or today). Degrades to
 // empty if the table has not been migrated yet.
 export const getChallengeChecklist = cache(async () => {
-  const empty = { byDay: {}, completeDays: [], streak: 0 };
+  const empty = { byDay: {}, byDayAt: {}, completeDays: [], streak: 0 };
   const membership = await getMembership();
   if (membership !== "challenge") return empty;
 
@@ -130,7 +130,7 @@ export const getChallengeChecklist = cache(async () => {
 
   const { data, error } = await supabase
     .from("challenge_checklist")
-    .select("day, items")
+    .select("day, items, items_at")
     .eq("user_id", user.id);
   if (error) {
     if (isMissingChecklistTable(error)) return empty;
@@ -138,7 +138,11 @@ export const getChallengeChecklist = cache(async () => {
   }
 
   const byDay = {};
-  for (const row of data ?? []) byDay[row.day] = row.items ?? {};
+  const byDayAt = {};
+  for (const row of data ?? []) {
+    byDay[row.day] = row.items ?? {};
+    byDayAt[row.day] = row.items_at ?? {};
+  }
 
   const completeDays = [];
   for (let d = 1; d <= CHALLENGE_DAYS; d++) {
@@ -152,7 +156,7 @@ export const getChallengeChecklist = cache(async () => {
     else if (d < challengeDay) break;
   }
 
-  return { byDay, completeDays, streak };
+  return { byDay, byDayAt, completeDays, streak };
 });
 
 // Everything the "challenge complete" badge and its share card need:

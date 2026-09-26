@@ -55,22 +55,28 @@ export async function setChecklistItem(day, key, value) {
 
   const { data: existing } = await supabase
     .from("challenge_checklist")
-    .select("items")
+    .select("items, items_at")
     .eq("user_id", user.id)
     .eq("day", d)
     .maybeSingle();
 
+  const now = new Date().toISOString();
   const items = { ...(existing?.items ?? {}), [key]: value === true };
+  // Stamps when a box was ticked, regardless of whether it was tapped by
+  // hand or set automatically elsewhere (logging weight, saving a
+  // workout, pressing play) - the checklist shows this as "ticked X ago"
+  // so an auto-tick never reads as having just happened right now.
+  const itemsAt = { ...(existing?.items_at ?? {}), [key]: now };
 
   const { error } = await supabase
     .from("challenge_checklist")
     .upsert(
-      { user_id: user.id, day: d, items, updated_at: new Date().toISOString() },
+      { user_id: user.id, day: d, items, items_at: itemsAt, updated_at: now },
       { onConflict: "user_id,day" },
     );
   if (error) return { error: error.message };
 
   revalidatePath("/challenge");
   revalidatePath("/dashboard");
-  return { ok: true, items };
+  return { ok: true, items, itemsAt };
 }

@@ -8,7 +8,7 @@ const KIND_LABEL = { train: "Training", cardio: "Cardio", rest: "Rest" };
 // The one card that matters today: what to do, the video for it, a
 // button straight into the logger for training days, and today's
 // checklist.
-export default function ChallengeToday({ day, challengeDay, mesoId, variant, items }) {
+export default function ChallengeToday({ day, challengeDay, mesoId, variant, items, itemsAt }) {
   if (!day) return null;
   const trainHref =
     day.kind === "train" && day.dayTemplateId && mesoId
@@ -38,7 +38,7 @@ export default function ChallengeToday({ day, challengeDay, mesoId, variant, ite
       </div>
 
       <div className="border-t border-border">
-        <ChallengeChecklist day={challengeDay} kind={day.kind} items={items} />
+        <ChallengeChecklist day={challengeDay} kind={day.kind} items={items} itemsAt={itemsAt} />
       </div>
 
       <TapLink

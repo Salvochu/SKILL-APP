@@ -6,37 +6,52 @@ import { setChecklistItem } from "@/app/(app)/challenge/actions";
 
 // The five daily boxes. Optimistic: the tick flips immediately, the
 // server action runs in the background, and a failure rolls it back.
-// `locked` (a future day) renders the boxes read-only.
-export default function ChallengeChecklist({ day, kind, items: initial = {}, locked = false }) {
+// `locked` (a future day) renders the boxes read-only. `itemsAt` is a
+// parallel {key: isoString} map of when each box was last set - shown
+// as "ticked X ago" so an auto-tick (logging weight, saving a workout,
+// pressing play) never reads as having just happened this second.
+export default function ChallengeChecklist({
+  day,
+  kind,
+  items: initial = {},
+  itemsAt: initialAt = {},
+  locked = false,
+}) {
   const [items, setItems] = useState(initial);
+  const [itemsAt, setItemsAt] = useState(initialAt);
   const [, startTransition] = useTransition();
   const [error, setError] = useState(null);
 
   // Something outside this component can also tick a box now (logging
   // weight, saving a workout, pressing play on today's video), each
   // followed by a router.refresh() rather than this component's own
-  // optimistic path - so re-sync when the server sends a new `initial`.
+  // optimistic path - so re-sync when the server sends new props.
   // Adjusted during render (not an effect) per React's guidance for
   // resetting state from a changed prop: https://react.dev/learn/you-might-not-need-an-effect
   const [prevInitial, setPrevInitial] = useState(initial);
   if (initial !== prevInitial) {
     setPrevInitial(initial);
     setItems(initial);
+    setItemsAt(initialAt);
   }
 
   function toggle(key) {
     if (locked) return;
     const next = !items[key];
-    const prev = items;
+    const prevItems = items;
+    const prevAt = itemsAt;
     setItems({ ...items, [key]: next });
+    setItemsAt({ ...itemsAt, [key]: new Date().toISOString() });
     setError(null);
     startTransition(async () => {
       const res = await setChecklistItem(day, key, next);
       if (res?.error) {
-        setItems(prev);
+        setItems(prevItems);
+        setItemsAt(prevAt);
         setError(res.error);
       } else if (res?.items) {
         setItems(res.items);
+        if (res.itemsAt) setItemsAt(res.itemsAt);
       }
     });
   }
@@ -69,6 +84,7 @@ export default function ChallengeChecklist({ day, kind, items: initial = {}, loc
         {CHECKLIST_ITEMS.map((item) => {
           const on = Boolean(items[item.key]);
           const label = item.key === "session" ? sessionLabel(kind) : item.label;
+          const ago = on ? timeAgo(itemsAt[item.key]) : null;
           return (
             <li key={item.key}>
               <button
@@ -91,7 +107,10 @@ export default function ChallengeChecklist({ day, kind, items: initial = {}, loc
                     </svg>
                   ) : null}
                 </span>
-                <span className={on ? "text-fg" : "text-muted"}>{label}</span>
+                <span className="min-w-0 flex-1">
+                  <span className={on ? "text-fg" : "text-muted"}>{label}</span>
+                  {ago ? <span className="ml-2 text-xs text-dim">{ago}</span> : null}
+                </span>
               </button>
             </li>
           );
@@ -102,4 +121,20 @@ export default function ChallengeChecklist({ day, kind, items: initial = {}, loc
       ) : null}
     </div>
   );
+}
+
+// Fine-grained near term (a tick usually happens within the same day),
+// falling back to day/week for a backfilled past day ticked much later.
+function timeAgo(iso) {
+  if (!iso) return null;
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 0 || ms < 60000) return "just now";
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "1d ago";
+  if (days < 7) return `${days}d ago`;
+  return `${Math.round(days / 7)}w ago`;
 }

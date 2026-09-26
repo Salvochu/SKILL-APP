@@ -6,7 +6,7 @@ import { isChallengeDayComplete } from "@/lib/data/challenge";
 // checklist so a day can be backfilled; future days show a preview only.
 // The section itself is collapsible (open by default) - the page is long
 // once this and Learn are both expanded, so it's worth tucking away.
-export default function ChallengeTimeline({ challengeDay, byDay = {}, readOnly = false }) {
+export default function ChallengeTimeline({ challengeDay, byDay = {}, byDayAt = {}, readOnly = false }) {
   return (
     <details open className="group flex flex-col gap-2 [&_summary::-webkit-details-marker]:hidden">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-1">
@@ -69,7 +69,13 @@ export default function ChallengeTimeline({ challengeDay, byDay = {}, readOnly =
                         </p>
                       ) : (
                         <div className="border-t border-border">
-                          <ChallengeChecklist day={d.day} kind={d.kind} items={byDay[d.day] ?? {}} locked={readOnly} />
+                          <ChallengeChecklist
+                            day={d.day}
+                            kind={d.kind}
+                            items={byDay[d.day] ?? {}}
+                            itemsAt={byDayAt[d.day] ?? {}}
+                            locked={readOnly}
+                          />
                         </div>
                       )}
                     </>
