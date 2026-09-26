@@ -1,12 +1,20 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
 import MusclePill from "@/components/MusclePill";
+import ExerciseSheet from "@/components/library/ExerciseSheet";
 
 // A shortlist of the lifts a beginner should learn first, pinned above
 // the full library so 135 exercises are not the first thing they see.
 // Laid out as a horizontal scroller so it stays one screen tall no
-// matter how many staples there are.
+// matter how many staples there are. Tapping a card opens the same
+// ExerciseSheet (video + how-to) as the main list below, not the
+// history page - a brand new beginner has no history to show yet.
 export default function BeginnerStaples({ exercises }) {
+  const [openId, setOpenId] = useState(null);
   if (!exercises.length) return null;
+  const open = exercises.find((e) => e.id === openId) ?? null;
+
   return (
     <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
       <div className="flex flex-col gap-0.5">
@@ -20,9 +28,10 @@ export default function BeginnerStaples({ exercises }) {
         <ul className="flex gap-2.5">
           {exercises.map((e) => (
             <li key={e.id} className="shrink-0">
-              <Link
-                href={`/library/exercises/${e.id}`}
-                className="flex h-full w-36 flex-col gap-2 rounded-field border border-border bg-surface p-3 transition-colors hover:border-border-strong hover:bg-surface-2"
+              <button
+                type="button"
+                onClick={() => setOpenId(e.id)}
+                className="flex h-full w-36 flex-col gap-2 rounded-field border border-border bg-surface p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
               >
                 <span className="flex items-start justify-between gap-1">
                   <MusclePill muscle={e.muscle} />
@@ -36,11 +45,13 @@ export default function BeginnerStaples({ exercises }) {
                 </span>
                 <span className="text-sm font-medium leading-tight text-fg">{e.name}</span>
                 <span className="mt-auto text-xs text-dim">{e.equipment}</span>
-              </Link>
+              </button>
             </li>
           ))}
         </ul>
       </div>
+
+      {open ? <ExerciseSheet exercise={open} onClose={() => setOpenId(null)} /> : null}
     </section>
   );
 }
