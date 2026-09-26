@@ -105,7 +105,7 @@ export async function buildPhotoCompareBlob({ beforeUrl, afterUrl, beforeLabel, 
   }
 
   const logo = await loadImage("/skill-logo.png");
-  drawTrainedWith(ctx, WIDTH / 2, HEIGHT - 70, logo);
+  drawTrainedWith(ctx, WIDTH / 2, HEIGHT - 140, logo);
 
   before.close?.();
   after.close?.();
