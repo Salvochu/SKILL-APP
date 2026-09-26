@@ -23,9 +23,7 @@ const SETTINGS = {
   tint: "#fc7605",
 };
 
-// Same contact address already used for push notifications (lib/push.js) -
-// one real, monitored inbox rather than a separate support system.
-const SUPPORT_EMAIL = "hello@salvadorskfitness.com";
+const SUPPORT_EMAIL = "info@skfitness.uk";
 const REPORT_ISSUE_HREF = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
   "SKILL app issue",
 )}&body=${encodeURIComponent("What happened?\n\n\nWhat were you trying to do?\n\n")}`;
