@@ -31,6 +31,7 @@ export default function ChallengeStart() {
 
       <div className="relative flex flex-col gap-4 border-t border-accent/20 p-5">
         <WelcomeVideo loomId={welcome?.loomId} title="Start here: how the 14 days work" />
+        <div className="border-t border-accent/20" />
         <SetupSteps />
       </div>
     </details>

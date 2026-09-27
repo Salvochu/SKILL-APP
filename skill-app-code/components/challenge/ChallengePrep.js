@@ -42,6 +42,8 @@ export default function ChallengePrep() {
           <WelcomeVideo loomId={welcome?.loomId} title="Start here: how the 14 days work" />
         </div>
 
+        <div className="relative border-t border-accent/20" />
+
         <div className="relative">
           <SetupSteps />
         </div>
