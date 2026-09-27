@@ -96,6 +96,11 @@
 
 html {
   background: var(--color-bg);
+  /* Without this, scrolling to the very top (e.g. the "Back to top"
+     anchor on the Challenge tab) can be misread as a pull-to-refresh
+     gesture and trigger a real, slow full-page reload instead of just
+     scrolling. */
+  overscroll-behavior-y: contain;
 }
 
 body {

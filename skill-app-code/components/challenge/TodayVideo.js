@@ -24,7 +24,7 @@ export default function TodayVideo({ day, loomId, title, watched = false }) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="flex items-center gap-3 rounded-field border border-border bg-surface-2 px-3 py-2.5 text-left transition-colors hover:border-border-strong"
+        className="-mx-1 flex items-center gap-3 rounded-field px-1 py-1 text-left transition-colors hover:bg-surface-2"
       >
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-black">
           <IconPlay className="ml-0.5 h-3.5 w-3.5" />
