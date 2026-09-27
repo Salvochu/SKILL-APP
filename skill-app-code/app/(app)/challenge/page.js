@@ -56,7 +56,7 @@ export default async function ChallengePage() {
         streak={checklist.streak}
       />
 
-      <ChallengeStart challengeDay={challengeDay} />
+      <ChallengeStart />
 
       {completion.completed ? (
         <ChallengeComplete

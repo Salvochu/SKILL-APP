@@ -26,7 +26,12 @@ export default function ChallengeToday({ day, challengeDay, mesoId, variant, ite
       </div>
 
       <div className="flex flex-col gap-3 border-t border-border p-4">
-        <TodayVideo day={challengeDay} loomId={day.loomId} title={`Day ${day.day}: ${day.title}`} />
+        <TodayVideo
+          day={challengeDay}
+          loomId={day.loomId}
+          title={`Day ${day.day}: ${day.title}`}
+          watched={items?.video === true}
+        />
         {trainHref ? (
           <GuardedStartLink
             href={trainHref}

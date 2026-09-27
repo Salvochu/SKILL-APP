@@ -2,20 +2,16 @@ import LoomEmbed from "@/components/challenge/LoomEmbed";
 import SetupSteps from "@/components/challenge/SetupSteps";
 import { getLesson } from "@/lib/challenge/curriculum";
 
-// "Before you start" - pinned at the top of the Challenge tab. Open on
-// days 1-2, collapsed to a one-line summary after. The welcome video
-// plus the four setup non-negotiables. The shine animation only runs
-// while it's open - it's there to say "look here, new thing", which
-// stops being true once it collapses.
-export default function ChallengeStart({ challengeDay = 1 }) {
+// "Before you start" - pinned at the top of the Challenge tab, collapsed
+// by default. Reaching this card at all means "Start my 14 days" has
+// already been pressed (it lives on the separate ChallengePrep screen,
+// shown only before that), so the shine and open-by-default state that
+// make sense there would just be stale noise here.
+export default function ChallengeStart() {
   const welcome = getLesson("start-here");
-  const open = challengeDay <= 2;
 
   return (
-    <details
-      open={open}
-      className={`${open ? "challenge-start " : ""}group relative overflow-hidden rounded-card border border-accent/30 [&_summary::-webkit-details-marker]:hidden`}
-    >
+    <details className="group relative overflow-hidden rounded-card border border-accent/30 [&_summary::-webkit-details-marker]:hidden">
       <div
         aria-hidden="true"
         className="cc-bloom pointer-events-none absolute -left-20 -top-16 h-52 w-52 rounded-full blur-3xl"

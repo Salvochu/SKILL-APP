@@ -4,11 +4,11 @@ import { isChallengeDayComplete } from "@/lib/data/challenge";
 
 // The whole 14 days as a list. Past and current days open to their
 // checklist so a day can be backfilled; future days show a preview only.
-// The section itself is collapsible (open by default) - the page is long
-// once this and Learn are both expanded, so it's worth tucking away.
+// Collapsed by default - today's own card above already has what matters
+// most, this is reference material someone opens on purpose.
 export default function ChallengeTimeline({ challengeDay, byDay = {}, byDayAt = {}, readOnly = false }) {
   return (
-    <details open className="group flex flex-col gap-2 [&_summary::-webkit-details-marker]:hidden">
+    <details className="group flex flex-col gap-2 [&_summary::-webkit-details-marker]:hidden">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-1">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
           The 14 days
