@@ -36,8 +36,8 @@ export default function ChangePasswordForm() {
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Change password</h2>
+    <div className="flex flex-col gap-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-dim">Change password</h3>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
           New password
@@ -80,6 +80,6 @@ export default function ChangePasswordForm() {
           {saving ? "Updating..." : "Update password"}
         </button>
       </form>
-    </section>
+    </div>
   );
 }

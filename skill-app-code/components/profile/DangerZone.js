@@ -24,8 +24,8 @@ export default function DangerZone() {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-danger/30 bg-surface p-4">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Danger zone</h2>
+    <div className="flex flex-col gap-3">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-dim">Danger zone</h3>
 
       <button
         type="button"
@@ -78,6 +78,6 @@ export default function DangerZone() {
           </div>
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

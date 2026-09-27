@@ -5,8 +5,8 @@ import { signOut } from "@/app/actions";
 // account" and risk being confused with it.
 export default function SignOutCard() {
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Session</h2>
+    <div className="flex flex-col gap-3">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-dim">Session</h3>
       <form action={signOut}>
         <button
           type="submit"
@@ -15,6 +15,6 @@ export default function SignOutCard() {
           Sign out
         </button>
       </form>
-    </section>
+    </div>
   );
 }

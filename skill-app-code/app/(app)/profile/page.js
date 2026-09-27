@@ -3,10 +3,8 @@ import { redirect } from "next/navigation";
 import { getProfile, getMembership } from "@/lib/data/profile";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import ProfileForm from "@/components/profile/ProfileForm";
-import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
 import ChallengeEquipmentCard from "@/components/profile/ChallengeEquipmentCard";
-import SignOutCard from "@/components/profile/SignOutCard";
-import DangerZone from "@/components/profile/DangerZone";
+import AccountCard from "@/components/profile/AccountCard";
 
 export const metadata = { title: "Profile" };
 
@@ -29,9 +27,9 @@ export default function ProfilePage() {
         <ChallengeEquipmentSection />
       </Suspense>
 
-      <ChangePasswordForm />
-      <SignOutCard />
-      <DangerZone />
+      <Suspense fallback={null}>
+        <AccountCard />
+      </Suspense>
     </div>
   );
 }
