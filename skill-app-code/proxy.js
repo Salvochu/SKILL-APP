@@ -1,6 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
+// Mirrors lib/data/challenge.js's CHALLENGE_TEMPLATE_ID/CHALLENGE_DAYS/
+// GRACE_DAYS - duplicated here rather than imported, since that module
+// pulls in next/headers-based session helpers that don't belong in Edge
+// middleware (same reasoning as the reminders cron, which recomputes
+// this in bulk with the admin client instead of the request-scoped
+// helpers).
+const CHALLENGE_TEMPLATE_ID = "main-character-14";
+const CHALLENGE_DAYS = 14;
+const GRACE_DAYS = 3;
+const DAY_MS = 86400000;
+
 // Next.js 16 renamed middleware.js -> proxy.js (same mechanics, new name/
 // export). This runs on every matched request, before rendering.
 //
@@ -90,6 +101,49 @@ export async function proxy(request) {
       return NextResponse.redirect(url);
     }
     if (!lapsed && pathname === "/paused") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    // A challenge account past its 14 days + grace window without
+    // converting gets the same full-lock treatment behind
+    // /challenge-ended, instead of just losing access to the logger
+    // while the rest of the app stays browsable.
+    if (profile?.membership === "challenge") {
+      const { data: run } = await supabase
+        .from("user_mesocycles")
+        .select("start_date, started_at")
+        .eq("user_id", user.id)
+        .eq("template_id", CHALLENGE_TEMPLATE_ID)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const basis = run?.started_at || run?.start_date;
+      let challengeLapsed = false;
+      if (basis) {
+        const startMs = Date.parse(`${basis}T00:00:00Z`);
+        const todayMs = Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+        const daysSince = Math.max(0, Math.floor((todayMs - startMs) / DAY_MS));
+        challengeLapsed = daysSince + 1 > CHALLENGE_DAYS + GRACE_DAYS;
+      }
+
+      if (challengeLapsed && pathname !== "/challenge-ended") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/challenge-ended";
+        url.search = "";
+        return NextResponse.redirect(url);
+      }
+      if (!challengeLapsed && pathname === "/challenge-ended") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/dashboard";
+        url.search = "";
+        return NextResponse.redirect(url);
+      }
+    } else if (pathname === "/challenge-ended") {
+      // Not (or no longer) a challenge account - nothing to lock here.
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       url.search = "";

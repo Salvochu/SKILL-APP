@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 export default function SetPasswordForm() {
   const router = useRouter();
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState("idle"); // idle | saving | done | error
   const [error, setError] = useState(null);
 
@@ -15,6 +16,10 @@ export default function SetPasswordForm() {
     e.preventDefault();
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Passwords do not match.");
       return;
     }
     setStatus("saving");
@@ -54,6 +59,19 @@ export default function SetPasswordForm() {
           className="auth-input"
         />
         <span className="text-xs font-normal text-dim">At least 8 characters.</span>
+      </label>
+
+      <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
+        Confirm password
+        <input
+          type="password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          required
+          minLength={8}
+          autoComplete="new-password"
+          className="auth-input"
+        />
       </label>
 
       {error ? (

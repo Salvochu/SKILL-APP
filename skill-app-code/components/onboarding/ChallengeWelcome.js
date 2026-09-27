@@ -181,13 +181,18 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
             </div>
 
             {needsHomeScreen ? (
-              <div className="flex flex-col gap-1.5 rounded-field border border-border bg-bg px-4 py-3.5">
-                <p className="text-sm font-medium text-fg">Add SKILL to your Home Screen first</p>
-                <p className="text-xs text-muted">
-                  iPhone only allows reminders for apps added to your Home Screen. Tap the Share
-                  button in Safari, then &quot;Add to Home Screen&quot;. Open SKILL from there and
-                  turn reminders on in Settings.
-                </p>
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                  <IconShare className="h-4 w-4" />
+                </span>
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium text-fg">Add SKILL to your Home Screen first</p>
+                  <p className="text-xs text-muted">
+                    iPhone only allows reminders for apps added to your Home Screen. Tap the Share
+                    button in Safari, then &quot;Add to Home Screen&quot;. Open SKILL from there and
+                    turn reminders on in Settings.
+                  </p>
+                </div>
               </div>
             ) : (
               <>
@@ -236,6 +241,16 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
         )}
       </div>
     </div>
+  );
+}
+
+function IconShare(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 3v12" />
+      <path d="m8 7 4-4 4 4" />
+      <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+    </svg>
   );
 }
 

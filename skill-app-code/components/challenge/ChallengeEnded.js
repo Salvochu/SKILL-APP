@@ -2,10 +2,13 @@ import Link from "next/link";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getJourney } from "@/lib/data/journey";
 import { KEEP_TRAINING_URL } from "@/lib/links";
+import { signOut } from "@/app/actions";
 
-// Shown in place of the logger once a challenge account is past its 14
-// days (+ grace) without converting. Not a dead end: the rest of the app
-// stays readable, and this points at both ways forward.
+// The whole app once a challenge account is past its 14 days + grace
+// without converting - the proxy sends every in-app route to
+// /challenge-ended, same full-lock treatment as a lapsed paid membership
+// (components/membership/MembershipPaused.js). Only two ways forward:
+// keep training, or work with Salvador 1:1.
 export default async function ChallengeEnded() {
   const [summary, journey] = await Promise.all([getWorkoutSummary(), getJourney()]);
   const workouts = summary?.workouts ?? 0;
@@ -57,17 +60,14 @@ export default async function ChallengeEnded() {
         </Link>
       </section>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        <Link href="/progress" className="font-medium text-muted transition-colors hover:text-fg">
-          See your progress
-        </Link>
-        <Link href="/history" className="font-medium text-muted transition-colors hover:text-fg">
-          Your workout history
-        </Link>
-        <Link href="/library" className="font-medium text-muted transition-colors hover:text-fg">
-          Exercise library
-        </Link>
-      </div>
+      <form action={signOut} className="self-center">
+        <button
+          type="submit"
+          className="text-xs font-medium text-dim transition-colors hover:text-fg"
+        >
+          Sign out
+        </button>
+      </form>
     </div>
   );
 }
