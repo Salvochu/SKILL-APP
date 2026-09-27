@@ -1,4 +1,4 @@
-import LoomEmbed from "@/components/challenge/LoomEmbed";
+import WelcomeVideo from "@/components/challenge/WelcomeVideo";
 import SetupSteps from "@/components/challenge/SetupSteps";
 import { getLesson } from "@/lib/challenge/curriculum";
 
@@ -30,7 +30,7 @@ export default function ChallengeStart() {
       </summary>
 
       <div className="relative flex flex-col gap-4 border-t border-accent/20 p-5">
-        <LoomEmbed id={welcome?.loomId} title="Start here: how the 14 days work" />
+        <WelcomeVideo loomId={welcome?.loomId} title="Start here: how the 14 days work" />
         <SetupSteps />
       </div>
     </details>

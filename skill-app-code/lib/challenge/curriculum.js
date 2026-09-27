@@ -145,29 +145,32 @@ export function getChallengeDay(day) {
 }
 
 // The "Before you start" setup steps, pinned at the top of the Challenge
-// tab (open on days 1-2, collapsed after).
+// tab (open on days 1-2, collapsed after). Deliberately just the one-time
+// things to do before day 1 starts - the ongoing rules for the 14 days
+// (weigh in daily, three sessions plus cardio) live in SETUP_NOTE instead,
+// so this list doesn't mix "do this once" with "do this every day".
 export const SETUP_STEPS = [
   {
     title: "Take your day 1 photos",
     detail:
-      "Front, side and back. Same spot, same light, same time of day. You will compare them to your day 14 photos, and that is the real before and after.",
+      "Front, side and back. Same spot, same light, same time of day. Upload them in the app now, then compare with your day 14 photos for the real before and after.",
+    action: "photos",
   },
   {
-    title: "Weigh in every morning",
-    detail:
-      "First thing, before food or water, and log it in the app. Do not read into one day. The daily number bounces around; the 14-day line is what tells the truth.",
+    title: "Watch: how to read your meal plan",
+    detail: "Portions, swaps and the grocery list, matched to your bodyweight from your welcome email.",
+    action: "meal-video",
   },
   {
-    title: "Three sessions, plus one cardio",
-    detail:
-      "Alternate Day A and Day B with a rest day between lifts, and add one easy 20 to 30 minute cardio session each week. If life gets in the way, do two sessions. Never zero.",
-  },
-  {
-    title: "Follow the meal plan",
-    detail:
-      'It is in your welcome email, matched to your bodyweight. Portions, not calorie counting. Watch "How to read your meal plan" in Learn below before your first shop.',
+    title: "Do your food shop",
+    detail: "Once you've watched the video above, shop for the week using your plan. Portions, not calorie counting.",
   },
 ];
+
+// Shown under the setup steps as a short reminder, not a numbered step -
+// these are the ongoing rules for the 14 days, not one-time setup.
+export const SETUP_NOTE =
+  "Once you're in: weigh in every morning before food or water, and aim for three sessions a week plus one cardio session. Two is fine if life gets in the way. Never zero.";
 
 // Short course, shown under the day timeline. `kind: "vsl"` gets the
 // "work with me" CTA at the end.
