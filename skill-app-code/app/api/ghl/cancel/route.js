@@ -1,9 +1,9 @@
-import { createAdminClient } from "@/lib/supabase/admin";
 import {
   jsonResponse as json,
   verifyGhlSignature,
   extractContact,
 } from "@/lib/ghl/webhook";
+import { lapseMembershipByEmail } from "@/lib/membership";
 
 // GHL calls this when a paid app subscription ends: a voluntary cancel
 // (fire this at the end of the paid period, not the moment they click
@@ -37,42 +37,13 @@ export async function POST(request) {
     return json({ error: "no email found in payload" }, 422);
   }
 
-  const supabase = createAdminClient();
-
-  // Look up the auth user by email. No pagination needed at this scale;
-  // listUsers is the only admin lookup-by-email available.
-  const { data: list, error: listError } = await supabase.auth.admin.listUsers();
-  if (listError) {
-    console.error("ghl/cancel listUsers failed:", listError.message);
-    return json({ error: "could not look up account" }, 502);
-  }
-  const user = list?.users?.find((u) => u.email?.toLowerCase() === email);
-  if (!user) {
-    // Nothing to do - no account for this email. Not an error: GHL may
-    // fire for a contact who never finished sign-up.
-    return json({ ok: true, email, skipped: "no account" });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("membership")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (profile?.membership !== "member") {
-    return json({ ok: true, email, skipped: `membership is ${profile?.membership ?? "null"}` });
-  }
-
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({ membership: "lapsed" })
-    .eq("user_id", user.id);
-  if (updateError) {
-    console.error("ghl/cancel update failed:", updateError.message);
+  try {
+    const result = await lapseMembershipByEmail(email);
+    return json({ ...result, email });
+  } catch (err) {
+    console.error("ghl/cancel failed:", err?.message);
     return json({ error: "could not update membership" }, 502);
   }
-
-  return json({ ok: true, email, membership: "lapsed" });
 }
 
 export function GET() {

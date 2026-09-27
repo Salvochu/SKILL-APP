@@ -4,6 +4,7 @@ import ExportRow from "@/components/menu/ExportRow";
 import { getIsCoach } from "@/lib/data/coach";
 import { getMembership } from "@/lib/data/profile";
 import { getChallengeAccess, getChallengeHistory } from "@/lib/data/challenge";
+import { MANAGE_MEMBERSHIP_URL } from "@/lib/links";
 
 export const metadata = { title: "Menu" };
 
@@ -50,6 +51,9 @@ export default function MenuPage() {
         ))}
         <Suspense fallback={null}>
           <ChallengeHistoryRow />
+        </Suspense>
+        <Suspense fallback={null}>
+          <ManageMembershipRow />
         </Suspense>
         <ExportRow />
         <TapLink href={SETTINGS.href} className="block transition-colors hover:bg-surface-2">
@@ -125,6 +129,37 @@ async function ChallengeHistoryRow() {
         tint="#fc7605"
       />
     </TapLink>
+  );
+}
+
+// A paying member manages or cancels their own subscription directly in
+// Stripe's Customer Portal - no need to email in. Only relevant with an
+// actual subscription to manage.
+async function ManageMembershipRow() {
+  if ((await getMembership()) !== "member") return null;
+  return (
+    <a
+      href={MANAGE_MEMBERSHIP_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block transition-colors hover:bg-surface-2"
+    >
+      <MenuRow
+        label="Manage membership"
+        body="Update your card or cancel your subscription"
+        icon={IconCard}
+        tint="#3fb6a8"
+      />
+    </a>
+  );
+}
+
+function IconCard(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+    </svg>
   );
 }
 

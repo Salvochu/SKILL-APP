@@ -11,3 +11,12 @@ export const BOOKING_URL =
 export const COACHING_PAYMENT_URL =
   process.env.NEXT_PUBLIC_COACHING_PAYMENT_URL ||
   "https://buy.stripe.com/bJe00j8DE0uqcIH1ZugrS00";
+
+// Stripe's hosted Customer Portal: a paying member manages or cancels
+// their own SKILL App Membership subscription here directly, no need to
+// email in. A cancellation here changes the same Stripe subscription
+// object the "SKILL App Cancellation" GHL workflow already watches, so
+// it should reach it the same way any other cancellation does.
+export const MANAGE_MEMBERSHIP_URL =
+  process.env.NEXT_PUBLIC_MANAGE_MEMBERSHIP_URL ||
+  "https://billing.stripe.com/p/login/bJe00j8DE0uqcIH1ZugrS00";
