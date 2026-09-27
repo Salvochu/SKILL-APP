@@ -4,6 +4,7 @@ import { getChallengeAccess, getChallengeChecklist, getChallengeCompletion } fro
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getChallengeDay, CHALLENGE_DAYS } from "@/lib/challenge/curriculum";
 import { fromKg } from "@/lib/units";
+import BackToTop from "@/components/challenge/BackToTop";
 import ChallengeClimb from "@/components/challenge/ChallengeClimb";
 import ChallengePrep from "@/components/challenge/ChallengePrep";
 import ChallengeStart from "@/components/challenge/ChallengeStart";
@@ -90,21 +91,7 @@ export default async function ChallengePage() {
 
       <ChallengeLearn variant={variant} challengeDay={challengeDay} totalDays={total} />
 
-      <a
-        href="#top"
-        className="inline-flex items-center gap-1.5 self-center rounded-full border border-accent/40 bg-accent-soft px-4 py-2 text-xs font-semibold uppercase tracking-wider text-accent transition-colors hover:bg-accent hover:text-black"
-      >
-        <IconUp className="h-3.5 w-3.5" />
-        Back to top
-      </a>
+      <BackToTop />
     </div>
-  );
-}
-
-function IconUp(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M12 19V5M5 12l7-7 7 7" />
-    </svg>
   );
 }
