@@ -4,11 +4,9 @@ import { useState } from "react";
 import LessonVideoModal from "@/components/challenge/LessonVideoModal";
 import { getLesson } from "@/lib/challenge/curriculum";
 
-// The "Watch: how to read your meal plan" setup step's action - opens the
-// lesson in a popup instead of embedding the player inline, so the setup
-// list stays a list of steps rather than a list of videos. The play icon
-// lives next to the step's title instead (see SetupSteps.js), so this
-// stays a plain text pill.
+// The "Watch: how to read your meal plan" setup step's action - a small
+// icon on the right of the step's title (see SetupSteps.js) that opens
+// the lesson in a popup, instead of a pill button underneath.
 export default function MealPlanVideoButton() {
   const [open, setOpen] = useState(false);
   const lesson = getLesson("read-your-meal-plan");
@@ -18,9 +16,10 @@ export default function MealPlanVideoButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-1 inline-flex w-fit items-center rounded-full border border-accent/40 bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
+        aria-label="Watch: how to read your meal plan"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent-soft text-accent transition-colors hover:bg-accent hover:text-black"
       >
-        Watch video
+        <IconPlay className="ml-0.5 h-3.5 w-3.5" />
       </button>
       {open ? (
         <LessonVideoModal
@@ -31,5 +30,13 @@ export default function MealPlanVideoButton() {
         />
       ) : null}
     </>
+  );
+}
+
+function IconPlay(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M8 5v14l11-7z" />
+    </svg>
   );
 }
