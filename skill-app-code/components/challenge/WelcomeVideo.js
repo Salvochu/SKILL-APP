@@ -39,15 +39,13 @@ export default function WelcomeVideo({ loomId, title }) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="-mx-1 flex items-center gap-3 rounded-field px-1 py-1 text-left transition-colors hover:bg-surface-2"
+        className="-mx-1 flex flex-col gap-0.5 rounded-field px-1 py-1 text-left transition-colors hover:bg-surface-2"
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-black">
-          <IconPlay className="ml-0.5 h-3.5 w-3.5" />
-        </span>
-        <span className="flex min-w-0 flex-col">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <IconPlay className="h-3.5 w-3.5 shrink-0 text-accent" />
           <span className="truncate text-sm font-medium text-fg">{title}</span>
-          <span className="text-xs text-dim">Watched. Tap to watch again.</span>
         </span>
+        <span className="text-xs text-dim">Watched. Tap to watch again.</span>
       </button>
     );
   }

@@ -145,10 +145,11 @@ export function getChallengeDay(day) {
 }
 
 // The "Before you start" setup steps, pinned at the top of the Challenge
-// tab (open on days 1-2, collapsed after). Deliberately just the one-time
-// things to do before day 1 starts - the ongoing rules for the 14 days
-// (weigh in daily, three sessions plus cardio) live in SETUP_NOTE instead,
-// so this list doesn't mix "do this once" with "do this every day".
+// tab (open on days 1-2, collapsed after). The first three are one-time
+// things to do before day 1; the last is the ongoing rules for the 14
+// days themselves (weigh in daily, three sessions plus cardio) - kept as
+// a numbered item too rather than a separate note, so it doesn't look
+// like an orphaned line under the list.
 export const SETUP_STEPS = [
   {
     title: "Take your day 1 photos",
@@ -165,12 +166,12 @@ export const SETUP_STEPS = [
     title: "Do your food shop",
     detail: "Once you've watched the video above, shop for the week using your plan. Portions, not calorie counting.",
   },
+  {
+    title: "Once you're in",
+    detail:
+      "Weigh in every morning before food or water, and aim for three sessions a week plus one cardio session. Two is fine if life gets in the way. Never zero.",
+  },
 ];
-
-// Shown under the setup steps as a short reminder, not a numbered step -
-// these are the ongoing rules for the 14 days, not one-time setup.
-export const SETUP_NOTE =
-  "Once you're in: weigh in every morning before food or water, and aim for three sessions a week plus one cardio session. Two is fine if life gets in the way. Never zero.";
 
 // Short course, shown under the day timeline. `kind: "vsl"` gets the
 // "work with me" CTA at the end.
