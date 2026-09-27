@@ -162,6 +162,72 @@ export const getChallengeChecklist = cache(async () => {
   return { byDay, byDayAt, completeDays, streak };
 });
 
+// A finished (or abandoned) challenge run's final state, for the
+// post-challenge recap in Menu once someone has left the challenge tier
+// (almost always by converting to a paying member). Unlike
+// getChallengeChecklist/getChallengeAccess this is NOT gated on
+// membership === "challenge" - the whole point is showing it after that
+// membership value is gone.
+export const getChallengeHistory = cache(async () => {
+  const none = { found: false };
+  const user = await getSessionUser();
+  if (!user) return none;
+  const supabase = await getServerSupabase();
+
+  const { data: run } = await supabase
+    .from("user_mesocycles")
+    .select("id, start_date, started_at")
+    .eq("user_id", user.id)
+    .eq("template_id", CHALLENGE_TEMPLATE_ID)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!run || !run.started_at) return none;
+
+  const startMs = Date.parse(`${run.started_at}T00:00:00Z`);
+  const todayMs = Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+  const daysSince = Math.max(0, Math.floor((todayMs - startMs) / DAY_MS));
+  const challengeDay = Math.min(daysSince + 1, CHALLENGE_DAYS);
+
+  const { data: checks } = await supabase
+    .from("challenge_checklist")
+    .select("day, items, items_at")
+    .eq("user_id", user.id);
+  const byDay = {};
+  const byDayAt = {};
+  for (const row of checks ?? []) {
+    byDay[row.day] = row.items ?? {};
+    byDayAt[row.day] = row.items_at ?? {};
+  }
+  const completeDays = [];
+  for (let d = 1; d <= CHALLENGE_DAYS; d++) {
+    if (isChallengeDayComplete(byDay[d])) completeDays.push(d);
+  }
+  let streak = 0;
+  for (let d = challengeDay; d >= 1; d--) {
+    if (completeDays.includes(d)) streak++;
+    else if (d < challengeDay) break;
+  }
+
+  const completion = await getChallengeCompletion();
+
+  return {
+    found: true,
+    challengeDay,
+    totalDays: CHALLENGE_DAYS,
+    completeDays,
+    streak,
+    byDay,
+    byDayAt,
+    sessions: completion.sessions,
+    targetSessions: completion.targetSessions,
+    perfectDays: completion.perfectDays,
+    volumeKg: completion.volumeKg,
+    topMuscles: completion.muscles.top,
+    completed: completion.completed,
+  };
+});
+
 // Everything the "challenge complete" badge and its share card need:
 // whether the 14-day plan is finished, and the numbers to show for it.
 // `completed` is true once they have logged the target number of

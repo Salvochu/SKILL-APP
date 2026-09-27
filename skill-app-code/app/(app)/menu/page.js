@@ -3,7 +3,7 @@ import TapLink from "@/components/TapLink";
 import ExportRow from "@/components/menu/ExportRow";
 import { getIsCoach } from "@/lib/data/coach";
 import { getMembership } from "@/lib/data/profile";
-import { getChallengeAccess } from "@/lib/data/challenge";
+import { getChallengeAccess, getChallengeHistory } from "@/lib/data/challenge";
 
 export const metadata = { title: "Menu" };
 
@@ -48,6 +48,9 @@ export default function MenuPage() {
             <MenuRow label={it.label} body={it.body} icon={it.icon} tint={it.tint} />
           </TapLink>
         ))}
+        <Suspense fallback={null}>
+          <ChallengeHistoryRow />
+        </Suspense>
         <ExportRow />
         <TapLink href={SETTINGS.href} className="block transition-colors hover:bg-surface-2">
           <MenuRow label={SETTINGS.label} body={SETTINGS.body} icon={SETTINGS.icon} tint={SETTINGS.tint} />
@@ -102,6 +105,36 @@ async function WorkWithMeEntry() {
         />
       </TapLink>
     </div>
+  );
+}
+
+// Once someone has left the challenge tier (converted to a paying
+// member, most commonly) but has a finished run behind them, this is
+// where the climb, streak and checklist history they earned still live -
+// the live /challenge tab is gone along with the "challenge" membership.
+async function ChallengeHistoryRow() {
+  if ((await getMembership()) === "challenge") return null;
+  const history = await getChallengeHistory();
+  if (!history.found) return null;
+  return (
+    <TapLink href="/challenge/history" className="block transition-colors hover:bg-surface-2">
+      <MenuRow
+        label="Your 14-Day Challenge"
+        body="Your climb, streak and checklist history"
+        icon={IconChallengeFlag}
+        tint="#fc7605"
+      />
+    </TapLink>
+  );
+}
+
+function IconChallengeFlag(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M6 21V4" />
+      <path d="M6 4h13l-3 4 3 4H6" />
+      <circle cx="6" cy="21" r="1" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 
