@@ -23,7 +23,6 @@ export default function MesocyclePanel({
   const [error, setError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
-  const [showGraduateChoice, setShowGraduateChoice] = useState(true);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -57,7 +56,7 @@ export default function MesocyclePanel({
     // brand new beginner would - but "Start Foundations, your first
     // month" is the exact split they just spent up to 14 days on. Offer
     // an explicit choice instead of quietly re-suggesting it as if new.
-    if (hasChallengeHistory && isBeginner && showGraduateChoice) {
+    if (hasChallengeHistory && isBeginner) {
       return (
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
@@ -78,13 +77,6 @@ export default function MesocyclePanel({
           >
             Start a new program
           </TapLink>
-          <button
-            type="button"
-            onClick={() => setShowGraduateChoice(false)}
-            className="self-center text-xs font-medium text-dim hover:text-fg"
-          >
-            Not now
-          </button>
         </div>
       );
     }
