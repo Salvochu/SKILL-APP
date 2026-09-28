@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveChallengeSetup } from "@/app/(app)/dashboard/actions";
-import { subscribeToPush, isIOS, isStandalone } from "@/lib/pushClient";
+import { subscribeToPush, isIOS, isAndroid, isStandalone } from "@/lib/pushClient";
 
 // First-run flow for a free challenge sign-up. Short: welcome + how it
 // works, one equipment question, a reminders prompt, then straight to
@@ -23,10 +23,13 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
   const [notifBusy, setNotifBusy] = useState(false);
   const [notifError, setNotifError] = useState(null);
   const [needsHomeScreen, setNeedsHomeScreen] = useState(false);
+  const [showAndroidHint, setShowAndroidHint] = useState(false);
 
   useEffect(() => {
-    async function check() {
-      setNeedsHomeScreen(isIOS() && !isStandalone());
+    function check() {
+      const standalone = isStandalone();
+      setNeedsHomeScreen(isIOS() && !standalone);
+      setShowAndroidHint(isAndroid() && !standalone);
     }
     check();
   }, []);
@@ -181,21 +184,49 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
             </div>
 
             {needsHomeScreen ? (
-              <div className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-                  <IconShare className="h-4 w-4" />
-                </span>
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium text-fg">Add SKILL to your Home Screen first</p>
-                  <p className="text-xs text-muted">
-                    iPhone only allows reminders for apps added to your Home Screen. Tap the Share
-                    button in Safari, then &quot;Add to Home Screen&quot;. Open SKILL from there and
-                    turn reminders on in Settings.
-                  </p>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                    <IconShare className="h-4 w-4" />
+                  </span>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-medium text-fg">Add SKILL to your Home Screen first</p>
+                    <p className="text-xs text-muted">
+                      iPhone only allows reminders for apps added to your Home Screen. Tap the Share
+                      button in Safari, then &quot;Add to Home Screen&quot;. Open SKILL from there and
+                      turn reminders on in Settings.
+                    </p>
+                  </div>
                 </div>
+                <img
+                  src="/onboarding/add-to-home-ios.jpg"
+                  alt="Safari share sheet with Add to Home Screen highlighted"
+                  className="w-full rounded-field border border-border"
+                />
               </div>
             ) : (
               <>
+                {showAndroidHint ? (
+                  <div className="flex flex-col gap-3 rounded-field border border-border bg-surface-2 p-3">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                        <IconShare className="h-4 w-4" />
+                      </span>
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium text-fg">Tip: add SKILL to your Home Screen too</p>
+                        <p className="text-xs text-muted">
+                          Not required for reminders, but it opens like a real app. In Chrome&apos;s
+                          menu, tap &quot;Install and create shortcut&quot;.
+                        </p>
+                      </div>
+                    </div>
+                    <img
+                      src="/onboarding/add-to-home-android.jpg"
+                      alt="Chrome menu with Install and create shortcut highlighted"
+                      className="w-full rounded-field border border-border"
+                    />
+                  </div>
+                ) : null}
                 {notifError ? <p className="text-sm text-danger">{notifError}</p> : null}
                 <button
                   type="button"

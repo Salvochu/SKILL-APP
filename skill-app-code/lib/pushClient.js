@@ -35,6 +35,15 @@ export function isIOS() {
   return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
 }
 
+// Android Chrome supports web push straight from a browser tab (no
+// install needed) - this is only used to decide whether to show the
+// optional "add to Home Screen" screenshot in onboarding, not to gate
+// push the way isIOS() does.
+export function isAndroid() {
+  if (typeof navigator === "undefined") return false;
+  return /Android/.test(navigator.userAgent || "");
+}
+
 export function isStandalone() {
   if (typeof window === "undefined") return false;
   return (
