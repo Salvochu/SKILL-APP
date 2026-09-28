@@ -206,7 +206,7 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
 
             {needsHomeScreen ? (
               <p className="text-sm text-muted">
-                iPhone only turns these on for apps added to your Home Screen - next step shows you
+                iPhone only turns these on for apps added to your Home Screen. The next step shows you
                 exactly how.
               </p>
             ) : (
