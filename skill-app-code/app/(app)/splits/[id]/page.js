@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSplits } from "@/lib/data/splits";
 import { getMesocycleTemplates, getActiveMesocycle } from "@/lib/data/mesocycles";
-import { getBeginnerContext } from "@/lib/data/profile";
+import { getBeginnerContext, getMembership } from "@/lib/data/profile";
 import SplitDetail from "@/components/splits/SplitDetail";
+import ChallengeProgramLocked from "@/components/challenge/ChallengeProgramLocked";
 
 export const instant = false;
 
@@ -25,6 +26,13 @@ export default function SplitPage({ params }) {
 }
 
 async function Body({ params }) {
+  // A challenge account's plan is the challenge itself - the full splits
+  // library (exercises, programs, everything) is a membership feature,
+  // gated here before any split content loads at all, not just at the
+  // "start program"/"log this" buttons further down the page.
+  const membership = await getMembership();
+  if (membership === "challenge") return <ChallengeProgramLocked />;
+
   const { id } = await params;
   const [splits, templates, active, beginner] = await Promise.all([
     getSplits(),
