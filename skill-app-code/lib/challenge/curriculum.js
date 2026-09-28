@@ -152,9 +152,9 @@ export function getChallengeDay(day) {
 // like an orphaned line under the list.
 export const SETUP_STEPS = [
   {
-    title: "Take your day 1 photos",
+    title: "Take your day 1 photos and log your weight",
     detail:
-      "Front, side and back. Same spot, same light, same time of day. Upload them in the app now, then compare with your day 14 photos for the real before and after.",
+      "Photos: front, side and back, same spot, same light, same time of day. Weight: first thing, before food or water. Upload both in the app now, then compare with your day 14 photos for the real before and after.",
     action: "photos",
   },
   {
