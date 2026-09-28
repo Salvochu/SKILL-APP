@@ -93,11 +93,13 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
       <div className="relative flex max-h-[90vh] w-full max-w-md flex-col gap-5 overflow-y-auto rounded-t-2xl border border-border bg-surface p-6 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-6">
 
         {step < 4 ? (
-          <div className="flex gap-1.5">
+          <div className="flex gap-1">
             {[0, 1, 2, 3].map((i) => (
               <span
                 key={i}
-                className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-accent" : "bg-border"}`}
+                className={`h-0.5 flex-1 rounded-full transition-colors ${
+                  i <= step ? "bg-gradient-to-r from-accent to-accent-2" : "bg-border"
+                }`}
               />
             ))}
           </div>
