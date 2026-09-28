@@ -10,7 +10,10 @@ import { useState } from "react";
 // and the welcome video) or "horizontal" (16:9 - the Learn lessons).
 // `locked`, with `lockedLabel`, shows a lock placeholder instead of the
 // video regardless of `id` - used for the VSL, which only unlocks on
-// Day 14 (see ChallengeLearn.js).
+// Day 14 (see ChallengeLearn.js). `loomLink` adds a "Watch on Loom" pill
+// under the player, straight to the share page - used only for the Learn
+// lessons, where the Loom page itself may have links/resources attached
+// that the embedded player doesn't surface.
 export default function LoomEmbed({
   id,
   title = "Watch",
@@ -18,6 +21,7 @@ export default function LoomEmbed({
   orientation = "vertical",
   locked = false,
   lockedLabel = "Unlocks soon",
+  loomLink = false,
   onPlay,
 }) {
   const [playing, setPlaying] = useState(false);
@@ -46,37 +50,48 @@ export default function LoomEmbed({
     );
   }
 
-  if (playing) {
-    return (
-      <div className={`relative ${aspect} w-full overflow-hidden rounded-field border border-border bg-black ${className}`}>
-        <iframe
-          src={`https://www.loom.com/embed/${id}?autoplay=1&hide_owner=true&hide_share=true&hideEmbedTopBar=true`}
-          title={title}
-          allow="autoplay; fullscreen; picture-in-picture"
-          allowFullScreen
-          className="absolute inset-0 h-full w-full"
-        />
-      </div>
-    );
-  }
-
   return (
-    <button
-      type="button"
-      onClick={() => {
-        setPlaying(true);
-        onPlay?.();
-      }}
-      className={`group relative flex ${aspect} w-full items-center justify-center overflow-hidden rounded-field border border-border bg-gradient-to-b from-surface-2 to-surface transition-colors hover:border-border-strong ${className}`}
-      aria-label={`Play video: ${title}`}
-    >
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-black shadow-lg transition-transform group-hover:scale-105">
-        <IconPlay className="ml-0.5 h-6 w-6" />
-      </span>
-      <span className="absolute bottom-0 left-0 right-0 truncate bg-gradient-to-t from-black/80 to-transparent p-3 text-left text-xs font-medium text-white">
-        {title}
-      </span>
-    </button>
+    <div className="flex flex-col gap-2">
+      {playing ? (
+        <div className={`relative ${aspect} w-full overflow-hidden rounded-field border border-border bg-black ${className}`}>
+          <iframe
+            src={`https://www.loom.com/embed/${id}?autoplay=1&hide_owner=true&hide_share=true&hideEmbedTopBar=true`}
+            title={title}
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            className="absolute inset-0 h-full w-full"
+          />
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            setPlaying(true);
+            onPlay?.();
+          }}
+          className={`group relative flex ${aspect} w-full items-center justify-center overflow-hidden rounded-field border border-border bg-gradient-to-b from-surface-2 to-surface transition-colors hover:border-border-strong ${className}`}
+          aria-label={`Play video: ${title}`}
+        >
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-black shadow-lg transition-transform group-hover:scale-105">
+            <IconPlay className="ml-0.5 h-6 w-6" />
+          </span>
+          <span className="absolute bottom-0 left-0 right-0 truncate bg-gradient-to-t from-black/80 to-transparent p-3 text-left text-xs font-medium text-white">
+            {title}
+          </span>
+        </button>
+      )}
+      {loomLink ? (
+        <a
+          href={`https://www.loom.com/share/${id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex w-fit items-center gap-1.5 self-start rounded-full border border-accent/40 bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
+        >
+          <IconExternal className="h-3 w-3" />
+          Watch on Loom
+        </a>
+      ) : null}
+    </div>
   );
 }
 
@@ -92,6 +107,14 @@ function IconPlay(props) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
       <path d="M8 5v14l11-7z" />
+    </svg>
+  );
+}
+function IconExternal(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <path d="M15 3h6v6M10 14 21 3" />
     </svg>
   );
 }

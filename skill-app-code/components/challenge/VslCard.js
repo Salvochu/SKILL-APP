@@ -27,6 +27,7 @@ export default function VslCard({ lesson, loomId, locked, lockedLabel }) {
           locked={locked}
           lockedLabel={lockedLabel}
           onPlay={() => setWatched(true)}
+          loomLink
         />
       </div>
       {watched ? (

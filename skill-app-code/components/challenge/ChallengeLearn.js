@@ -58,6 +58,7 @@ export default function ChallengeLearn({ variant = "Full Gym", challengeDay = 1,
                   orientation={lesson.orientation}
                   locked={eatingOutLocked}
                   lockedLabel="Unlocks on Day 2"
+                  loomLink
                 />
                 {isFormWalkthrough ? (
                   <p className="pt-2 text-xs text-dim">
