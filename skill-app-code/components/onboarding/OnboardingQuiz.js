@@ -180,9 +180,14 @@ export default function OnboardingQuiz({ show = false, initialName = "", initial
       />
       <div className="relative flex max-h-[90vh] w-full max-w-md flex-col gap-5 overflow-y-auto rounded-t-2xl border border-border bg-surface p-6 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-6">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex gap-1">
+          <div className="flex flex-1 gap-1">
             {steps.map((s, i) => (
-              <span key={s.key} className={`h-1 w-6 rounded-full ${i <= step ? "bg-accent" : "bg-surface-2"}`} />
+              <span
+                key={s.key}
+                className={`h-0.5 flex-1 rounded-full transition-colors ${
+                  i <= step ? "bg-gradient-to-r from-accent to-accent-2" : "bg-border"
+                }`}
+              />
             ))}
           </div>
           <button type="button" onClick={skipAll} className="shrink-0 text-xs font-medium text-dim hover:text-fg">
