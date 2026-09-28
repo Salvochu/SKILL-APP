@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import StreakFlame from "@/components/challenge/StreakFlame";
 
 // The 14-Day Challenge progress hero: a route that climbs from Day 1 to
 // a finish flag. Completed days are solid nodes on a glowing trail; a
@@ -72,10 +73,7 @@ export default function ChallengeClimb({ day = 1, totalDays = 14, completeDays =
           </div>
         </div>
         <div className="flex flex-col items-end gap-1.5 pb-1">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent-soft px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-accent">
-            <Flame className="h-3.5 w-3.5" />
-            {streak} day{streak === 1 ? "" : "s"}
-          </span>
+          <StreakFlame streak={streak} />
           <span className="text-[11px] font-medium text-dim">
             {doneCount} of {totalDays} complete
           </span>
@@ -313,10 +311,3 @@ function CountUp({ to }) {
   return <>{n}</>;
 }
 
-function Flame(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M12 2c1 3-1 5-2.5 6.5C8 10 7 11.5 7 14a5 5 0 0 0 10 0c0-2-1-3.5-2-5 .5 1.5 0 3-1 3.5.5-2-1-4-2-5.5C10 9 11 6 12 2z" />
-    </svg>
-  );
-}

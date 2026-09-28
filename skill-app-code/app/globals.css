@@ -319,6 +319,26 @@ h4 {
   .cc-node, .cc-halo, .cc-bloom, .cc-trail-draw { animation: none; }
 }
 
+/* Streak flame (components/challenge/ChallengeClimb.js). Two layers
+   flicker on independent, slightly-off timings so it doesn't read as a
+   mechanical loop; each anchors near the base of the flame so the tip
+   moves more than the root, like it's actually rooted in place. */
+@keyframes flame-flicker-a {
+  0%, 100% { transform: scaleY(1) scaleX(1) rotate(0deg); }
+  30% { transform: scaleY(1.05) scaleX(0.97) rotate(-1.5deg); }
+  60% { transform: scaleY(0.96) scaleX(1.03) rotate(1.5deg); }
+}
+@keyframes flame-flicker-b {
+  0%, 100% { transform: scaleY(1) scaleX(1) rotate(0deg); }
+  40% { transform: scaleY(0.94) scaleX(1.05) rotate(2deg); }
+  70% { transform: scaleY(1.07) scaleX(0.95) rotate(-2deg); }
+}
+.flame-outer { animation: flame-flicker-a 2.4s ease-in-out infinite; transform-origin: 50% 95%; }
+.flame-inner { animation: flame-flicker-b 1.7s ease-in-out infinite; transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .flame-outer, .flame-inner { animation: none; }
+}
+
 /* Daily checklist progress bar (components/challenge/ChallengeChecklist.js):
    diagonal stripes marching left to right across the filled portion. */
 .progress-stripes {
