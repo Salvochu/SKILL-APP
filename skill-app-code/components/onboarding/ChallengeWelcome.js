@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveChallengeSetup } from "@/app/(app)/dashboard/actions";
 import { subscribeToPush, isIOS, isAndroid, isStandalone } from "@/lib/pushClient";
+import ImageModal from "@/components/onboarding/ImageModal";
 
 // First-run flow for a free challenge sign-up. Short: welcome + how it
 // works, one equipment question, a reminders prompt, then straight to
@@ -16,7 +17,7 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
   const router = useRouter();
   const [latched] = useState(show);
   const [dismissed, setDismissed] = useState(false);
-  const [step, setStep] = useState(0); // 0 welcome, 1 equipment, 2 reminders, 3 done
+  const [step, setStep] = useState(0); // 0 welcome, 1 equipment, 2 reminders, 3 home screen, 4 done
   const [name, setName] = useState(initialName);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -24,6 +25,7 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
   const [notifError, setNotifError] = useState(null);
   const [needsHomeScreen, setNeedsHomeScreen] = useState(false);
   const [showAndroidHint, setShowAndroidHint] = useState(false);
+  const [showScreenshot, setShowScreenshot] = useState(false);
 
   useEffect(() => {
     function check() {
@@ -50,6 +52,12 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
     setStep(2);
   }
 
+  // Skips the home screen step entirely for anyone it doesn't apply to
+  // (already standalone, or a platform with no screenshot for it).
+  function advanceFromReminders() {
+    setStep(needsHomeScreen || showAndroidHint ? 3 : 4);
+  }
+
   async function enableReminders() {
     setNotifBusy(true);
     setNotifError(null);
@@ -65,7 +73,7 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
       );
       return;
     }
-    setStep(3);
+    advanceFromReminders();
   }
 
   function leave() {
@@ -83,6 +91,17 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div className="relative flex max-h-[90vh] w-full max-w-md flex-col gap-5 overflow-y-auto rounded-t-2xl border border-border bg-surface p-6 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-6">
+
+        {step < 4 ? (
+          <div className="flex gap-1.5">
+            {[0, 1, 2, 3].map((i) => (
+              <span
+                key={i}
+                className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-accent" : "bg-border"}`}
+              />
+            ))}
+          </div>
+        ) : null}
 
         {step === 0 ? (
           <>
@@ -184,49 +203,12 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
             </div>
 
             {needsHomeScreen ? (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-                    <IconShare className="h-4 w-4" />
-                  </span>
-                  <div className="flex flex-col gap-1">
-                    <p className="text-sm font-medium text-fg">Add SKILL to your Home Screen first</p>
-                    <p className="text-xs text-muted">
-                      iPhone only allows reminders for apps added to your Home Screen. Tap the Share
-                      button in Safari, then &quot;Add to Home Screen&quot;. Open SKILL from there and
-                      turn reminders on in Settings.
-                    </p>
-                  </div>
-                </div>
-                <img
-                  src="/onboarding/add-to-home-ios.jpg"
-                  alt="Safari share sheet with Add to Home Screen highlighted"
-                  className="w-full rounded-field border border-border"
-                />
-              </div>
+              <p className="text-sm text-muted">
+                iPhone only turns these on for apps added to your Home Screen - next step shows you
+                exactly how.
+              </p>
             ) : (
               <>
-                {showAndroidHint ? (
-                  <div className="flex flex-col gap-3 rounded-field border border-border bg-surface-2 p-3">
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-                        <IconShare className="h-4 w-4" />
-                      </span>
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium text-fg">Tip: add SKILL to your Home Screen too</p>
-                        <p className="text-xs text-muted">
-                          Not required for reminders, but it opens like a real app. In Chrome&apos;s
-                          menu, tap &quot;Install and create shortcut&quot;.
-                        </p>
-                      </div>
-                    </div>
-                    <img
-                      src="/onboarding/add-to-home-android.jpg"
-                      alt="Chrome menu with Install and create shortcut highlighted"
-                      className="w-full rounded-field border border-border"
-                    />
-                  </div>
-                ) : null}
                 {notifError ? <p className="text-sm text-danger">{notifError}</p> : null}
                 <button
                   type="button"
@@ -240,11 +222,60 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
             )}
             <button
               type="button"
-              onClick={() => setStep(3)}
+              onClick={advanceFromReminders}
               className="self-center text-xs font-medium text-dim hover:text-fg"
             >
               {needsHomeScreen ? "Continue" : "Not now"}
             </button>
+          </>
+        ) : step === 3 ? (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wider text-dim">
+                {needsHomeScreen ? "One more thing" : "Optional"}
+              </span>
+              <h2 className="font-display text-xl font-semibold text-fg">Add SKILL to your Home Screen</h2>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                <IconShare className="h-4 w-4" />
+              </span>
+              <p className="text-sm text-muted">
+                {needsHomeScreen
+                  ? "iPhone only allows reminders for apps added to your Home Screen. Tap the Share button in Safari, then “Add to Home Screen”. Open SKILL from there and turn reminders on in Settings."
+                  : "Not required, but it opens like a real app instead of a browser tab. In Chrome’s menu, tap “Install and create shortcut”."}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowScreenshot(true)}
+              className="inline-flex w-fit items-center gap-1.5 self-start rounded-full border border-accent/40 bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
+            >
+              <IconImage className="h-3.5 w-3.5" />
+              See screenshot
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep(4)}
+              className="self-center text-xs font-medium text-dim hover:text-fg"
+            >
+              Continue
+            </button>
+
+            {showScreenshot ? (
+              <ImageModal
+                src={needsHomeScreen ? "/onboarding/add-to-home-ios.jpg" : "/onboarding/add-to-home-android.jpg"}
+                alt={
+                  needsHomeScreen
+                    ? "Safari share sheet with Add to Home Screen highlighted"
+                    : "Chrome menu with Install and create shortcut highlighted"
+                }
+                onClose={() => setShowScreenshot(false)}
+              />
+            ) : null}
           </>
         ) : (
           <>
@@ -281,6 +312,16 @@ function IconShare(props) {
       <path d="M12 3v12" />
       <path d="m8 7 4-4 4 4" />
       <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+    </svg>
+  );
+}
+
+function IconImage(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path d="m21 15-5-5L5 20" />
     </svg>
   );
 }
