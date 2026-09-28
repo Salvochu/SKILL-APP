@@ -2,6 +2,7 @@ import TapLink from "@/components/TapLink";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 import TodayVideo from "@/components/challenge/TodayVideo";
 import ChallengeChecklist from "@/components/challenge/ChallengeChecklist";
+import LearnPrompt from "@/components/challenge/LearnPrompt";
 
 const KIND_LABEL = { train: "Training", cardio: "Cardio", rest: "Rest" };
 
@@ -45,6 +46,8 @@ export default function ChallengeToday({ day, challengeDay, mesoId, variant, ite
       <div className="border-t border-border">
         <ChallengeChecklist day={challengeDay} kind={day.kind} items={items} itemsAt={itemsAt} />
       </div>
+
+      {challengeDay === 1 ? <LearnPrompt /> : null}
 
       <TapLink
         href="/body"
