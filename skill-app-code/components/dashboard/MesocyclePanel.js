@@ -16,12 +16,14 @@ export default function MesocyclePanel({
   isNew = false,
   isBeginner = false,
   challengeLapsed = false,
+  hasChallengeHistory = false,
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const [showGraduateChoice, setShowGraduateChoice] = useState(true);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -50,6 +52,43 @@ export default function MesocyclePanel({
   // program IS running - even with no workouts logged yet - the active
   // panel below takes over.)
   if (!active) {
+    // A challenge graduate: their run just got closed out on conversion
+    // (see app/api/ghl/purchase/route.js), so they land here same as a
+    // brand new beginner would - but "Start Foundations, your first
+    // month" is the exact split they just spent up to 14 days on. Offer
+    // an explicit choice instead of quietly re-suggesting it as if new.
+    if (hasChallengeHistory && isBeginner && showGraduateChoice) {
+      return (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-semibold text-fg">What&apos;s next?</span>
+            <span className="text-xs text-dim">
+              You already know the 14-day split - pick up where you left off, or try something new.
+            </span>
+          </div>
+          <TapLink
+            href="/splits"
+            className="btn-shine flex w-full items-center justify-center gap-2 rounded-field bg-accent px-4 py-3.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+          >
+            Continue with your 14-day split
+          </TapLink>
+          <TapLink
+            href="/splits"
+            className="flex w-full items-center justify-center rounded-field border border-border px-4 py-3 text-sm font-semibold text-fg transition-colors hover:bg-surface-2"
+          >
+            Start a new program
+          </TapLink>
+          <button
+            type="button"
+            onClick={() => setShowGraduateChoice(false)}
+            className="self-center text-xs font-medium text-dim hover:text-fg"
+          >
+            Not now
+          </button>
+        </div>
+      );
+    }
+
     const programLabel = isBeginner ? "Start Foundations" : "Pick a training program";
     const programBlurb = isBeginner
       ? "Your first month: two full-body days, three times a week"

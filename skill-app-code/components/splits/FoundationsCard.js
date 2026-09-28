@@ -9,8 +9,11 @@ import MusclePill from "@/components/MusclePill";
 
 // A beginner's first month, offered as one clear choice. No week
 // numbers, no RIR ramp, no deload - just "learn the lifts, add a little
-// each session".
-export default function FoundationsCard({ split }) {
+// each session". `isChallengeGraduate` reframes the copy for someone
+// converting from the free 14-day challenge, whose day templates this
+// program actually reuses - "new to lifting, start here" would be an
+// odd thing to tell someone who just finished 14 days of training.
+export default function FoundationsCard({ split, isChallengeGraduate = false }) {
   const router = useRouter();
   const days = split.days ?? [];
   const variants = sortVariants(
@@ -38,11 +41,14 @@ export default function FoundationsCard({ split }) {
   return (
     <section className="flex flex-col gap-4 rounded-card border border-accent/40 bg-accent-soft p-4">
       <div className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-accent">New to lifting? Start here</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+          {isChallengeGraduate ? "Welcome back" : "New to lifting? Start here"}
+        </span>
         <h2 className="font-display text-lg font-semibold text-fg">Foundations</h2>
         <p className="text-sm text-muted">
-          Two full-body days, three times a week for four weeks. Learn the main lifts and add a little
-          weight whenever you hit your target reps. That is the whole plan.
+          {isChallengeGraduate
+            ? "The same Day A / Day B split from your 14-day challenge, now as an ongoing program. Keep adding a little weight whenever you hit your target reps."
+            : "Two full-body days, three times a week for four weeks. Learn the main lifts and add a little weight whenever you hit your target reps. That is the whole plan."}
         </p>
       </div>
 
@@ -133,7 +139,7 @@ export default function FoundationsCard({ split }) {
         disabled={starting}
         className="w-full rounded-field bg-accent py-3 text-center font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
       >
-        {starting ? "Starting..." : "Start Foundations"}
+        {starting ? "Starting..." : isChallengeGraduate ? "Continue with this split" : "Start Foundations"}
       </button>
 
       {videoFor ? <VideoModal exercise={videoFor} onClose={() => setVideoFor(null)} /> : null}

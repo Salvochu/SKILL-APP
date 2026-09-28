@@ -7,13 +7,20 @@ const SECTION_LABEL = { primary: "Choose your split", coached: "Specialization p
 // The Train landing page: Foundations (for beginners), a couple of quick
 // starts, the user's own saved workouts, and the splits. Each split opens
 // its own page at /splits/[id].
-export default function SplitsList({ splits, strengthCheck = null, foundations = null, isBeginner = false, myWorkouts = [] }) {
+export default function SplitsList({
+  splits,
+  strengthCheck = null,
+  foundations = null,
+  isBeginner = false,
+  myWorkouts = [],
+  hasChallengeHistory = false,
+}) {
   const sections = groupBySection(splits).filter((s) => !isBeginner || s.section !== "coached");
   const others = sections.flatMap(({ items }) => items);
 
   return (
     <div className="flex flex-col gap-8">
-      {foundations ? <FoundationsCard split={foundations} /> : null}
+      {foundations ? <FoundationsCard split={foundations} isChallengeGraduate={hasChallengeHistory} /> : null}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Quick start</h2>

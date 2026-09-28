@@ -162,6 +162,25 @@ export const getChallengeChecklist = cache(async () => {
   return { byDay, byDayAt, completeDays, streak };
 });
 
+// Whether this account has ever run the free challenge (any status) -
+// cheap existence check, unlike getChallengeHistory below which pulls the
+// full recap. Used to reframe the "no active program" nudge on the
+// Dashboard and Train tab for a challenge graduate instead of treating
+// them like a brand new beginner who has never trained before.
+export const hasRunChallenge = cache(async () => {
+  const user = await getSessionUser();
+  if (!user) return false;
+  const supabase = await getServerSupabase();
+  const { data } = await supabase
+    .from("user_mesocycles")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("template_id", CHALLENGE_TEMPLATE_ID)
+    .limit(1)
+    .maybeSingle();
+  return Boolean(data);
+});
+
 // A finished (or abandoned) challenge run's final state, for the
 // post-challenge recap in Menu once someone has left the challenge tier
 // (almost always by converting to a paying member). Unlike
