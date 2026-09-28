@@ -17,7 +17,7 @@ export default function LearnPrompt() {
     <button
       type="button"
       onClick={openLearn}
-      className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 text-sm font-medium text-accent transition-colors hover:bg-surface-2"
+      className="flex w-full items-center justify-between gap-2 border-t border-border px-4 py-3 text-sm font-medium text-accent transition-colors hover:bg-surface-2"
     >
       <span>Check out the lessons in Learn</span>
       <IconDown className="h-4 w-4 shrink-0" />
