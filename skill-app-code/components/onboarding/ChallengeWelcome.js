@@ -222,13 +222,22 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
                 </button>
               </>
             )}
-            <button
-              type="button"
-              onClick={advanceFromReminders}
-              className="self-center text-xs font-medium text-dim hover:text-fg"
-            >
-              {needsHomeScreen ? "Continue" : "Not now"}
-            </button>
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="text-xs font-medium text-dim hover:text-fg"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={advanceFromReminders}
+                className="text-xs font-medium text-dim hover:text-fg"
+              >
+                {needsHomeScreen ? "Continue" : "Not now"}
+              </button>
+            </div>
           </>
         ) : step === 3 ? (
           <>
@@ -259,13 +268,22 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
               See screenshot
             </button>
 
-            <button
-              type="button"
-              onClick={() => setStep(4)}
-              className="self-center text-xs font-medium text-dim hover:text-fg"
-            >
-              Continue
-            </button>
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="text-xs font-medium text-dim hover:text-fg"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep(4)}
+                className="text-xs font-medium text-dim hover:text-fg"
+              >
+                Continue
+              </button>
+            </div>
 
             {showScreenshot ? (
               <ImageModal
