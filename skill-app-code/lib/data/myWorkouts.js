@@ -10,13 +10,24 @@ export async function getMyWorkouts() {
   if (!user) return [];
   const supabase = await getServerSupabase();
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("my_workouts")
     .select(
-      "id, name, note, updated_at, exercises:my_workout_exercises(position, sets, reps, exercise:exercises(id, name, muscle, equipment, video_url, instructions))",
+      "id, name, note, group_name, updated_at, exercises:my_workout_exercises(position, sets, reps, exercise:exercises(id, name, muscle, equipment, video_url, instructions))",
     )
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
+
+  if (error && isMissingGroupColumn(error)) {
+    // Migration 0045 not run yet: behave as if nothing is grouped.
+    ({ data, error } = await supabase
+      .from("my_workouts")
+      .select(
+        "id, name, note, updated_at, exercises:my_workout_exercises(position, sets, reps, exercise:exercises(id, name, muscle, equipment, video_url, instructions))",
+      )
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false }));
+  }
 
   if (error) {
     // Table not there yet (migration 0032 not run): behave as "none".
@@ -104,7 +115,12 @@ function shape(row, lastLoggedAt = null) {
     exercises,
     muscleSummary: groups.join(", "),
     lastLoggedAt,
+    groupName: row.group_name ?? null,
   };
+}
+
+function isMissingGroupColumn(error) {
+  return error?.code === "42703" && /group_name/i.test(error?.message ?? "");
 }
 
 function isMissingRelation(error) {

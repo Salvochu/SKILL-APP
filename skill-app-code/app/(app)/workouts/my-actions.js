@@ -148,3 +148,37 @@ function cleanNote(v) {
   const s = String(v || "").trim().slice(0, 400);
   return s || null;
 }
+
+function cleanGroupName(v) {
+  const s = String(v || "").trim().slice(0, 40);
+  return s || null;
+}
+
+function isMissingGroupColumn(error) {
+  return error?.code === "42703" && /group_name/i.test(error?.message ?? "");
+}
+
+// Assigns a saved workout to a named group (or null for "Ungrouped") on
+// the Train tab. Just a label - there's no group table, so renaming a
+// group elsewhere means re-assigning every workout that used the old name.
+export async function setMyWorkoutGroup(id, groupName) {
+  const supabase = await getServerSupabase();
+  const user = await getSessionUser();
+  if (!user) return { error: "Please sign in again." };
+  if (!id || typeof id !== "string") return { error: "That workout could not be found." };
+
+  const { error } = await supabase
+    .from("my_workouts")
+    .update({ group_name: cleanGroupName(groupName) })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) {
+    if (isMissingGroupColumn(error)) {
+      return { error: "Grouping isn't set up on this database yet (migration 0045)." };
+    }
+    return { error: error.message };
+  }
+
+  revalidatePath("/splits");
+  return { ok: true };
+}
