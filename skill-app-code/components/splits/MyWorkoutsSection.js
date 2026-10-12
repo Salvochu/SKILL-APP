@@ -121,18 +121,53 @@ function GroupFolder({ name, items, groupNames }) {
 // Three small cards fanned out like a loose stack of photos. Flattens
 // and squares up slightly when the folder is open, so the icon itself
 // hints at the transition from "closed stack" to "spread out below".
+const STACK_EASE = "cubic-bezier(0.22, 0.8, 0.2, 1)";
+
+// A fanned stack of cards, SVG for clean edges at this size: two muted
+// back cards (crisp border, no blur) and a front card with the app's
+// accent gradient plus a couple of "content line" marks, so it reads
+// like a tiny stack of workout cards rather than a smudge of color.
 function StackIcon({ open = false }) {
   return (
-    <span className="relative block h-11 w-11 shrink-0">
-      <span
-        className="absolute inset-0 m-auto h-6 w-6 rounded-md border border-border-strong bg-surface-2 shadow-sm shadow-black/40 transition-transform"
-        style={{ transform: open ? "translate(0, -2px) rotate(0deg)" : "translate(-7px, 4px) rotate(-16deg)" }}
-      />
-      <span
-        className="absolute inset-0 m-auto h-6 w-6 rounded-md border border-border-strong bg-bg shadow-sm shadow-black/40 transition-transform"
-        style={{ transform: open ? "translate(0, 2px) rotate(0deg)" : "translate(7px, -3px) rotate(14deg)" }}
-      />
-      <span className="absolute inset-0 m-auto flex h-7 w-7 items-center justify-center rounded-md border border-accent bg-accent-soft shadow-md shadow-black/50 transition-transform" />
+    <span
+      className="relative block h-11 w-11 shrink-0"
+      style={{ filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.55))" }}
+    >
+      <svg viewBox="0 0 44 44" className="h-full w-full overflow-visible">
+        <defs>
+          <linearGradient id="stackFrontGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="var(--color-accent-2)" />
+            <stop offset="100%" stopColor="var(--color-accent)" />
+          </linearGradient>
+        </defs>
+        <g
+          style={{
+            transform: open ? "translate(0px, -2px)" : "translate(-7px, 4px) rotate(-16deg)",
+            transformOrigin: "22px 22px",
+            transition: `transform 220ms ${STACK_EASE}`,
+          }}
+        >
+          <rect
+            x="10" y="10" width="24" height="24" rx="6"
+            fill="var(--color-surface-2)" stroke="var(--color-dim)" strokeWidth="1.25" strokeOpacity="0.5"
+          />
+        </g>
+        <g
+          style={{
+            transform: open ? "translate(0px, 2px)" : "translate(7px, -3px) rotate(14deg)",
+            transformOrigin: "22px 22px",
+            transition: `transform 220ms ${STACK_EASE}`,
+          }}
+        >
+          <rect
+            x="10" y="10" width="24" height="24" rx="6"
+            fill="var(--color-bg)" stroke="var(--color-dim)" strokeWidth="1.25" strokeOpacity="0.6"
+          />
+        </g>
+        <rect x="9" y="9" width="26" height="26" rx="7" fill="url(#stackFrontGradient)" />
+        <rect x="14" y="27" width="16" height="2" rx="1" fill="rgba(0,0,0,0.3)" />
+        <rect x="14" y="22" width="11" height="2" rx="1" fill="rgba(0,0,0,0.22)" />
+      </svg>
     </span>
   );
 }
