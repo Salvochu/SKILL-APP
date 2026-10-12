@@ -18,7 +18,13 @@ export default function RouteProgress() {
   const safety = useRef(null);
 
   function start() {
-    setPhase((p) => (p === "loading" ? p : "loading"));
+    // Deferred: start() is invoked synchronously from the patched
+    // history.pushState/replaceState (see below), and Next's App Router
+    // sometimes calls pushState/replaceState from inside its own
+    // useInsertionEffect. Calling setPhase in that same tick trips React's
+    // "useInsertionEffect must not schedule updates" guard, so push the
+    // update to a microtask, safely outside that call stack.
+    queueMicrotask(() => setPhase((p) => (p === "loading" ? p : "loading")));
   }
 
   // Route (or query) committed -> finish.
