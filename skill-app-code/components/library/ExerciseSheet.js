@@ -1,48 +1,26 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 import { loomEmbedUrl } from "@/lib/exercises";
 import { figureMuscleFor } from "@/lib/muscleImage";
 import MusclePill from "@/components/MusclePill";
 import MuscleFigure from "@/components/MuscleFigure";
+import Sheet from "@/components/Sheet";
 
 // Bottom-sheet detail for one exercise: form video, how-to, quick log link.
 export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
-  useEffect(() => {
-    function onKey(e) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [onClose]);
-
   if (!exercise) return null;
   const embed = loomEmbedUrl(exercise.video_url);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label={exercise.name}
-    >
-      <button
-        type="button"
-        aria-label="Close"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-      />
-      <div className="relative max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 pb-[calc(1.75rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
+    <Sheet onClose={onClose} ariaLabel={exercise.name}>
+      {(close) => (
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 pb-[calc(1.75rem+env(safe-area-inset-bottom))] sm:pb-5">
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-xl font-bold text-fg">{exercise.name}</h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={close}
             aria-label="Close"
             className="-mr-1 -mt-1 rounded-field p-1.5 text-dim transition-colors hover:text-fg"
           >
@@ -138,8 +116,9 @@ export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
             </Link>
           </div>
         ) : null}
-      </div>
-    </div>
+        </div>
+      )}
+    </Sheet>
   );
 }
 

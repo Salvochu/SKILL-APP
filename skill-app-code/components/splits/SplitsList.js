@@ -1,6 +1,7 @@
 import TapLink from "@/components/TapLink";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 import FoundationsCard from "@/components/splits/FoundationsCard";
+import LoggedAt from "@/components/LoggedAt";
 
 const SECTION_LABEL = { primary: "Choose your split", coached: "Specialization programs" };
 
@@ -167,6 +168,15 @@ function MyWorkoutsSection({ myWorkouts }) {
                   <span className="block truncate font-display text-base font-semibold text-fg">{w.name}</span>
                   <span className="block truncate text-xs text-dim">
                     {w.muscleSummary || `${w.exercises.length} exercise${w.exercises.length === 1 ? "" : "s"}`}
+                  </span>
+                  <span className="block truncate text-xs text-dim">
+                    {w.lastLoggedAt ? (
+                      <>
+                        Last logged <LoggedAt iso={w.lastLoggedAt} />
+                      </>
+                    ) : (
+                      "Not logged yet"
+                    )}
                   </span>
                 </span>
               </GuardedStartLink>

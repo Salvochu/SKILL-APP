@@ -24,7 +24,33 @@ export async function getMyWorkouts() {
     throw new Error(`Failed to load your workouts: ${error.message}`);
   }
 
-  return (data ?? []).map(shape);
+  const lastLogged = await getLastLoggedDates(
+    supabase,
+    user.id,
+    (data ?? []).map((w) => w.id),
+  );
+  return (data ?? []).map((w) => shape(w, lastLogged.get(w.id) ?? null));
+}
+
+// Most recent started_at per my_workout_id, for the "Last logged" line on
+// each card. One query for every workout at once rather than N+1: sessions
+// come back newest-first, so the first one seen per workout is its latest.
+async function getLastLoggedDates(supabase, userId, workoutIds) {
+  const map = new Map();
+  if (!workoutIds.length) return map;
+
+  const { data, error } = await supabase
+    .from("workout_sessions")
+    .select("my_workout_id, started_at")
+    .eq("user_id", userId)
+    .in("my_workout_id", workoutIds)
+    .order("started_at", { ascending: false });
+
+  if (error) return map; // non-fatal - cards just show no "last logged" line
+  for (const row of data ?? []) {
+    if (!map.has(row.my_workout_id)) map.set(row.my_workout_id, row.started_at);
+  }
+  return map;
 }
 
 // One custom workout by id, owner-scoped. null if not found or not
@@ -51,7 +77,7 @@ export async function getMyWorkout(id) {
   return data ? shape(data) : null;
 }
 
-function shape(row) {
+function shape(row, lastLoggedAt = null) {
   const exercises = (row.exercises ?? [])
     .filter((e) => e.exercise)
     .sort((a, b) => a.position - b.position)
@@ -77,6 +103,7 @@ function shape(row) {
     updatedAt: row.updated_at,
     exercises,
     muscleSummary: groups.join(", "),
+    lastLoggedAt,
   };
 }
 
