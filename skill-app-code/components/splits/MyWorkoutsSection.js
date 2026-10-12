@@ -43,26 +43,23 @@ export default function MyWorkoutsSection({ myWorkouts }) {
           <span className="text-sm font-medium text-fg">Build your own workout</span>
           <span className="text-xs text-dim">Save a set of exercises you can start any day</span>
         </TapLink>
-      ) : (
-        <div className="flex flex-col gap-5">
+      ) : groupNames.length > 0 ? (
+        // At least one real group exists: every bucket, Ungrouped
+        // included, renders as a collapsed folder - a fanned stack plus
+        // a count - instead of a permanently-open list.
+        <div className="flex flex-col gap-2.5">
           {groups.map(({ name, items }) => (
-            <div key={name ?? "__ungrouped"} className="flex flex-col gap-2.5">
-              {/* A single "null" bucket means nobody has grouped anything -
-                  show a plain flat list. Any real group name gets a
-                  heading, even if every workout ended up in just the one. */}
-              {groupNames.length > 0 ? (
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-dim">
-                  {name ?? "Ungrouped"}
-                </h3>
-              ) : null}
-              <ul className="flex flex-col gap-2.5">
-                {items.map((w) => (
-                  <WorkoutCard key={w.id} workout={w} groupNames={groupNames} />
-                ))}
-              </ul>
-            </div>
+            <GroupFolder key={name ?? "__ungrouped"} name={name} items={items} groupNames={groupNames} />
           ))}
         </div>
+      ) : (
+        // Nobody's grouped anything yet: a plain flat list, same as
+        // before groups existed at all.
+        <ul className="flex flex-col gap-2.5">
+          {myWorkouts.map((w) => (
+            <WorkoutCard key={w.id} workout={w} groupNames={groupNames} />
+          ))}
+        </ul>
       )}
     </section>
   );
@@ -82,6 +79,62 @@ function groupWorkouts(myWorkouts) {
   const named = [...map.keys()].filter((k) => k !== null).sort();
   const ordered = map.has(null) ? [...named, null] : named;
   return ordered.map((name) => ({ name, items: map.get(name) }));
+}
+
+// A collapsed group of workouts: a fanned stack of little cards (like a
+// macOS folder of stacked screenshots), the group name, and a count.
+// Tapping it reveals the actual WorkoutCards, indented underneath.
+function GroupFolder({ name, items, groupNames }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="flex w-full items-center gap-3 rounded-card border border-border bg-surface p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+      >
+        <StackIcon open={expanded} />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-display text-sm font-semibold text-fg">{name ?? "Ungrouped"}</span>
+          <span className="block text-xs text-dim">
+            {items.length} workout{items.length === 1 ? "" : "s"}
+          </span>
+        </span>
+        <IconChevronDown
+          className={`h-4 w-4 shrink-0 text-dim transition-transform ${expanded ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {expanded ? (
+        <ul className="flex flex-col gap-2.5 border-l-2 border-border pl-3">
+          {items.map((w) => (
+            <WorkoutCard key={w.id} workout={w} groupNames={groupNames} />
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+// Three small cards fanned out like a loose stack of photos. Flattens
+// and squares up slightly when the folder is open, so the icon itself
+// hints at the transition from "closed stack" to "spread out below".
+function StackIcon({ open = false }) {
+  return (
+    <span className="relative block h-11 w-11 shrink-0">
+      <span
+        className="absolute inset-0 m-auto h-6 w-6 rounded-md border border-border-strong bg-surface-2 shadow-sm shadow-black/40 transition-transform"
+        style={{ transform: open ? "translate(0, -2px) rotate(0deg)" : "translate(-7px, 4px) rotate(-16deg)" }}
+      />
+      <span
+        className="absolute inset-0 m-auto h-6 w-6 rounded-md border border-border-strong bg-bg shadow-sm shadow-black/40 transition-transform"
+        style={{ transform: open ? "translate(0, 2px) rotate(0deg)" : "translate(7px, -3px) rotate(14deg)" }}
+      />
+      <span className="absolute inset-0 m-auto flex h-7 w-7 items-center justify-center rounded-md border border-accent bg-accent-soft shadow-md shadow-black/50 transition-transform" />
+    </span>
+  );
 }
 
 function WorkoutCard({ workout: w, groupNames }) {

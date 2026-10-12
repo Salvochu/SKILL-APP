@@ -277,14 +277,19 @@ h4 {
   border-radius: 2px;
 }
 
-/* Touch feedback: every button and link visibly reacts the instant it is
-   pressed, so a tap that kicks off a slow load never feels ignored. */
+/* Touch feedback: every button and link visibly compresses the instant
+   it is pressed, so a tap that kicks off a slow load never feels
+   ignored. A slight scale-down reads more tactile than a brightness dim
+   alone - closer to how iOS controls respond to touch. Excludes
+   .btn-shine (the primary CTA buttons) and anything with its own
+   active:scale-* utility, which already have their own tuned press. */
 @media (hover: none) and (pointer: coarse) {
-  a:active,
-  button:not(:disabled):active,
-  [role="button"]:active {
-    filter: brightness(0.85);
-    transition: filter 60ms ease-out;
+  a:not(.btn-shine):not([class*="active:scale"]):active,
+  button:not(.btn-shine):not([class*="active:scale"]):not(:disabled):active,
+  [role="button"]:not(.btn-shine):not([class*="active:scale"]):active {
+    transform: scale(0.97);
+    filter: brightness(0.94);
+    transition: transform 100ms ease-out, filter 100ms ease-out;
   }
 }
 

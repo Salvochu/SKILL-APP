@@ -308,22 +308,24 @@ export default function WorkoutBuilder({ allExercises, initial }) {
         <p className="rounded-field border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
       ) : null}
 
-      <div className="sticky bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-40 flex gap-2 md:bottom-4">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="rounded-field border border-border bg-surface px-4 py-3 text-sm font-semibold text-muted transition-colors hover:text-fg"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          className="flex-1 rounded-field bg-accent py-3 text-center font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
-        >
-          {saving ? "Saving..." : isEdit ? "Save changes" : "Save workout"}
-        </button>
+      <div className="fixed inset-x-0 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-40 md:bottom-4">
+        <div className="mx-auto flex max-w-2xl gap-2 px-4 md:max-w-5xl md:px-6">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="rounded-field border border-border bg-surface px-4 py-3 text-sm font-semibold text-muted shadow-lg shadow-black/30 transition-colors hover:text-fg"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="flex-1 rounded-field bg-accent py-3 text-center font-semibold text-black shadow-lg shadow-black/30 transition-colors hover:bg-accent-2 disabled:opacity-60"
+          >
+            {saving ? "Saving..." : isEdit ? "Save changes" : "Save workout"}
+          </button>
+        </div>
       </div>
 
       {pickerOpen ? (

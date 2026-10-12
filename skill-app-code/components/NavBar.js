@@ -20,10 +20,11 @@ function isActive(pathname, href) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export default function NavBar({ streak = null, challenge = false }) {
+export default function NavBar({ streak = null, challenge = false, avatarUrl = null }) {
   const pathname = usePathname() ?? "";
   const TABS = challenge ? [CHALLENGE_TAB, ...BASE_TABS] : BASE_TABS;
   const gridCols = TABS.length === 4 ? "grid-cols-4" : "grid-cols-3";
+  const activeIndex = TABS.findIndex((tab) => isActive(pathname, tab.href));
 
   return (
     <>
@@ -58,11 +59,16 @@ export default function NavBar({ streak = null, challenge = false }) {
               href="/profile"
               aria-label="Profile"
               aria-current={isActive(pathname, "/profile") ? "page" : undefined}
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
-                isActive(pathname, "/profile") ? "bg-accent-soft text-accent" : "text-muted hover:text-fg"
+              className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full transition-colors ${
+                isActive(pathname, "/profile") ? "ring-2 ring-accent" : "text-muted hover:text-fg"
               }`}
             >
-              <IconUser className="h-5 w-5" />
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, arbitrary remote host
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <IconUser className="h-5 w-5" />
+              )}
             </Link>
           </div>
         </div>
@@ -73,7 +79,17 @@ export default function NavBar({ streak = null, challenge = false }) {
           still land in iOS's own home-indicator gesture strip instead of
           the link under it. */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 pb-[calc(env(safe-area-inset-bottom)+1rem)] backdrop-blur md:hidden">
-        <div className={`mx-auto grid max-w-2xl ${gridCols}`}>
+        <div className={`relative mx-auto grid max-w-2xl ${gridCols}`}>
+          {/* One shared indicator that glides between tabs, instead of a
+              separate bar per tab that pops in/out on navigation. */}
+          <span
+            aria-hidden="true"
+            className="absolute top-0 h-0.5 w-10 -translate-x-1/2 rounded-full bg-accent transition-[left,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+            style={{
+              left: `calc((100% / ${TABS.length}) * ${Math.max(activeIndex, 0)} + (100% / ${TABS.length}) / 2)`,
+              opacity: activeIndex === -1 ? 0 : 1,
+            }}
+          />
           {TABS.map((tab) => {
             const active = isActive(pathname, tab.href);
             const Icon = tab.icon;
@@ -86,9 +102,6 @@ export default function NavBar({ streak = null, challenge = false }) {
                   active ? "text-accent" : "text-dim hover:text-muted"
                 }`}
               >
-                {active ? (
-                  <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-accent" />
-                ) : null}
                 <Icon className="h-[22px] w-[22px] transition-transform duration-100 group-active:scale-90" />
                 {tab.label}
               </Link>
