@@ -47,7 +47,10 @@ export default function MyWorkoutsSection({ myWorkouts }) {
         <div className="flex flex-col gap-5">
           {groups.map(({ name, items }) => (
             <div key={name ?? "__ungrouped"} className="flex flex-col gap-2.5">
-              {groups.length > 1 ? (
+              {/* A single "null" bucket means nobody has grouped anything -
+                  show a plain flat list. Any real group name gets a
+                  heading, even if every workout ended up in just the one. */}
+              {groupNames.length > 0 ? (
                 <h3 className="text-[11px] font-semibold uppercase tracking-wider text-dim">
                   {name ?? "Ungrouped"}
                 </h3>
@@ -107,14 +110,14 @@ function WorkoutCard({ workout: w, groupNames }) {
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
           aria-label={expanded ? "Show less" : "Show more"}
-          className="flex shrink-0 items-center border-l border-border px-3 text-dim transition-colors hover:bg-surface-2 hover:text-fg"
+          className="flex shrink-0 items-center px-3 text-dim transition-colors hover:bg-surface-2 hover:text-fg"
         >
           <IconChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
         </button>
         <TapLink
           href={`/workouts/mine/${w.id}`}
           aria-label={`Edit ${w.name}`}
-          className="flex shrink-0 items-center border-l border-border px-3 text-dim transition-colors hover:bg-surface-2 hover:text-fg"
+          className="flex shrink-0 items-center px-3 text-dim transition-colors hover:bg-surface-2 hover:text-fg"
         >
           <IconPencil className="h-4 w-4" />
         </TapLink>

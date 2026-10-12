@@ -29,7 +29,10 @@ export default function ActiveWorkoutBar() {
     return () => clearInterval(id);
   }, []);
 
-  if (!draft || pathname === "/log") return null;
+  // Hidden on /log (that's the active session itself) and on the workout
+  // builder (/workouts/mine/*), whose own sticky Cancel/Save bar sits in
+  // the same bottom-of-screen spot - the two would otherwise overlap.
+  if (!draft || pathname === "/log" || pathname.startsWith("/workouts/mine/")) return null;
 
   const clockAt = draft.pausedAt ?? now;
   const elapsedSeconds = Math.max(0, Math.round((clockAt - draft.startedAt - (draft.pausedTotalMs || 0)) / 1000));
