@@ -14,7 +14,7 @@ const STRUGGLING_MISSED_THRESHOLD = 2;
 export async function GET(request) {
   const secret = process.env.CRON_SECRET;
   const auth = request.headers.get("authorization");
-  if (secret && auth !== `Bearer ${secret}`) {
+  if (!secret || auth !== `Bearer ${secret}`) {
     return new Response("forbidden", { status: 403 });
   }
   const webhookUrl = process.env.CHALLENGE_DAY7_REPORT_WEBHOOK_URL;
