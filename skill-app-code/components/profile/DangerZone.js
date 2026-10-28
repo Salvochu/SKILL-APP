@@ -38,9 +38,9 @@ export default function DangerZone() {
             onClick={() => !deleting && setConfirmOpen(false)}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
-          <div className="relative flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
-            <h3 className="font-display text-lg font-semibold text-fg">Delete your account</h3>
-            <p className="text-sm text-muted">
+          <div className="glass-strong pop-in relative flex w-full max-w-sm flex-col gap-3 rounded-3xl p-5">
+            <h3 className="font-display text-[1.35rem] font-bold leading-tight tracking-[-0.02em] text-fg">Delete your account</h3>
+            <p className="text-[15px] leading-relaxed text-muted">
               This permanently deletes your login and every workout you have logged. It cannot be
               undone. Type <span className="font-semibold text-fg">DELETE</span> to confirm.
             </p>
@@ -49,15 +49,16 @@ export default function DangerZone() {
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="DELETE"
               autoFocus
-              className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-danger"
+              aria-label="Type DELETE to confirm"
+              className="w-full rounded-xl bg-fg/10 px-3.5 py-3 text-[16px] text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-danger/60"
             />
-            {error ? <p className="text-sm text-danger">{error}</p> : null}
-            <div className="flex gap-2">
+            {error ? <p className="text-[14px] text-danger">{error}</p> : null}
+            <div className="mt-1 flex gap-2">
               <button
                 type="button"
                 onClick={() => setConfirmOpen(false)}
                 disabled={deleting}
-                className="flex-1 rounded-field border border-border px-4 py-2.5 text-sm font-medium text-fg hover:bg-surface-2 disabled:opacity-60"
+                className="flex-1 rounded-2xl bg-fg/10 px-4 py-3 text-[15px] font-semibold text-fg transition-transform active:scale-[0.98] disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -65,7 +66,7 @@ export default function DangerZone() {
                 type="button"
                 onClick={onDelete}
                 disabled={confirmText !== "DELETE" || deleting}
-                className="flex-1 rounded-field bg-danger px-4 py-2.5 text-sm font-semibold text-black transition-colors disabled:opacity-40"
+                className="flex-1 rounded-2xl bg-danger px-4 py-3 text-[15px] font-semibold text-black transition-[transform,opacity] active:scale-[0.98] disabled:opacity-40"
               >
                 {deleting ? "Deleting..." : "Delete permanently"}
               </button>

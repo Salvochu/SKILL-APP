@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { saveNotificationPrefs } from "@/app/(app)/settings/actions";
 import { pushSupported, getPushSubscription, subscribeToPush, unsubscribeFromPush } from "@/lib/pushClient";
+import { Group } from "@/components/ui/Grouped";
+import Switch from "@/components/ui/Switch";
 
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 // Keep the client-read prefs in localStorage so the workout logger,
 // RestTimer and the unfinished-workout prompt can check them without a
@@ -81,50 +84,51 @@ export default function NotificationSettings({ initialPrefs }) {
   const gated = !pushOn; // most toggles need push working
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-fg">Notifications on this device</span>
-            <span className="text-xs text-dim">
+    <div className="flex flex-col gap-7">
+      <Group
+        title="Notifications"
+        footer={
+          <>
+            {error ? <span className="mb-1 block text-danger">{error}</span> : null}
+            On iPhone, add SKILL to your Home Screen first, then open it from there to allow notifications.
+          </>
+        }
+      >
+        <div className="flex min-h-[56px] items-center justify-between gap-4 px-4 py-2.5">
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[16px] text-fg">On this device</span>
+            <span className="text-[13px] leading-snug text-dim">
               {push === "unsupported"
                 ? "This browser cannot show notifications."
                 : pushOn
                   ? "On. Alerts can reach you when the app is closed."
                   : "Off"}
             </span>
-          </div>
+          </span>
           {push !== "unsupported" && push !== "loading" ? (
             <button
               type="button"
               onClick={pushOn ? disablePush : enablePush}
               disabled={pushBusy}
-              className={`shrink-0 rounded-field border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60 ${
-                pushOn
-                  ? "border-border text-muted hover:text-fg"
-                  : "border-accent/40 bg-accent-soft text-accent hover:bg-accent hover:text-black"
+              className={`shrink-0 rounded-full px-4 py-1.5 text-[14px] font-semibold transition-[transform,opacity] active:scale-95 disabled:opacity-60 ${
+                pushOn ? "bg-fg/10 text-fg" : "bg-accent text-black"
               }`}
             >
               {pushBusy ? "..." : pushOn ? "Turn off" : "Turn on"}
             </button>
           ) : null}
         </div>
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
-        <p className="text-[11px] text-dim">
-          On iPhone, add SKILL to your Home Screen first, then open it from there to allow
-          notifications.
-        </p>
-      </section>
+      </Group>
 
-      <section className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
-        <Toggle
+      <Group title="Alerts" footer={gated ? "Turn on notifications above to choose your alerts." : null}>
+        <ToggleRow
           label="Training nudge"
           body="If you go a few days without training"
           checked={prefs.quietDayNudge}
           disabled={gated}
           onChange={(v) => patch({ quietDayNudge: v })}
         />
-        <div className="flex flex-col gap-2 bg-surface px-4 py-3.5">
+        <div className="flex flex-col">
           <ToggleRow
             label="Scheduled reminders"
             body="A nudge on your training days"
@@ -133,7 +137,7 @@ export default function NotificationSettings({ initialPrefs }) {
             onChange={(v) => patch({ scheduledEnabled: v })}
           />
           {prefs.scheduledEnabled ? (
-            <div className="flex gap-1.5 pl-0.5">
+            <div className="flex justify-between gap-1 px-4 pb-3.5">
               {DOW.map((d, i) => {
                 const on = prefs.scheduledDays.includes(i);
                 return (
@@ -141,6 +145,8 @@ export default function NotificationSettings({ initialPrefs }) {
                     key={i}
                     type="button"
                     disabled={gated}
+                    aria-pressed={on}
+                    aria-label={DAY_NAMES[i]}
                     onClick={() =>
                       patch({
                         scheduledDays: on
@@ -148,8 +154,8 @@ export default function NotificationSettings({ initialPrefs }) {
                           : [...prefs.scheduledDays, i],
                       })
                     }
-                    className={`h-8 w-8 rounded-full border text-xs font-semibold transition-colors disabled:opacity-40 ${
-                      on ? "border-accent bg-accent text-black" : "border-border text-muted hover:text-fg"
+                    className={`h-9 w-9 rounded-full text-[13px] font-semibold transition-[background-color,color,transform] active:scale-90 disabled:opacity-40 ${
+                      on ? "bg-accent text-black" : "bg-fg/10 text-muted hover:text-fg"
                     }`}
                   >
                     {d}
@@ -159,111 +165,86 @@ export default function NotificationSettings({ initialPrefs }) {
             </div>
           ) : null}
         </div>
-        <Toggle
+        <ToggleRow
           label="Weekly recap"
           body="Every Monday, a summary of last week"
           checked={prefs.weeklyRecap}
           disabled={gated}
           onChange={(v) => patch({ weeklyRecap: v })}
         />
-        <Toggle
+        <ToggleRow
           label="Streak at risk"
           body="When your weekly streak is about to break"
           checked={prefs.streakAtRisk}
           disabled={gated}
           onChange={(v) => patch({ streakAtRisk: v })}
         />
-        <Toggle
+        <ToggleRow
           label="Rest timer done"
           body="When the rest timer finishes and the app is in the background"
           checked={prefs.restTimerDone}
           disabled={gated}
           onChange={(v) => patch({ restTimerDone: v })}
         />
-      </section>
+      </Group>
 
-      <div className="flex flex-col gap-2">
-        <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-dim">Workout</h2>
-        <section className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
-          <div className="flex flex-col gap-3 bg-surface px-4 py-3.5">
-            <ToggleRow
-              label="Rest timer"
-              body="Show a rest countdown after you log a set"
-              checked={prefs.restTimerEnabled}
-              onChange={(v) => patch({ restTimerEnabled: v })}
-            />
-            {prefs.restTimerEnabled ? (
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-dim">Starts at</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {REST_PRESETS.map((s) => (
+      <Group title="Workout">
+        <div className="flex flex-col">
+          <ToggleRow
+            label="Rest timer"
+            body="Show a rest countdown after you log a set"
+            checked={prefs.restTimerEnabled}
+            onChange={(v) => patch({ restTimerEnabled: v })}
+          />
+          {prefs.restTimerEnabled ? (
+            <div className="flex flex-col gap-2 px-4 pb-3.5">
+              <span className="text-[13px] text-dim">Starts at</span>
+              <div className="flex flex-wrap gap-1.5">
+                {REST_PRESETS.map((s) => {
+                  const on = (prefs.defaultRestSeconds ?? 90) === s;
+                  return (
                     <button
                       key={s}
                       type="button"
+                      aria-pressed={on}
                       onClick={() => patch({ defaultRestSeconds: s })}
-                      className={`rounded-field border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                        (prefs.defaultRestSeconds ?? 90) === s
-                          ? "border-accent bg-accent-soft text-accent"
-                          : "border-border text-muted hover:text-fg"
+                      className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold tabular-nums transition-colors ${
+                        on ? "bg-fg text-bg" : "bg-fg/10 text-muted hover:text-fg"
                       }`}
                     >
                       {s}s
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            ) : null}
-          </div>
-          <Toggle
-            label="Form videos in the logger"
-            body="Keep a small video next to each exercise while you log, instead of tapping to open it. Handy while you are still learning the lifts."
-            checked={prefs.inlineVideos}
-            onChange={(v) => patch({ inlineVideos: v })}
-          />
-          <Toggle
-            label="Unfinished workout reminder"
-            body="If a workout is still running 90 minutes after you started, prompt to finish or discard it next time you open the app"
-            checked={prefs.unfinishedWorkout}
-            onChange={(v) => patch({ unfinishedWorkout: v })}
-          />
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function Toggle({ label, body, checked, disabled, onChange }) {
-  return (
-    <div className="bg-surface px-4 py-3.5">
-      <ToggleRow label={label} body={body} checked={checked} disabled={disabled} onChange={onChange} />
-    </div>
-  );
-}
-
-function ToggleRow({ label, body, checked, disabled, onChange }) {
-  return (
-    <div className={`flex items-center justify-between gap-4 ${disabled ? "opacity-45" : ""}`}>
-      <span className="flex min-w-0 flex-col">
-        <span className="text-sm font-medium text-fg">{label}</span>
-        <span className="text-xs text-dim">{body}</span>
-      </span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        disabled={disabled}
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors disabled:cursor-not-allowed ${
-          checked ? "border-accent bg-accent" : "border-border bg-surface-2"
-        }`}
-      >
-        <span
-          className={`inline-block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform ${
-            checked ? "translate-x-[22px]" : "translate-x-[3px]"
-          }`}
+            </div>
+          ) : null}
+        </div>
+        <ToggleRow
+          label="Form videos in the logger"
+          body="Keep a small video next to each exercise while you log, instead of tapping to open it. Handy while you are still learning the lifts."
+          checked={prefs.inlineVideos}
+          onChange={(v) => patch({ inlineVideos: v })}
         />
-      </button>
+        <ToggleRow
+          label="Unfinished workout reminder"
+          body="If a workout is still running 90 minutes after you started, prompt to finish or discard it next time you open the app"
+          checked={prefs.unfinishedWorkout}
+          onChange={(v) => patch({ unfinishedWorkout: v })}
+        />
+      </Group>
+    </div>
+  );
+}
+
+function ToggleRow({ label, body, checked, disabled = false, onChange }) {
+  return (
+    <div className="flex min-h-[56px] items-center justify-between gap-4 px-4 py-3">
+      <span className={`flex min-w-0 flex-col ${disabled ? "opacity-45" : ""}`}>
+        <span className="text-[16px] text-fg">{label}</span>
+        <span className="text-[13px] leading-snug text-dim">{body}</span>
+      </span>
+      <Switch checked={checked} onChange={onChange} label={label} disabled={disabled} />
     </div>
   );
 }

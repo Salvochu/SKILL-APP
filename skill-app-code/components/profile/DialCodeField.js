@@ -68,13 +68,13 @@ export default function DialCodeField({ value, onChange, bare = false, filled = 
             ? "tabular-nums w-full min-w-0 bg-transparent py-3 text-right text-[16px] text-muted outline-none placeholder:text-dim focus:text-fg"
             : filled
               ? "tabular-nums w-full min-w-0 rounded-xl bg-fg/10 px-3 py-3 text-[16px] text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-accent/60"
-              : "tabular w-full min-w-0 rounded-field border border-border bg-bg px-2 py-2 text-sm text-fg focus:border-accent"
+              : "tabular-nums w-full min-w-0 rounded-xl bg-fg/[0.07] px-3 py-2.5 text-[16px] text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-accent/60"
         }
       />
       {open ? (
-        <ul className={`absolute ${bare ? "right-0" : ""} z-20 mt-1 max-h-60 w-64 max-w-[80vw] overflow-y-auto rounded-field border border-border bg-surface py-1 shadow-lg`}>
+        <ul className={`glass-strong pop-in absolute ${bare ? "right-0 origin-top-right" : "origin-top-left"} z-20 mt-1.5 max-h-64 w-64 max-w-[80vw] overflow-y-auto rounded-2xl py-1.5`}>
           {results.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-dim">No match. The typed value will be used as is.</li>
+            <li className="px-4 py-2.5 text-[14px] text-muted">No match. The typed value will be used as is.</li>
           ) : (
             results.map((c) => (
               <li key={c.code}>
@@ -82,7 +82,7 @@ export default function DialCodeField({ value, onChange, bare = false, filled = 
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pick(c)}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-fg hover:bg-surface-2"
+                  className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-[15px] text-fg hover:bg-fg/5 active:bg-fg/10"
                 >
                   <span>{c.flag}</span>
                   <span className="tabular text-dim">{c.dial}</span>

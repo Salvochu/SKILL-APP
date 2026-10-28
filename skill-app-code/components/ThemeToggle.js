@@ -36,7 +36,7 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={light ? "Switch to dark mode" : "Switch to light mode"}
-      className="rounded-field p-2 text-muted transition-colors hover:text-fg"
+      className="rounded-full p-2 text-muted transition-colors hover:bg-fg/5 hover:text-fg"
     >
       {light ? <IconMoon /> : <IconSun />}
     </button>

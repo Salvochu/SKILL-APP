@@ -42,7 +42,7 @@ export default function NavBar({ streak = null, challenge = false, avatarUrl = n
                   key={tab.href}
                   href={tab.href}
                   aria-current={active ? "page" : undefined}
-                  className={`rounded-field px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-full px-3.5 py-2 text-sm font-semibold transition-colors ${
                     active ? "bg-accent-soft text-accent" : "text-muted hover:text-fg"
                   }`}
                 >
