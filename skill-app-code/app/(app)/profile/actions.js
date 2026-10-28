@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncProfileToGHL } from "@/lib/ghl";
+import { sniffImage } from "@/lib/imageSniff";
 
 const str = (v) => (typeof v === "string" ? v.trim() : "");
 
@@ -34,11 +35,14 @@ export async function saveProfile(formData) {
     if (file.size > 5 * 1024 * 1024) {
       return { error: "That photo is too large. Please use one under 5MB." };
     }
-    const ext = (file.name?.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-    const path = `${user.id}/avatar.${ext}`;
+    // The avatars bucket is public, so only real images go in, stored
+    // under the type their bytes say (not the name the browser sent).
+    const image = await sniffImage(file);
+    if (!image) return { error: "That file isn't a photo. Use a JPG, PNG or HEIC image." };
+    const path = `${user.id}/avatar.${image.ext}`;
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(path, file, { upsert: true, contentType: file.type || undefined });
+      .upload(path, file, { upsert: true, contentType: image.type });
     if (uploadError) return { error: `Could not save that photo: ${uploadError.message}` };
     const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
     // Cache-bust so the new photo shows immediately instead of the

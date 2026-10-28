@@ -32,7 +32,8 @@ function weekStart(ms) {
 export async function GET(request) {
   const secret = process.env.CRON_SECRET;
   const auth = request.headers.get("authorization");
-  if (secret && auth !== `Bearer ${secret}`) {
+  // Fails closed: if CRON_SECRET is ever missing, nobody can run it.
+  if (!secret || auth !== `Bearer ${secret}`) {
     return new Response("forbidden", { status: 403 });
   }
   if (!pushConfigured()) {

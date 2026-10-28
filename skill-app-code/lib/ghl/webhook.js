@@ -27,7 +27,9 @@ function secretMatches(provided, expected) {
 }
 
 export function verifyGhlSignature(rawBody, req) {
-  if (process.env.GHL_WEBHOOK_SKIP_VERIFY === "1") return true; // local testing only
+  // Local testing only: ignored anywhere but `next dev`, so a stray env
+  // var can never open the webhooks in production.
+  if (process.env.NODE_ENV === "development" && process.env.GHL_WEBHOOK_SKIP_VERIFY === "1") return true;
 
   // Preferred path: a shared secret we set on both ends.
   const expectedSecret = process.env.GHL_WEBHOOK_SECRET;

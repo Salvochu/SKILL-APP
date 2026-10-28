@@ -2,6 +2,7 @@
 
 import { randomUUID } from "crypto";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
+import { sniffImage } from "@/lib/imageSniff";
 
 const ANGLES = ["front", "side", "back"];
 
@@ -20,6 +21,11 @@ export async function uploadProgressPhoto(formData) {
   }
   if (file.size > 8 * 1024 * 1024) {
     return { error: "That image is too large. Try another." };
+  }
+  // The app always sends a JPEG it has already resized; anything else
+  // did not come from the app.
+  if ((await sniffImage(file))?.type !== "image/jpeg") {
+    return { error: "That file isn't a photo. Try another." };
   }
 
   const takenOn = /^\d{4}-\d{2}-\d{2}$/.test(formData.get("takenOn"))
