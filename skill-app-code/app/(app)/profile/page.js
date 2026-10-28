@@ -41,9 +41,10 @@ async function ProfileSection() {
 }
 
 async function ChallengeEquipmentSection() {
-  const membership = await getMembership();
+  // Fetched together rather than one after the other; the extra
+  // mesocycle read for non-challenge accounts is cheaper than the wait.
+  const [membership, meso] = await Promise.all([getMembership(), getActiveMesocycle()]);
   if (membership !== "challenge") return null;
-  const meso = await getActiveMesocycle();
   const variant = meso?.variant && meso.variant !== "Standard" ? meso.variant : "Full Gym";
   return <ChallengeEquipmentCard variant={variant} />;
 }

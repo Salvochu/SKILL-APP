@@ -21,10 +21,9 @@ export const metadata = { title: "Challenge" };
 export const instant = false;
 
 export default async function ChallengePage() {
-  const membership = await getMembership();
+  const [membership, access] = await Promise.all([getMembership(), getChallengeAccess()]);
   if (membership !== "challenge") redirect("/dashboard");
 
-  const access = await getChallengeAccess();
   if (!access.started) return <ChallengePrep />;
   if (access.lapsed) return <ChallengeEnded />;
 
