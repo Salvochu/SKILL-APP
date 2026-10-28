@@ -16,10 +16,11 @@ export default function BeginnerStaples({ exercises }) {
   const open = exercises.find((e) => e.id === openId) ?? null;
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
-      <div className="flex flex-col gap-0.5">
-        <h2 className="font-display text-base font-semibold text-fg">New to the gym? Start with these</h2>
-        <p className="text-xs text-muted">
+    <section className="flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5 px-1">
+        <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">Start here</span>
+        <h2 className="font-sans text-[17px] font-semibold tracking-[-0.01em] text-fg">New to the gym? Start with these</h2>
+        <p className="text-[14px] leading-snug text-muted">
           The core lifts from the Foundations program. Get comfortable here first.
         </p>
       </div>
@@ -31,20 +32,20 @@ export default function BeginnerStaples({ exercises }) {
               <button
                 type="button"
                 onClick={() => setOpenId(e.id)}
-                className="flex h-full w-36 flex-col gap-2 rounded-field border border-border bg-surface p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+                className="flex h-full w-40 flex-col gap-2.5 rounded-2xl bg-surface p-3.5 text-left transition-[background-color,transform] hover:bg-surface-2 active:scale-[0.98]"
               >
                 <span className="flex items-start justify-between gap-1">
                   <MusclePill muscle={e.muscle} />
                   {e.video_url ? (
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-                      <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="currentColor">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                      <svg viewBox="0 0 24 24" className="ml-px h-3 w-3" fill="currentColor">
                         <path d="M8 5v14l11-7z" />
                       </svg>
                     </span>
                   ) : null}
                 </span>
-                <span className="text-sm font-medium leading-tight text-fg">{e.name}</span>
-                <span className="mt-auto text-xs text-dim">{e.equipment}</span>
+                <span className="text-[15px] font-semibold leading-snug text-fg">{e.name}</span>
+                <span className="mt-auto text-[13px] text-dim">{e.equipment}</span>
               </button>
             </li>
           ))}

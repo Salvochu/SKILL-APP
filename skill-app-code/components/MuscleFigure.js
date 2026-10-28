@@ -12,7 +12,7 @@ export default function MuscleFigure({ muscles = [], compact = false, className 
   if (compact) {
     return (
       <figure className={`flex shrink-0 flex-col items-center gap-1 ${className}`}>
-        <div className="flex items-center justify-center rounded-field border border-border bg-bg/50 p-1.5">
+        <div className="flex items-center justify-center rounded-xl bg-fg/[0.06] p-1.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={src}
@@ -21,7 +21,7 @@ export default function MuscleFigure({ muscles = [], compact = false, className 
             className="h-28 w-auto max-w-[104px] object-contain"
           />
         </div>
-        <figcaption className="max-w-[112px] text-center text-[10px] leading-tight text-dim">
+        <figcaption className="max-w-[112px] text-center text-[11px] leading-tight text-dim">
           {pick.name}
         </figcaption>
       </figure>
@@ -30,7 +30,7 @@ export default function MuscleFigure({ muscles = [], compact = false, className 
 
   return (
     <figure className={`flex flex-col items-center gap-2 ${className}`}>
-      <div className="flex items-center justify-center rounded-field border border-border bg-surface-2 px-4 py-3">
+      <div className="flex items-center justify-center rounded-2xl bg-fg/[0.06] px-4 py-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
@@ -39,7 +39,7 @@ export default function MuscleFigure({ muscles = [], compact = false, className 
           className="h-48 w-auto max-w-[240px] object-contain"
         />
       </div>
-      <figcaption className="text-[11px] text-dim">
+      <figcaption className="text-[12px] text-dim">
         Targets <span className="font-medium text-muted">{pick.name}</span>
       </figcaption>
     </figure>

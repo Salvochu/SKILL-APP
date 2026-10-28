@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { MUSCLE_ORDER, sortEquipment, muscleKey, musclesInGroup } from "@/lib/exercises";
 import ExerciseSheet from "@/components/library/ExerciseSheet";
-import MusclePill from "@/components/MusclePill";
 
 // Every muscle an exercise touches, primary tags first. Falls back to the
 // parent group when a row has no tags yet.
@@ -59,14 +58,18 @@ export default function LibraryBrowser({ exercises, noun = "exercise", canLog = 
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder={`Search ${plural} or instructions`}
-        className="w-full rounded-field border border-border bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-dim focus:border-accent"
-      />
+    <div className="flex flex-col gap-3.5">
+      <label className="relative flex items-center">
+        <IconSearch className="pointer-events-none absolute left-3 h-[18px] w-[18px] text-dim" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={`Search ${plural} or instructions`}
+          aria-label={`Search ${plural}`}
+          className="w-full rounded-xl bg-fg/[0.07] py-2.5 pl-10 pr-3 text-[16px] text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-accent/60"
+        />
+      </label>
 
       <ChipRow value={group} onChange={pickGroup} options={groups} allLabel="All muscles" dots />
       {subs.length > 0 ? (
@@ -76,40 +79,52 @@ export default function LibraryBrowser({ exercises, noun = "exercise", canLog = 
         <ChipRow value={equipment} onChange={setEquipment} options={equipmentList} allLabel="All equipment" />
       ) : null}
 
-      <p className="text-xs text-dim">
+      <p className="px-1 pt-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">
         {filtered.length} {filtered.length === 1 ? noun : plural}
       </p>
 
       {filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted">No {plural} match those filters.</p>
+        <p className="rounded-2xl bg-surface py-10 text-center text-[15px] text-muted">No {plural} match those filters.</p>
       ) : (
-        <ul className="flex flex-col gap-2.5">
+        <ul className="-mt-1 overflow-hidden rounded-2xl bg-surface [&>li:first-child_.row-sep]:border-transparent">
           {filtered.map((e) => {
             const primary = tagsFor(e).filter((m) => m.role === "primary").slice(0, 3);
+            const lead = primary[0]?.name ?? e.muscle;
+            const meta = [primary.map((m) => m.name).join(", "), e.equipment].filter(Boolean).join(" · ");
             return (
               <li key={e.id}>
                 <button
                   type="button"
                   onClick={() => setOpenId(e.id)}
-                  className="flex w-full flex-col gap-1.5 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2 active:bg-accent-soft"
+                  className="flex w-full pl-4 text-left transition-colors hover:bg-surface-2 active:bg-surface-2"
                 >
-                  <span className="flex items-start justify-between gap-3">
-                    <span className="font-display text-base font-semibold text-fg">{e.name}</span>
-                    {e.video_url ? <IconPlay className="mt-1 h-4 w-4 shrink-0 text-dim" /> : null}
-                  </span>
-                  <span className="flex flex-wrap gap-2">
-                    {primary.map((m) => (
-                      <MusclePill key={m.id} muscle={m.name} />
-                    ))}
-                    {e.equipment ? (
-                      <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted">
-                        {e.equipment}
+                  <span className="row-sep flex min-w-0 flex-1 items-center gap-3 border-t border-border/70 py-3 pr-4">
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-[16px] font-semibold text-fg">{e.name}</span>
+                      {meta ? (
+                        <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[13px] text-dim">
+                          {lead ? (
+                            <span
+                              aria-hidden="true"
+                              className="h-2 w-2 shrink-0 rounded-full"
+                              style={{ backgroundColor: `var(--muscle-${muscleKey(lead)})` }}
+                            />
+                          ) : null}
+                          <span className="truncate">{meta}</span>
+                        </span>
+                      ) : null}
+                      {e.instructions ? (
+                        <span className="mt-1 line-clamp-2 text-[13px] leading-snug text-muted">{e.instructions}</span>
+                      ) : null}
+                    </span>
+                    {e.video_url ? (
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                        <IconPlay className="ml-0.5 h-3.5 w-3.5" />
                       </span>
-                    ) : null}
+                    ) : (
+                      <IconChevron className="h-4 w-4 shrink-0 text-dim" />
+                    )}
                   </span>
-                  {e.instructions ? (
-                    <span className="line-clamp-2 text-sm text-muted">{e.instructions}</span>
-                  ) : null}
                 </button>
               </li>
             );
@@ -124,16 +139,15 @@ export default function LibraryBrowser({ exercises, noun = "exercise", canLog = 
 
 function ChipRow({ value, onChange, options, allLabel, dots }) {
   return (
-    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden">
       {["All", ...options].map((opt) => (
         <button
           key={opt}
           type="button"
           onClick={() => onChange(opt)}
-          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-            value === opt
-              ? "border-accent bg-accent-soft text-accent"
-              : "border-border text-muted hover:text-fg"
+          aria-pressed={value === opt}
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+            value === opt ? "bg-fg text-bg" : "bg-surface-2 text-muted hover:text-fg"
           }`}
         >
           {dots && opt !== "All" ? (
@@ -153,6 +167,21 @@ function IconPlay(props) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
       <path d="M8 5.5v13l11-6.5z" />
+    </svg>
+  );
+}
+function IconChevron(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+function IconSearch(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m20 20-4.2-4.2" />
     </svg>
   );
 }
