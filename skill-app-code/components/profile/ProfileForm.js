@@ -5,6 +5,7 @@ import { saveProfile } from "@/app/(app)/profile/actions";
 import { FITNESS_GOALS, EXPERIENCE_LEVELS } from "@/lib/profileOptions";
 import { COUNTRIES, splitPhone } from "@/lib/countries";
 import DialCodeField from "@/components/profile/DialCodeField";
+import { Group, Row, rowInput, rowSelect, PickerChevron } from "@/components/ui/Grouped";
 
 export default function ProfileForm({ initial }) {
   const [fullName, setFullName] = useState(initial.fullName);
@@ -60,171 +61,157 @@ export default function ProfileForm({ initial }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5 rounded-card border border-border bg-surface p-4">
-      <div className="flex items-center gap-4">
+    <form onSubmit={onSubmit} className="flex flex-col gap-7">
+      <div className="flex flex-col items-center gap-2">
         <button
           type="button"
           onClick={() => fileInput.current?.click()}
           aria-label="Change profile photo"
-          className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-surface-2"
+          className="relative h-24 w-24 overflow-hidden rounded-full bg-surface-2 transition-transform active:scale-95"
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
           ) : (
             <span className="flex h-full w-full items-center justify-center text-dim">
-              <IconUser className="h-7 w-7" />
+              <IconUser className="h-10 w-10" />
             </span>
           )}
         </button>
-        <div className="flex flex-col gap-1">
-          <button
-            type="button"
-            onClick={() => fileInput.current?.click()}
-            className="self-start rounded-field border border-border px-3 py-1.5 text-sm font-medium text-fg hover:bg-surface-2"
-          >
-            Change photo
-          </button>
-          <span className="text-xs text-dim">JPG or PNG, up to 5MB.</span>
-          <input
-            ref={fileInput}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={onPickPhoto}
-            className="hidden"
-          />
-        </div>
+        <button
+          type="button"
+          onClick={() => fileInput.current?.click()}
+          className="text-[15px] font-semibold text-accent active:opacity-60"
+        >
+          Edit photo
+        </button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={onPickPhoto}
+          className="hidden"
+        />
       </div>
 
-      <Field label="Email">
-        <span className="rounded-field border border-border bg-surface-2 px-3 py-2 text-sm text-muted">
-          {initial.email}
-        </span>
-      </Field>
-
-      <Field label="Name">
-        <input
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          placeholder="Your name"
-          className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
-        />
-      </Field>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Age" className="min-w-0">
+      <Group title="About you">
+        <Row label="Name" htmlFor="pf-name">
           <input
+            id="pf-name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Your name"
+            className={rowInput}
+          />
+        </Row>
+        <Row label="Age" htmlFor="pf-age">
+          <input
+            id="pf-age"
             type="number"
             inputMode="numeric"
             min="13"
             max="100"
             value={age}
             onChange={(e) => setAge(e.target.value)}
-            className="tabular w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
+            placeholder="Optional"
+            className={`tabular-nums ${rowInput}`}
           />
-        </Field>
-        <Field label="Country" className="min-w-0">
-          <select
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            className="w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
-          >
-            <option value="">Prefer not to say</option>
-            {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.name}>
-                {c.flag} {c.name}
-              </option>
+        </Row>
+        <Row label="Country" htmlFor="pf-country">
+          <div className="relative flex w-full items-center">
+            <select id="pf-country" value={country} onChange={(e) => setCountry(e.target.value)} className={rowSelect}>
+              <option value="">Prefer not to say</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.name}>
+                  {c.flag} {c.name}
+                </option>
+              ))}
+            </select>
+            <PickerChevron />
+          </div>
+        </Row>
+      </Group>
+
+      <Group title="Training">
+        <Row label="Goal" htmlFor="pf-goal">
+          <div className="relative flex w-full items-center">
+            <select id="pf-goal" value={fitnessGoal} onChange={(e) => setFitnessGoal(e.target.value)} className={rowSelect}>
+              <option value="">Prefer not to say</option>
+              {FITNESS_GOALS.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+            <PickerChevron />
+          </div>
+        </Row>
+        <Row label="Experience" htmlFor="pf-exp">
+          <div className="relative flex w-full items-center">
+            <select id="pf-exp" value={experienceLevel} onChange={(e) => setExperienceLevel(e.target.value)} className={rowSelect}>
+              <option value="">Prefer not to say</option>
+              {EXPERIENCE_LEVELS.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+            </select>
+            <PickerChevron />
+          </div>
+        </Row>
+        <Row label="Units">
+          <div role="radiogroup" aria-label="Weight units" className="flex w-32 rounded-[9px] bg-surface-2 p-0.5">
+            {["kg", "lb"].map((u) => (
+              <button
+                key={u}
+                type="button"
+                role="radio"
+                aria-checked={unit === u}
+                onClick={() => setUnit(u)}
+                className={`flex-1 rounded-[7px] py-1 text-[13px] font-semibold transition-colors ${
+                  unit === u ? "bg-fg text-bg shadow-sm" : "text-muted"
+                }`}
+              >
+                {u}
+              </button>
             ))}
-          </select>
-        </Field>
+          </div>
+        </Row>
+      </Group>
+
+      <Group title="Contact" footer="Your phone number is optional and only used for coaching follow-up.">
+        <Row label="Email">
+          <span className="truncate py-3 text-[16px] text-dim">{initial.email}</span>
+        </Row>
+        <Row label="Phone" htmlFor="pf-phone">
+          <div className="flex w-full items-center justify-end gap-2">
+            <div className="w-[5.5rem] shrink-0">
+              <DialCodeField value={dial} onChange={setDial} bare />
+            </div>
+            <input
+              id="pf-phone"
+              type="tel"
+              value={localPhone}
+              onChange={(e) => setLocalPhone(e.target.value)}
+              placeholder="Number"
+              className={rowInput}
+            />
+          </div>
+        </Row>
+      </Group>
+
+      <div className="flex flex-col gap-2">
+        {error ? <p className="px-4 text-[14px] text-danger">{error}</p> : null}
+        {saved ? <p className="px-4 text-[14px] text-good">Profile saved.</p> : null}
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-2xl bg-accent px-4 py-4 text-[16px] font-semibold text-black transition-[transform,background-color] duration-100 hover:bg-accent-2 active:scale-[0.98] disabled:opacity-60"
+        >
+          {saving ? "Saving..." : "Save profile"}
+        </button>
       </div>
-
-      <Field label="Fitness goal">
-        <select
-          value={fitnessGoal}
-          onChange={(e) => setFitnessGoal(e.target.value)}
-          className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
-        >
-          <option value="">Prefer not to say</option>
-          {FITNESS_GOALS.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <Field label="Training experience">
-        <select
-          value={experienceLevel}
-          onChange={(e) => setExperienceLevel(e.target.value)}
-          className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
-        >
-          <option value="">Prefer not to say</option>
-          {EXPERIENCE_LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <Field label="Weight units">
-        <div className="flex gap-2">
-          {["kg", "lb"].map((u) => (
-            <button
-              key={u}
-              type="button"
-              onClick={() => setUnit(u)}
-              className={`flex-1 rounded-field border px-4 py-2 text-sm font-semibold transition-colors ${
-                unit === u ? "border-accent bg-accent-soft text-accent" : "border-border text-muted hover:text-fg"
-              }`}
-            >
-              {u}
-            </button>
-          ))}
-        </div>
-      </Field>
-
-      <Field label="Phone">
-        <div className="grid grid-cols-[9.5rem_minmax(0,1fr)] gap-2">
-          <DialCodeField value={dial} onChange={setDial} />
-          <input
-            type="tel"
-            value={localPhone}
-            onChange={(e) => setLocalPhone(e.target.value)}
-            placeholder="For coaching follow-up, optional"
-            className="w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
-          />
-        </div>
-      </Field>
-
-      {error ? (
-        <p className="rounded-field border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
-      ) : null}
-      {saved ? (
-        <p className="rounded-field border border-accent/40 bg-accent-soft px-3 py-2 text-sm text-accent">
-          Profile saved.
-        </p>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={saving}
-        className="rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
-      >
-        {saving ? "Saving..." : "Save profile"}
-      </button>
     </form>
-  );
-}
-
-function Field({ label, className = "", children }) {
-  return (
-    <label className={`flex flex-col gap-1.5 text-sm font-medium text-muted ${className}`}>
-      {label}
-      {children}
-    </label>
   );
 }
 

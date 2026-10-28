@@ -1,45 +1,46 @@
 import { getMembership } from "@/lib/data/profile";
-import ManageMembershipCard from "@/components/profile/ManageMembershipCard";
+import { MANAGE_MEMBERSHIP_URL } from "@/lib/links";
+import { signOut } from "@/app/actions";
 import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
-import SignOutCard from "@/components/profile/SignOutCard";
 import DangerZone from "@/components/profile/DangerZone";
+import { Group, rowButton } from "@/components/ui/Grouped";
 
-// Everything account-level - billing, password, session, deletion - in
-// one place instead of four separate cards down the page. Collapsed by
-// default (details, not open): these are occasional actions, not
-// something to look at on every visit.
+// Everything account-level as grouped rows, iOS Settings style: billing
+// and password up top, sign out on its own, and deleting the account in
+// a separate group at the bottom so it's never next to a routine action.
 export default async function AccountCard() {
   const isMember = (await getMembership()) === "member";
   return (
-    <details className="group rounded-card border border-border bg-surface [&_summary::-webkit-details-marker]:hidden">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Account</h2>
-        <IconChevron className="h-4 w-4 shrink-0 text-dim transition-transform group-open:rotate-90" />
-      </summary>
-      <div className="flex flex-col divide-y divide-border border-t border-border">
+    <div className="flex flex-col gap-7">
+      <Group
+        title="Account"
+        footer={isMember ? "Update your card or cancel your subscription directly with Stripe." : null}
+      >
         {isMember ? (
-          <div className="p-4">
-            <ManageMembershipCard />
-          </div>
+          <a href={MANAGE_MEMBERSHIP_URL} target="_blank" rel="noopener noreferrer" className={`${rowButton} text-fg`}>
+            Manage membership
+            <IconExternal className="h-4 w-4 shrink-0 text-dim" />
+          </a>
         ) : null}
-        <div className="p-4">
-          <ChangePasswordForm />
-        </div>
-        <div className="p-4">
-          <SignOutCard />
-        </div>
-        <div className="p-4">
-          <DangerZone />
-        </div>
-      </div>
-    </details>
+        <ChangePasswordForm />
+        <form action={signOut}>
+          <button type="submit" className={`${rowButton} text-accent`}>
+            Sign out
+          </button>
+        </form>
+      </Group>
+
+      <Group>
+        <DangerZone />
+      </Group>
+    </div>
   );
 }
 
-function IconChevron(props) {
+function IconExternal(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m9 6 6 6-6 6" />
+      <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
     </svg>
   );
 }

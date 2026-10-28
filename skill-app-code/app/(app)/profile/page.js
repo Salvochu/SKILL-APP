@@ -10,16 +10,15 @@ export const metadata = { title: "Profile" };
 
 export default function ProfilePage() {
   return (
-    <div className="flex flex-col gap-6 py-2">
+    <div className="flex flex-col gap-7 py-2">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-fg">Profile</h1>
-        <p className="text-sm text-muted">
-          Tell us a bit about your goals. This also helps Coach Salvador tailor any coaching he
-          offers you.
+        <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Profile</h1>
+        <p className="text-[15px] leading-relaxed text-muted">
+          A bit about you and your goals. It also helps Coach Salvador tailor any coaching he offers you.
         </p>
       </header>
 
-      <Suspense fallback={<div className="h-96 rounded-card skeleton bg-surface-2" />}>
+      <Suspense fallback={<div className="h-96 rounded-2xl skeleton bg-surface-2" />}>
         <ProfileSection />
       </Suspense>
 

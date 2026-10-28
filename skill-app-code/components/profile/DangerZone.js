@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteAccount } from "@/app/(app)/profile/actions";
+import { rowButton } from "@/components/ui/Grouped";
 
 export default function DangerZone() {
   const router = useRouter();
@@ -24,14 +25,8 @@ export default function DangerZone() {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-dim">Danger zone</h3>
-
-      <button
-        type="button"
-        onClick={() => setConfirmOpen(true)}
-        className="w-full rounded-field border border-danger/40 px-4 py-2.5 text-left text-sm font-medium text-danger hover:bg-danger/10"
-      >
+    <div>
+      <button type="button" onClick={() => setConfirmOpen(true)} className={`${rowButton} text-danger`}>
         Delete account
       </button>
 

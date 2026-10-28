@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateChallengeVariant } from "@/app/(app)/profile/actions";
+import { Group, rowButton } from "@/components/ui/Grouped";
 
 // Lets a challenge account change equipment (Full Gym vs Dumbbells)
 // after onboarding, since ChallengeWelcome only asks once. Only ever
-// rendered for membership === "challenge" (see profile/page.js).
+// rendered for membership === "challenge" (see profile/page.js). An iOS
+// style single-choice list: the picked row gets the checkmark.
 export default function ChallengeEquipmentCard({ variant: initialVariant }) {
   const router = useRouter();
   const [variant, setVariant] = useState(initialVariant);
@@ -28,31 +30,25 @@ export default function ChallengeEquipmentCard({ variant: initialVariant }) {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
-        Challenge equipment
-      </h2>
-      <p className="text-sm text-muted">
-        Which version of each workout you get. Switching applies from your next session.
-      </p>
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
-      <div className="flex flex-col gap-2.5">
-        <EquipmentOption
-          label="Full gym"
-          hint="Barbells, machines, the lot"
-          selected={variant === "Full Gym"}
-          disabled={saving}
-          onClick={() => pick("Full Gym")}
-        />
-        <EquipmentOption
-          label="At home"
-          hint="A pair of dumbbells is all you need"
-          selected={variant === "Dumbbells"}
-          disabled={saving}
-          onClick={() => pick("Dumbbells")}
-        />
-      </div>
-    </section>
+    <Group
+      title="Challenge equipment"
+      footer={error ? <span className="text-danger">{error}</span> : "Switching applies from your next session."}
+    >
+      <EquipmentOption
+        label="Full gym"
+        hint="Barbells, machines, the lot"
+        selected={variant === "Full Gym"}
+        disabled={saving}
+        onClick={() => pick("Full Gym")}
+      />
+      <EquipmentOption
+        label="At home"
+        hint="A pair of dumbbells is all you need"
+        selected={variant === "Dumbbells"}
+        disabled={saving}
+        onClick={() => pick("Dumbbells")}
+      />
+    </Group>
   );
 }
 
@@ -60,16 +56,21 @@ function EquipmentOption({ label, hint, selected, disabled, onClick }) {
   return (
     <button
       type="button"
+      role="radio"
+      aria-checked={selected}
       disabled={disabled}
       onClick={onClick}
-      className={`flex flex-col gap-0.5 rounded-field border px-4 py-3.5 text-left transition-colors disabled:opacity-60 ${
-        selected
-          ? "border-accent bg-accent-soft"
-          : "border-border hover:border-accent hover:bg-accent-soft"
-      }`}
+      className={`${rowButton} py-2.5 disabled:opacity-60`}
     >
-      <span className="text-sm font-semibold text-fg">{label}</span>
-      <span className="text-xs text-dim">{hint}</span>
+      <span className="flex flex-col">
+        <span className="text-[16px] text-fg">{label}</span>
+        <span className="text-[13px] text-dim">{hint}</span>
+      </span>
+      {selected ? (
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m5 12 5 5 9-10" />
+        </svg>
+      ) : null}
     </button>
   );
 }
