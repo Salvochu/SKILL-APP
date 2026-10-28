@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import MusclePill from "@/components/MusclePill";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 import ProgramSetup from "@/components/splits/ProgramSetup";
 import VideoModal from "@/components/log/VideoModal";
 import WeekGrid from "@/components/splits/WeekGrid";
 import { weekLayout, cleanFocus } from "@/lib/splitWeek";
-import { sortVariants } from "@/lib/exercises";
+import { sortVariants, muscleKey } from "@/lib/exercises";
 
 // The body of a split's own page. For a multi-day split: the example
 // week, and below it the session for whichever day is tapped. For a
@@ -30,7 +29,7 @@ export default function SplitDetail({ split, template, activeProgram, advanced =
   const sel = useGrid ? slots[selected] : null;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       {useGrid ? (
         <>
           <WeekGrid split={split} selectedIndex={selected} onSelect={setSelected} />
@@ -44,8 +43,10 @@ export default function SplitDetail({ split, template, activeProgram, advanced =
               onStartProgram={() => setSetupOpen(true)}
             />
           ) : (
-            <div className="rounded-card border border-border bg-surface px-4 py-3.5 text-sm text-muted">
-              {sel?.weekday}: rest day. Nothing scheduled.
+            <div className="flex flex-col gap-1 py-2">
+              <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">{sel?.weekday}</span>
+              <span className="font-display text-[1.6rem] font-bold leading-[1.1] tracking-[-0.02em] text-fg">Rest day</span>
+              <p className="mt-1 text-[15px] text-muted">Nothing scheduled. Recover, walk, sleep well.</p>
             </div>
           )}
         </>
@@ -86,112 +87,134 @@ function DaySession({ day, split, eyebrow, programWeeks, onStartProgram }) {
   const [videoFor, setVideoFor] = useState(null);
   const list = day.variants[variant] ?? [];
   const canProgram = Boolean(programWeeks);
+  const anyVideo = list.some((i) => i.exercise.video_url);
 
+  // One surface only: the exercise list is the single grouped container
+  // (like an iOS inset list), everything else sits on the page itself.
   return (
-    <section className="flex flex-col rounded-card border border-border bg-surface">
-      <div className="flex flex-col gap-0.5 p-4">
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
         {eyebrow ? (
-          <span className="text-xs font-semibold uppercase tracking-wider text-accent">{eyebrow}</span>
+          <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">{eyebrow}</span>
         ) : null}
-        <span className="font-display text-lg font-semibold text-fg">{day.template.name}</span>
+        <h2 className="font-display text-[1.6rem] font-bold leading-[1.1] tracking-[-0.02em] text-fg">
+          {day.template.name}
+        </h2>
+        {day.template.description ? (
+          <p className="mt-1 text-[15px] leading-relaxed text-muted">{day.template.description}</p>
+        ) : null}
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-border p-4">
-        {day.template.description ? (
-          <p className="text-sm text-muted">{day.template.description}</p>
-        ) : null}
+      {variants.length > 1 ? (
+        <div role="tablist" aria-label="Equipment" className="flex rounded-[10px] bg-surface-2 p-0.5">
+          {variants.map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={v === variant}
+              onClick={() => setVariant(v)}
+              className={`flex-1 rounded-[8px] px-2 py-1.5 text-[13px] font-semibold transition-[background-color,color] duration-150 ${
+                v === variant ? "bg-fg text-bg shadow-sm" : "text-muted hover:text-fg"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
-        {variants.length > 1 ? (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-dim">Equipment</span>
-            <div className="flex flex-wrap gap-2">
-              {variants.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setVariant(v)}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                    v === variant
-                      ? "border-accent bg-accent text-black"
-                      : "border-border text-muted hover:text-fg"
+      <div className="flex flex-col gap-2">
+        <ul className="overflow-hidden rounded-2xl bg-surface">
+          {list.map((item, idx) => {
+            const hasVideo = Boolean(item.exercise.video_url);
+            const body = (
+              <>
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                    hasVideo ? "bg-accent-soft text-accent" : "bg-surface-2 text-dim"
                   }`}
                 >
-                  {v}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
-          {list.map((item) => {
-            const hasVideo = Boolean(item.exercise.video_url);
+                  {hasVideo ? <IconPlay className="ml-0.5 h-3.5 w-3.5" /> : <IconDot className="h-1.5 w-1.5" />}
+                </span>
+                <span
+                  className={`flex min-w-0 flex-1 items-center gap-3 py-3 pr-4 ${
+                    idx > 0 ? "border-t border-border/70" : ""
+                  }`}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[16px] font-semibold text-fg">{item.exercise.name}</span>
+                    <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-dim">
+                      <span
+                        aria-hidden="true"
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: `var(--muscle-${muscleKey(item.exercise.muscle)})` }}
+                      />
+                      <span className="truncate">
+                        {item.exercise.muscle}
+                        {item.exercise.equipment ? ` · ${item.exercise.equipment}` : ""}
+                      </span>
+                    </span>
+                  </span>
+                  <span className="tabular shrink-0 text-[15px] font-medium text-muted">
+                    {item.sets} × {item.reps}
+                  </span>
+                </span>
+              </>
+            );
             return (
-              <li key={`${item.variant}-${item.position}`} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">
+              <li key={`${item.variant}-${item.position}`}>
                 {hasVideo ? (
                   <button
                     type="button"
                     onClick={() => setVideoFor(item.exercise)}
-                    className="group flex flex-1 items-center gap-2.5 text-left"
+                    aria-label={`${item.exercise.name}, watch the form video`}
+                    className="flex w-full items-center gap-3 pl-4 text-left transition-colors active:bg-surface-2"
                   >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent transition-colors group-hover:bg-accent group-hover:text-black">
-                      <IconPlay className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-medium text-fg group-hover:text-accent">
-                        {item.exercise.name}
-                      </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-2">
-                        <MusclePill muscle={item.exercise.muscle} />
-                        <span className="text-xs text-dim">{item.exercise.equipment}</span>
-                      </span>
-                    </span>
+                    {body}
                   </button>
                 ) : (
-                  <span className="flex-1">
-                    <span className="block text-sm font-medium text-fg">{item.exercise.name}</span>
-                    <span className="mt-1 flex flex-wrap items-center gap-2">
-                      <MusclePill muscle={item.exercise.muscle} />
-                      <span className="text-xs text-dim">{item.exercise.equipment}</span>
-                    </span>
-                  </span>
+                  <div className="flex items-center gap-3 pl-4">{body}</div>
                 )}
-                <span className="tabular shrink-0 text-xs text-muted">
-                  {item.sets} x {item.reps}
-                </span>
               </li>
             );
           })}
         </ul>
-        {list.some((i) => i.exercise.video_url) ? (
-          <p className="text-xs text-dim">Tap a lift to watch the form video.</p>
-        ) : null}
+        {anyVideo ? <p className="px-4 text-[13px] text-dim">Tap an exercise to watch the form video.</p> : null}
+      </div>
 
-        <div className="flex flex-col gap-2 pt-1">
-          {canProgram ? (
-            <button
-              type="button"
-              onClick={onStartProgram}
-              className="btn-shine flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
-            >
-              Start the {programWeeks}-week program
-            </button>
-          ) : null}
-          <GuardedStartLink
-            href={`/log?split=${split.id}&day=${day.template.id}&variant=${encodeURIComponent(variant)}`}
-            className={
-              canProgram
-                ? "flex w-full items-center justify-center rounded-field border border-border px-4 py-3 text-sm font-semibold text-fg transition-colors hover:bg-surface-2"
-                : "flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
-            }
+      <div className="flex flex-col gap-1 pt-1">
+        {canProgram ? (
+          <button
+            type="button"
+            onClick={onStartProgram}
+            className="flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[16px] font-semibold text-black transition-[transform,background-color] duration-100 hover:bg-accent-2 active:scale-[0.98]"
           >
-            Just log this session
-          </GuardedStartLink>
-        </div>
+            Start the {programWeeks}-week program
+          </button>
+        ) : null}
+        <GuardedStartLink
+          href={`/log?split=${split.id}&day=${day.template.id}&variant=${encodeURIComponent(variant)}`}
+          className={
+            canProgram
+              ? "flex w-full items-center justify-center rounded-2xl px-4 py-3.5 text-[16px] font-semibold text-accent transition-[transform,background-color] duration-100 hover:bg-accent-soft active:scale-[0.98]"
+              : "flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[16px] font-semibold text-black transition-[transform,background-color] duration-100 hover:bg-accent-2 active:scale-[0.98]"
+          }
+        >
+          Just log this session
+        </GuardedStartLink>
       </div>
 
       {videoFor ? <VideoModal exercise={videoFor} onClose={() => setVideoFor(null)} /> : null}
     </section>
+  );
+}
+
+function IconDot(props) {
+  return (
+    <svg viewBox="0 0 8 8" fill="currentColor" {...props}>
+      <circle cx="4" cy="4" r="4" />
+    </svg>
   );
 }
 

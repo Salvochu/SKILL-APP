@@ -57,18 +57,20 @@ async function Body({ params }) {
       <div className="flex flex-col gap-1.5">
         <Link
           href="/splits"
-          className="flex items-center gap-1 self-start text-xs font-medium text-dim hover:text-fg"
+          className="-ml-1 flex items-center gap-0.5 self-start py-1 text-[15px] font-medium text-accent active:opacity-60"
         >
-          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m15 6-6 6 6 6" />
           </svg>
           Train
         </Link>
-        <h1 className="text-2xl font-bold text-fg">{split.name}</h1>
-        {split.description ? <p className="text-sm text-muted">{split.description}</p> : null}
-        <span className="mt-1 self-start rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-dim">
-          {split.cadence}
-        </span>
+        <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">{split.name}</h1>
+        {split.cadence ? (
+          <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">{split.cadence}</span>
+        ) : null}
+        {split.description ? (
+          <p className="mt-1 text-[15px] leading-relaxed text-muted">{split.description}</p>
+        ) : null}
       </div>
 
       <SplitDetail
