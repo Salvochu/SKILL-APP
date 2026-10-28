@@ -28,7 +28,7 @@ export default function NavBar({ streak = null, challenge = false, avatarUrl = n
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-40 h-14 border-b border-border bg-bg/90 backdrop-blur md:h-16">
+      <header className="glass-bar fixed inset-x-0 top-0 z-40 h-14 md:h-16">
         <div className="mx-auto flex h-full w-full max-w-2xl items-center gap-6 px-4 md:max-w-5xl md:px-6">
           <Link href="/dashboard" aria-label="SKILL home" className="shrink-0">
             <Wordmark height="22px" />
@@ -74,19 +74,22 @@ export default function NavBar({ streak = null, challenge = false, avatarUrl = n
         </div>
       </header>
 
-      {/* Bottom tab bar, mobile only. Padding goes past the reported
-          safe-area inset on purpose: right at that boundary, a tap can
-          still land in iOS's own home-indicator gesture strip instead of
-          the link under it. */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 pb-[calc(env(safe-area-inset-bottom)+1rem)] backdrop-blur md:hidden">
-        <div className={`relative mx-auto grid max-w-2xl ${gridCols}`}>
-          {/* One shared indicator that glides between tabs, instead of a
-              separate bar per tab that pops in/out on navigation. */}
+      {/* Bottom tab bar, mobile only: a floating glass capsule with the
+          content scrolling underneath (iOS style). It sits above the
+          safe-area inset with extra room on purpose: right at that
+          boundary, a tap can still land in iOS's own home-indicator
+          gesture strip instead of the link under it. The wrapper lets
+          taps beside the capsule through to the page. */}
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:hidden">
+        <div className={`glass pointer-events-auto relative mx-auto grid max-w-md rounded-full p-1.5 ${gridCols}`}>
+          {/* One shared pill that glides between tabs, instead of a
+              separate highlight per tab that pops in/out on navigation. */}
           <span
             aria-hidden="true"
-            className="absolute top-0 h-0.5 w-10 -translate-x-1/2 rounded-full bg-accent transition-[left,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+            className="absolute inset-y-1.5 rounded-full bg-accent-soft transition-[left,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
             style={{
-              left: `calc((100% / ${TABS.length}) * ${Math.max(activeIndex, 0)} + (100% / ${TABS.length}) / 2)`,
+              width: `calc((100% - 0.75rem) / ${TABS.length})`,
+              left: `calc(0.375rem + ((100% - 0.75rem) / ${TABS.length}) * ${Math.max(activeIndex, 0)})`,
               opacity: activeIndex === -1 ? 0 : 1,
             }}
           />
@@ -98,8 +101,8 @@ export default function NavBar({ streak = null, challenge = false, avatarUrl = n
                 key={tab.href}
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
-                className={`group relative flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors [-webkit-tap-highlight-color:transparent] ${
-                  active ? "text-accent" : "text-dim hover:text-muted"
+                className={`group relative flex flex-col items-center gap-0.5 rounded-full py-1.5 text-[10px] font-semibold transition-colors [-webkit-tap-highlight-color:transparent] ${
+                  active ? "text-accent" : "text-muted hover:text-fg"
                 }`}
               >
                 <Icon className="h-[22px] w-[22px] transition-transform duration-100 group-active:scale-90" />

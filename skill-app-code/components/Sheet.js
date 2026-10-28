@@ -123,7 +123,7 @@ export default function Sheet({ onClose, ariaLabel, children, panelClassName = "
         style={backdropStyle}
       />
       <div
-        className={`relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-border bg-surface sm:rounded-2xl ${panelClassName}`}
+        className={`glass-strong relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] sm:rounded-3xl ${panelClassName}`}
         style={panelStyle}
       >
         {showHandle ? (

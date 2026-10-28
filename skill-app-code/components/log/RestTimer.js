@@ -68,20 +68,20 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
   const pct = total > 0 ? (remaining / total) * 100 : 0;
 
   const done = remaining === 0;
-  const alertBorder = done ? "border-alert blink-alert" : "border-border-strong";
+  const alertRing = done ? "ring-1 ring-alert blink-alert" : "";
 
   // Compact + collapsed: a centred pill so it matches the minimised
   // session bar sitting under it.
   if (compact && !expanded) {
     const pill = (
-      <div className={`flex items-center gap-2 self-center rounded-full border bg-surface-2 py-1.5 pl-3.5 pr-1.5 ${alertBorder}`}>
+      <div className={`glass flex items-center gap-2 self-center rounded-full py-1.5 pl-4 pr-1.5 ${alertRing}`}>
         <button
           type="button"
           onClick={() => setExpanded(true)}
           aria-label="Expand rest timer"
           className="flex items-center gap-1.5"
         >
-          <span className={`clock text-sm font-bold ${done ? "text-alert" : "text-fg"}`}>
+          <span className={`text-sm font-bold tabular-nums ${done ? "text-alert" : "text-fg"}`}>
             {mm}:{ss}
           </span>
           <span className={`text-xs ${done ? "text-alert" : "text-dim"}`}>{done ? "over" : "rest"}</span>
@@ -90,7 +90,7 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
         <button
           type="button"
           onClick={onDismiss}
-          className="rounded-full bg-surface px-3 py-1 text-xs font-semibold text-fg transition-colors hover:bg-border active:bg-accent-soft"
+          className="rounded-full bg-fg px-3.5 py-1.5 text-xs font-semibold text-bg transition-transform active:scale-95"
         >
           {done ? "Done" : "Skip"}
         </button>
@@ -98,15 +98,15 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
     );
     if (docked) return pill;
     return (
-      <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 md:bottom-6">
+      <div className="fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 md:bottom-6">
         {pill}
       </div>
     );
   }
 
   const panel = (
-    <div className={`overflow-hidden rounded-card border bg-surface-2 ${alertBorder}`}>
-      <div className="h-1 bg-border">
+    <div className={`glass-strong overflow-hidden rounded-3xl ${alertRing}`}>
+      <div className="h-1 bg-fg/10">
         <div
           className={`h-full transition-[width] duration-1000 ease-linear ${done ? "bg-alert" : "bg-accent"}`}
           style={{ width: done ? "100%" : `${pct}%` }}
@@ -116,7 +116,7 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
       {expanded ? (
         <>
           <div className="flex items-center gap-3 p-3">
-            <span className={`clock text-xl font-bold ${done ? "text-alert" : "text-fg"}`}>
+            <span className={`text-2xl font-bold tabular-nums tracking-[-0.01em] ${done ? "text-alert" : "text-fg"}`}>
               {mm}:{ss}
             </span>
             <div className="flex items-center gap-1">
@@ -146,7 +146,7 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
                   key={p}
                   type="button"
                   onClick={() => { setTotal(p); setRemaining(p); setRunning(true); buzzed.current = false; }}
-                  className={`rounded-field px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  className={`rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                     total === p ? "bg-accent-soft text-accent" : "text-muted hover:text-fg"
                   }`}
                 >
@@ -157,7 +157,7 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
             <button
               type="button"
               onClick={onDismiss}
-              className="ml-auto rounded-field bg-surface-2 px-4 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-border active:bg-accent-soft"
+              className="ml-auto rounded-full bg-fg px-4 py-2 text-xs font-semibold text-bg transition-transform active:scale-95"
             >
               {done ? "Done" : "Skip rest"}
             </button>
@@ -169,9 +169,9 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
             type="button"
             onClick={() => setExpanded(true)}
             aria-label="More rest timer options"
-            className="flex items-center gap-2 rounded-field text-left transition-colors hover:opacity-80"
+            className="flex items-center gap-2 rounded-xl text-left transition-opacity active:opacity-60"
           >
-            <span className={`clock text-2xl font-bold ${done ? "text-alert" : "text-fg"}`}>
+            <span className={`text-[28px] font-bold leading-none tabular-nums tracking-[-0.02em] ${done ? "text-alert" : "text-fg"}`}>
               {mm}:{ss}
             </span>
             <span className={`text-xs font-medium ${done ? "text-alert" : "text-dim"}`}>
@@ -182,7 +182,7 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
           <button
             type="button"
             onClick={onDismiss}
-            className="ml-auto rounded-field bg-surface-2 px-5 py-2.5 text-sm font-semibold text-fg transition-colors hover:bg-border active:bg-accent-soft"
+            className="ml-auto rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg transition-transform active:scale-95"
           >
             {done ? "Done" : "Skip"}
           </button>
@@ -194,7 +194,7 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
   if (docked) return panel;
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-lg px-4 md:bottom-6">
+    <div className="fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-lg px-4 md:bottom-6">
       {panel}
     </div>
   );
@@ -202,14 +202,14 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
 
 function TimerButton({ label, onClick, children }) {
   return (
-    <button type="button" aria-label={label} onClick={onClick} className="tabular rounded-field bg-surface-2 px-2 py-1 text-xs font-medium text-muted transition-colors hover:text-fg">
+    <button type="button" aria-label={label} onClick={onClick} className="rounded-full bg-fg/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-fg transition-transform active:scale-95">
       {children}
     </button>
   );
 }
 function TimerIcon({ label, onClick, children }) {
   return (
-    <button type="button" aria-label={label} onClick={onClick} className="rounded-field p-1.5 text-muted transition-colors hover:text-fg">
+    <button type="button" aria-label={label} onClick={onClick} className="flex h-8 w-8 items-center justify-center rounded-full text-muted transition-[background-color,color,transform] hover:bg-fg/10 hover:text-fg active:scale-90">
       {children}
     </button>
   );

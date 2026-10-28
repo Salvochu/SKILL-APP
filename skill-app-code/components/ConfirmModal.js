@@ -15,21 +15,21 @@ export default function ConfirmModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" aria-label={cancelLabel} onClick={onCancel} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
+      <div className="glass-strong pop-in relative flex w-full max-w-sm flex-col gap-4 rounded-3xl p-5">
         <h3 className="font-display text-lg font-semibold text-fg">{title}</h3>
         <p className="text-sm text-muted">{message}</p>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-field border border-border px-4 py-2.5 text-sm font-medium text-fg hover:bg-surface-2"
+            className="flex-1 rounded-2xl bg-fg/10 px-4 py-3 text-[15px] font-semibold text-fg transition-transform active:scale-[0.98]"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`flex-1 rounded-field px-4 py-2.5 text-sm font-semibold transition-colors ${
+            className={`flex-1 rounded-2xl px-4 py-3 text-[15px] font-semibold transition-[background-color,transform] active:scale-[0.98] ${
               danger ? "bg-danger text-black hover:bg-danger/90" : "bg-accent text-black hover:bg-accent-2"
             }`}
           >

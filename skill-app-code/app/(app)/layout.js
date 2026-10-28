@@ -12,14 +12,17 @@ import OnboardingGate from "@/components/onboarding/OnboardingGate";
 // routes with dynamic params below, so it sits behind its own boundary.
 export default function AppLayout({ children }) {
   return (
-    <div className="min-h-full">
+    // isolate: its own stacking context, so the fixed ambient glow below
+    // can sit behind the content but in front of the page background.
+    <div className="relative isolate min-h-full">
+      <div aria-hidden="true" className="app-ambient" />
       <Suspense fallback={null}>
         <RouteProgress />
       </Suspense>
       <Suspense fallback={null}>
         <NavigationOverlay />
       </Suspense>
-      <Suspense fallback={<div className="fixed inset-x-0 top-0 z-40 h-14 border-b border-border bg-bg md:h-16" />}>
+      <Suspense fallback={<div className="glass-bar fixed inset-x-0 top-0 z-40 h-14 md:h-16" />}>
         <NavBarShell />
       </Suspense>
       {/* Mounted once, app-wide, so a workout queued offline on the Log
