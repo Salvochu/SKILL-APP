@@ -44,20 +44,21 @@ export default function ExportRow() {
       type="button"
       onClick={run}
       disabled={state === "working"}
-      className="block w-full text-left transition-colors hover:bg-surface-2 active:bg-accent-soft disabled:opacity-70"
+      className="block w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2 disabled:opacity-70"
     >
-      <div className="flex items-center gap-3 bg-surface px-4 py-3.5">
+      <div className="flex items-center gap-3 pl-4">
         <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-          style={{ color: TINT, backgroundColor: `color-mix(in srgb, ${TINT} 16%, transparent)` }}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-white"
+          style={{ backgroundColor: TINT }}
         >
-          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
           </svg>
         </span>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-sm font-medium text-fg">Export training log</span>
-          <span className="truncate text-xs text-dim">{body}</span>
+        {/* menu-sep: the row's hairline, hidden when it's first in its group. */}
+        <div className="menu-sep flex min-w-0 flex-1 flex-col border-t border-border/70 py-3 pr-4">
+          <span className="text-[16px] text-fg">Export training log</span>
+          <span className={`truncate text-[13px] ${state === "error" ? "text-danger" : "text-dim"}`}>{body}</span>
         </div>
       </div>
     </button>
