@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPush, pushConfigured } from "@/lib/push";
+import { selectAll } from "@/lib/supabase/selectAll";
 import { CHALLENGE_TEMPLATE_ID, CHALLENGE_DAYS, GRACE_DAYS, isChallengeDayComplete } from "@/lib/data/challenge";
 
 // The one scheduled job. Runs daily (Vercel Cron, Authorization: Bearer
@@ -46,12 +47,22 @@ export async function GET(request) {
   const lastWeek = thisWeek - 7 * DAY;
   const todayStart = new Date(now).setUTCHours(0, 0, 0, 0);
 
-  const [{ data: subs }, { data: prefsRows }, { data: sessions }, { data: profileRows }] = await Promise.all([
-    admin.from("push_subscriptions").select("user_id, endpoint, p256dh, auth"),
-    admin.from("notification_prefs").select("*"),
-    admin.from("workout_sessions").select("id, user_id, started_at"),
-    admin.from("profiles").select("user_id, membership").eq("membership", "challenge"),
+  const [{ data: subs }, { data: prefsRows }, { data: profileRows }] = await Promise.all([
+    selectAll(() => admin.from("push_subscriptions").select("user_id, endpoint, p256dh, auth").order("endpoint")),
+    selectAll(() => admin.from("notification_prefs").select("*").order("user_id")),
+    selectAll(() =>
+      admin.from("profiles").select("user_id, membership").eq("membership", "challenge").order("user_id"),
+    ),
   ]);
+
+  // Only people with a push subscription can be nudged, so only their
+  // sessions matter. Paged, since all-time sessions pass 1000 rows fast.
+  const subUserIds = [...new Set((subs ?? []).map((s) => s.user_id))];
+  const { data: sessions } = subUserIds.length
+    ? await selectAll(() =>
+        admin.from("workout_sessions").select("id, user_id, started_at").in("user_id", subUserIds).order("id"),
+      )
+    : { data: [] };
 
   const prefsByUser = new Map((prefsRows ?? []).map((p) => [p.user_id, p]));
   const challengeUserIdList = (profileRows ?? []).map((p) => p.user_id);
@@ -71,10 +82,14 @@ export async function GET(request) {
         .eq("template_id", CHALLENGE_TEMPLATE_ID)
         .eq("status", "active")
         .in("user_id", challengeUserIdList),
-      admin
-        .from("challenge_checklist")
-        .select("user_id, day, items")
-        .in("user_id", challengeUserIdList),
+      selectAll(() =>
+        admin
+          .from("challenge_checklist")
+          .select("user_id, day, items")
+          .in("user_id", challengeUserIdList)
+          .order("user_id")
+          .order("day"),
+      ),
     ]);
 
     const completeDaysByUser = new Map(); // user_id -> Set<day>
@@ -180,10 +195,13 @@ export async function GET(request) {
   if (recapUserIds.length) {
     const ids = recapUserIds.flatMap((id) => stats.get(id)?.lastWeekIds ?? []);
     if (ids.length) {
-      const { data: sets } = await admin
-        .from("workout_sets")
-        .select("session_id, weight, reps, completed, is_warmup")
-        .in("session_id", ids);
+      const { data: sets } = await selectAll(() =>
+        admin
+          .from("workout_sets")
+          .select("session_id, weight, reps, completed, is_warmup")
+          .in("session_id", ids)
+          .order("id"),
+      );
       const sessionUser = new Map((sessions ?? []).map((s) => [s.id, s.user_id]));
       for (const row of sets ?? []) {
         if (row.completed === false || row.is_warmup) continue;

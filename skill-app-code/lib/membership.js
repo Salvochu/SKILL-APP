@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { findUserByEmail } from "@/lib/supabase/selectAll";
 
 // Flips a paid member to "lapsed" by email. Shared by both cancellation
 // paths - GHL's own workflow webhook (/api/ghl/cancel) and Stripe's
@@ -11,11 +12,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function lapseMembershipByEmail(email) {
   const supabase = createAdminClient();
 
-  // Look up the auth user by email. No pagination needed at this scale;
-  // listUsers is the only admin lookup-by-email available.
-  const { data: list, error: listError } = await supabase.auth.admin.listUsers();
-  if (listError) throw new Error(`could not look up account: ${listError.message}`);
-  const user = list?.users?.find((u) => u.email?.toLowerCase() === email);
+  // Look up the auth user by email across every page of accounts (a
+  // plain listUsers() only sees the first 50).
+  const user = await findUserByEmail(supabase, email);
   if (!user) return { ok: true, skipped: "no account" };
 
   const { data: profile } = await supabase

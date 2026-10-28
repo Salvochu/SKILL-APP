@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { selectAll } from "@/lib/supabase/selectAll";
 import { computeWeekStreak, weekKeyOf } from "@/lib/training";
 import { currentWeek } from "@/lib/mesocycle";
 import { isChallengeDayComplete } from "@/lib/data/challenge";
@@ -46,13 +47,35 @@ async function loadEveryone() {
   }
 
   const [profilesRes, sessionsRes, setsRes, bodyRes, mesosRes, templatesRes] = await Promise.all([
-    admin.from("profiles").select("user_id, full_name, fitness_goal, experience_level, phone, unit_preference, role, membership"),
-    admin.from("workout_sessions").select("id, user_id, title, started_at, completed_at, perceived_effort, user_mesocycle_id"),
-    admin
-      .from("workout_sets")
-      .select("session_id, exercise_id, weight, reps, completed, is_warmup, exercise:exercises(name)"),
-    admin.from("body_logs").select("user_id, weight, body_fat, waist_cm, logged_at").order("logged_at", { ascending: true }),
-    admin.from("user_mesocycles").select("user_id, template_id, start_date, status, sessions_per_week"),
+    // Paged: every one of these grows past Supabase's 1000-row cap.
+    selectAll(() =>
+      admin
+        .from("profiles")
+        .select("user_id, full_name, fitness_goal, experience_level, phone, unit_preference, role, membership")
+        .order("user_id"),
+    ),
+    selectAll(() =>
+      admin
+        .from("workout_sessions")
+        .select("id, user_id, title, started_at, completed_at, perceived_effort, user_mesocycle_id")
+        .order("id"),
+    ),
+    selectAll(() =>
+      admin
+        .from("workout_sets")
+        .select("session_id, exercise_id, weight, reps, completed, is_warmup, exercise:exercises(name)")
+        .order("id"),
+    ),
+    selectAll(() =>
+      admin
+        .from("body_logs")
+        .select("user_id, weight, body_fat, waist_cm, logged_at")
+        .order("logged_at", { ascending: true })
+        .order("id"),
+    ),
+    selectAll(() =>
+      admin.from("user_mesocycles").select("user_id, template_id, start_date, status, sessions_per_week").order("id"),
+    ),
     admin.from("mesocycle_templates").select("id, name, weeks"),
   ]);
   for (const r of [profilesRes, sessionsRes, setsRes, bodyRes, mesosRes, templatesRes]) {

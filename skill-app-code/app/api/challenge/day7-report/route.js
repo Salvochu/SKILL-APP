@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { selectAll } from "@/lib/supabase/selectAll";
 import { CHALLENGE_TEMPLATE_ID, isChallengeDayComplete } from "@/lib/data/challenge";
 
 // Daily report (Vercel Cron, Authorization: Bearer CRON_SECRET). For
@@ -41,7 +42,14 @@ export async function GET(request) {
       .eq("template_id", CHALLENGE_TEMPLATE_ID)
       .eq("status", "active")
       .in("user_id", profileIds),
-    admin.from("challenge_checklist").select("user_id, day, items").in("user_id", profileIds),
+    selectAll(() =>
+      admin
+        .from("challenge_checklist")
+        .select("user_id, day, items")
+        .in("user_id", profileIds)
+        .order("user_id")
+        .order("day"),
+    ),
   ]);
 
   const completeDaysByUser = new Map(); // user_id -> Set<day>

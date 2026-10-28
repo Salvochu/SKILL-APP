@@ -91,24 +91,29 @@ export async function updateWorkoutSession(sessionId, patch) {
     if (ownedError) return { error: ownedError.message };
     const allowed = new Set((owned ?? []).map((r) => r.id));
 
-    for (const s of incoming) {
-      if (!s || !allowed.has(s.id)) continue;
-      const repsNum = s.reps === "" || s.reps == null ? null : Math.round(Number(s.reps));
-      const weightNum = s.weight === "" || s.weight == null ? null : Number(s.weight);
-      const rirNum = s.rir === "" || s.rir == null ? null : Math.round(Number(s.rir));
-      const { error } = await supabase
-        .from("workout_sets")
-        .update({
-          reps: Number.isFinite(repsNum) ? Math.max(0, repsNum) : null,
-          weight: Number.isFinite(weightNum) ? Math.max(0, weightNum) : null,
-          rir: Number.isFinite(rirNum) ? Math.max(0, Math.min(10, rirNum)) : null,
-          completed: s.completed !== false,
-          is_warmup: s.warmup === true,
-        })
-        .eq("id", s.id)
-        .eq("session_id", sessionId);
-      if (error) return { error: error.message };
-    }
+    // Each set has its own values, so it's still one update per set, but
+    // sent together instead of one after another.
+    const updates = incoming
+      .filter((s) => s && allowed.has(s.id))
+      .map((s) => {
+        const repsNum = s.reps === "" || s.reps == null ? null : Math.round(Number(s.reps));
+        const weightNum = s.weight === "" || s.weight == null ? null : Number(s.weight);
+        const rirNum = s.rir === "" || s.rir == null ? null : Math.round(Number(s.rir));
+        return supabase
+          .from("workout_sets")
+          .update({
+            reps: Number.isFinite(repsNum) ? Math.max(0, repsNum) : null,
+            weight: Number.isFinite(weightNum) ? Math.max(0, weightNum) : null,
+            rir: Number.isFinite(rirNum) ? Math.max(0, Math.min(10, rirNum)) : null,
+            completed: s.completed !== false,
+            is_warmup: s.warmup === true,
+          })
+          .eq("id", s.id)
+          .eq("session_id", sessionId);
+      });
+    const results = await Promise.all(updates);
+    const failed = results.find((r) => r.error);
+    if (failed) return { error: failed.error.message };
   }
 
   revalidatePath("/dashboard");
