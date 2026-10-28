@@ -57,20 +57,20 @@ export default function UnfinishedWorkoutPrompt() {
         type="button"
         aria-label="Not now"
         onClick={() => setDismissed(true)}
-        className="absolute inset-0 bg-black/70"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
-      <div className="relative w-full max-w-sm rounded-2xl border border-border bg-surface p-5">
-        <h2 className="text-lg font-bold text-fg">Still training?</h2>
-        <p className="mt-2 text-sm text-muted">
+      <div className="glass-strong pop-in relative flex w-full max-w-sm flex-col gap-2 rounded-3xl p-5">
+        <h2 className="font-display text-[1.35rem] font-bold leading-tight tracking-[-0.02em] text-fg">Still training?</h2>
+        <p className="text-[15px] leading-relaxed text-muted">
           Your workout has been running for{" "}
           <span className="clock font-semibold text-fg">{formatElapsed(prompt.elapsedSec)}</span>.
           Finish and save it, or discard it if you are done.
         </p>
-        <div className="mt-4 flex flex-col gap-2">
+        <div className="mt-3 flex flex-col gap-2.5">
           <button
             type="button"
             onClick={() => router.push(prompt.href)}
-            className="rounded-field bg-accent px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+            className="rounded-2xl bg-accent px-4 py-3.5 text-[16px] font-semibold text-black transition-transform active:scale-[0.98]"
           >
             Finish workout
           </button>
@@ -81,14 +81,14 @@ export default function UnfinishedWorkoutPrompt() {
               setPrompt(null);
               router.refresh();
             }}
-            className="rounded-field border border-border px-4 py-2.5 text-sm font-medium text-danger hover:bg-surface-2"
+            className="rounded-2xl bg-fg/10 px-4 py-3.5 text-[16px] font-semibold text-danger transition-transform active:scale-[0.98]"
           >
             Discard it
           </button>
           <button
             type="button"
             onClick={() => setDismissed(true)}
-            className="rounded-field px-4 py-2 text-xs font-medium text-dim hover:text-fg"
+            className="rounded-xl px-4 py-2 text-[15px] font-medium text-muted transition-colors hover:text-fg"
           >
             Not now
           </button>

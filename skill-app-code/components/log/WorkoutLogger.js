@@ -1001,7 +1001,7 @@ function SaveWorkoutModal({ defaultName, exercises, sourceMyWorkoutId, sourceNam
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-field py-2 text-sm font-medium text-muted transition-colors hover:text-fg"
+                className="rounded-xl py-2.5 text-[15px] font-medium text-muted transition-colors hover:text-fg"
               >
                 Not now
               </button>
@@ -1204,7 +1204,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
       </section>
 
       <section className="flex flex-col gap-3 rounded-2xl bg-surface p-4">
-        <h2 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-dim">
+        <h2 className="flex items-center gap-1.5 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">
           How hard was this workout?
           <Explain k="effort" />
         </h2>
@@ -1223,11 +1223,11 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
             </button>
           ))}
         </div>
-        <div className="flex justify-between text-xs text-dim">
+        <div className="flex justify-between text-[13px] text-muted">
           <span>{EFFORT_LABELS[1]}</span>
           <span>{EFFORT_LABELS[5]}</span>
         </div>
-        {effort ? <p className="text-center text-xs text-accent">{EFFORT_LABELS[effort]}</p> : null}
+        {effort ? <p className="text-center text-[14px] font-semibold text-accent">{EFFORT_LABELS[effort]}</p> : null}
       </section>
 
       <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} muscles={extras?.muscles} />
@@ -1654,9 +1654,9 @@ function Field({ label, className = "", children }) {
 function Metric({ label, value, delta }) {
   return (
     <div className="flex min-w-0 flex-col">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">{label}</span>
-      <span className="tabular truncate text-lg font-bold text-fg">{value}</span>
-      {delta ? <span className="tabular text-xs font-semibold text-good">{delta}</span> : null}
+      <span className="text-[12px] font-medium text-muted">{label}</span>
+      <span className="tabular truncate text-[20px] font-bold leading-tight text-fg">{value}</span>
+      {delta ? <span className="tabular text-[12px] font-semibold text-good">{delta}</span> : null}
     </div>
   );
 }
