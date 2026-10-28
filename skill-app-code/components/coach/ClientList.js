@@ -39,13 +39,15 @@ export default function ClientList({ data }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-        <span><span className="font-semibold text-fg">{totals.count}</span> clients</span>
-        <span><span className="font-semibold text-fg">{totals.activeThisWeek}</span> active this week</span>
-        <span><span className="font-semibold text-fg">{totals.flagged}</span> flagged</span>
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[15px] text-muted">
+        <span><span className="font-semibold text-fg tabular-nums">{totals.count}</span> clients</span>
+        <span className="text-dim" aria-hidden="true">·</span>
+        <span><span className="font-semibold text-fg tabular-nums">{totals.activeThisWeek}</span> active this week</span>
+        <span className="text-dim" aria-hidden="true">·</span>
+        <span><span className="font-semibold text-fg tabular-nums">{totals.flagged}</span> flagged</span>
       </div>
 
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden">
         {[
           ["all", "All"],
           ["flagged", "Flagged"],
@@ -56,8 +58,9 @@ export default function ClientList({ data }) {
             key={k}
             type="button"
             onClick={() => setFilter(k)}
-            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-              filter === k ? "border-accent bg-accent-soft text-accent" : "border-border text-muted hover:text-fg"
+            aria-pressed={filter === k}
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+              filter === k ? "bg-fg text-bg" : "bg-surface-2 text-muted hover:text-fg"
             }`}
           >
             {label}
@@ -66,70 +69,67 @@ export default function ClientList({ data }) {
       </div>
 
       {shown.length === 0 ? (
-        <p className="rounded-card border border-dashed border-border bg-surface p-8 text-center text-sm text-muted">
-          No clients here.
-        </p>
+        <p className="rounded-2xl bg-surface p-8 text-center text-[15px] text-muted">No clients here.</p>
       ) : (
-        <ul className="flex flex-col gap-2.5">
+        <ul className="overflow-hidden rounded-2xl bg-surface [&>li:first-child_.row-sep]:border-transparent">
           {shown.map((c) => {
             const dir = DIR[c.strengthDir] ?? DIR.none;
             return (
               <li key={c.id}>
-                <Link
-                  href={`/clients/${c.id}`}
-                  className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4 transition-colors hover:border-border-strong"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <span className="block truncate font-display text-base font-semibold text-fg">{c.name}</span>
-                      <span className="block truncate text-xs text-dim">
-                        {[c.goal, c.experience].filter(Boolean).join(" · ") || "No profile details"}
-                      </span>
-                    </div>
-                    <IconChevron className="mt-1 h-4 w-4 shrink-0 text-dim" />
-                  </div>
-
-                  {c.flags.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {c.flags.map((f) => (
-                        <span
-                          key={f.key}
-                          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${FLAG_TONE[f.tone] ?? FLAG_TONE.sky}`}
-                        >
-                          {f.label}
+                <Link href={`/clients/${c.id}`} className="flex pl-4 transition-colors hover:bg-surface-2 active:bg-surface-2">
+                  <span className="row-sep flex min-w-0 flex-1 items-center gap-3 border-t border-border/70 py-3.5 pr-4">
+                    <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate text-[16px] font-semibold text-fg">{c.name}</span>
+                        <span className="truncate text-[13px] text-dim">
+                          {[c.goal, c.experience].filter(Boolean).join(" · ") || "No profile details"}
                         </span>
-                      ))}
-                    </div>
-                  ) : null}
+                      </span>
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-                    <span>Last {ago(c.lastWorkoutAt)}</span>
-                    <span className="text-dim">|</span>
-                    <span><span className="font-semibold text-fg">{c.sessionsThisWeek}</span> this week</span>
-                    <span className="text-dim">|</span>
-                    <span><span className="font-semibold text-fg">{c.streak}</span>w streak</span>
-                    <span className="text-dim">|</span>
-                    <span>
-                      Strength <span className={`font-semibold ${dir.cls}`}>{dir.sym}</span>
-                      {c.strengthDelta != null && c.strengthDelta !== 0 ? (
-                        <span className={`ml-0.5 font-semibold ${dir.cls}`}>
-                          {c.strengthDelta > 0 ? "+" : ""}{c.strengthDelta}
+                      {c.flags.length > 0 ? (
+                        <span className="flex flex-wrap gap-1.5">
+                          {c.flags.map((f) => (
+                            <span
+                              key={f.key}
+                              className={`rounded-full px-2 py-0.5 text-[12px] font-semibold ${FLAG_TONE[f.tone] ?? FLAG_TONE.sky}`}
+                            >
+                              {f.label}
+                            </span>
+                          ))}
                         </span>
                       ) : null}
-                    </span>
-                    {c.weightDelta != null ? (
-                      <>
-                        <span className="text-dim">|</span>
+
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">
+                        <span>Last {ago(c.lastWorkoutAt)}</span>
+                        <span className="text-dim" aria-hidden="true">·</span>
+                        <span><span className="font-semibold text-fg tabular-nums">{c.sessionsThisWeek}</span> this week</span>
+                        <span className="text-dim" aria-hidden="true">·</span>
+                        <span><span className="font-semibold text-fg tabular-nums">{c.streak}</span>w streak</span>
+                        <span className="text-dim" aria-hidden="true">·</span>
                         <span>
-                          Weight{" "}
-                          <span className="font-semibold text-fg">
-                            {c.weightDelta > 0 ? "+" : ""}{c.weightDelta} {c.unit}
-                          </span>
-                          <span className="text-dim">/mo</span>
+                          Strength <span className={`font-semibold ${dir.cls}`}>{dir.sym}</span>
+                          {c.strengthDelta != null && c.strengthDelta !== 0 ? (
+                            <span className={`ml-0.5 font-semibold tabular-nums ${dir.cls}`}>
+                              {c.strengthDelta > 0 ? "+" : ""}{c.strengthDelta}
+                            </span>
+                          ) : null}
                         </span>
-                      </>
-                    ) : null}
-                  </div>
+                        {c.weightDelta != null ? (
+                          <>
+                            <span className="text-dim" aria-hidden="true">·</span>
+                            <span>
+                              Weight{" "}
+                              <span className="font-semibold text-fg tabular-nums">
+                                {c.weightDelta > 0 ? "+" : ""}{c.weightDelta} {c.unit}
+                              </span>
+                              <span className="text-dim">/mo</span>
+                            </span>
+                          </>
+                        ) : null}
+                      </span>
+                    </span>
+                    <IconChevron className="h-4 w-4 shrink-0 text-dim" />
+                  </span>
                 </Link>
               </li>
             );

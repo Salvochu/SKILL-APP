@@ -11,21 +11,23 @@ export default function ClientChallengeView({ clientId, data }) {
     <div className="flex flex-col gap-5 py-2">
       <Link
         href={`/clients/${clientId}`}
-        className="flex items-center gap-1 self-start text-xs font-medium text-dim hover:text-fg"
+        className="-ml-1 flex items-center gap-0.5 self-start py-1 text-[15px] font-medium text-accent transition-opacity active:opacity-60"
       >
-        <IconBack className="h-3.5 w-3.5" />
-        Back to {name}
+        <IconBack className="h-5 w-5" />
+        {name}
       </Link>
 
-      <header className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+      <header className="flex flex-col gap-1.5">
+        <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
           14-Day Main Character
         </span>
-        <h1 className="text-2xl font-bold text-fg">{name}&rsquo;s challenge</h1>
+        <h1 className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">
+          {name}&rsquo;s challenge
+        </h1>
       </header>
 
       {!data.started ? (
-        <div className="rounded-card border border-dashed border-border bg-surface p-8 text-center text-sm text-muted">
+        <div className="rounded-2xl bg-surface p-8 text-center text-[15px] text-muted">
           {data.membership !== "challenge"
             ? "This client isn't on the 14-Day Challenge."
             : data.prep
@@ -41,7 +43,7 @@ export default function ClientChallengeView({ clientId, data }) {
             streak={data.streak}
           />
 
-          <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label="Day" value={`${Math.min(data.challengeDay, data.challengeDays)}/${data.challengeDays}`} />
             <Stat label="Sessions" value={`${data.sessions}/${data.targetSessions}`} />
             <Stat label="Perfect days" value={`${data.perfectDays}/14`} />
@@ -49,14 +51,18 @@ export default function ClientChallengeView({ clientId, data }) {
           </section>
 
           {data.complete ? (
-            <div className="flex items-center gap-2 rounded-card border border-accent/40 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent">
-              <IconCheck className="h-4 w-4" />
-              Challenge complete
-              {data.topMuscles.length ? (
-                <span className="ml-auto text-xs font-medium text-muted">
-                  Most trained: {data.topMuscles.map((m) => m.group).join(" · ")}
-                </span>
-              ) : null}
+            <div className="flex items-center gap-3 rounded-2xl bg-accent-soft p-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-black">
+                <IconCheck className="h-[18px] w-[18px]" />
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="text-[16px] font-semibold text-fg">Challenge complete</span>
+                {data.topMuscles.length ? (
+                  <span className="truncate text-[13px] text-muted">
+                    Most trained: {data.topMuscles.map((m) => m.group).join(" · ")}
+                  </span>
+                ) : null}
+              </span>
             </div>
           ) : null}
 
@@ -69,16 +75,16 @@ export default function ClientChallengeView({ clientId, data }) {
 
 function Stat({ label, value }) {
   return (
-    <div className="flex flex-col items-center rounded-card border border-border bg-surface px-2 py-3 text-center">
-      <span className="font-display text-lg font-bold text-fg tabular-nums">{value}</span>
-      <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-dim">{label}</span>
+    <div className="flex flex-col gap-1 rounded-2xl bg-surface p-4">
+      <span className="text-[13px] font-medium text-muted">{label}</span>
+      <span className="text-[24px] font-bold leading-none tracking-[-0.01em] text-fg tabular-nums">{value}</span>
     </div>
   );
 }
 
 function IconBack(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="m15 18-6-6 6-6" />
     </svg>
   );

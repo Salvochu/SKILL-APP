@@ -53,17 +53,20 @@ export default function ClientDetail({ client: c }) {
   const labelByKey = new Map((c.patternLabels ?? []).map((p) => [p.key, p.label]));
 
   return (
-    <div className="flex flex-col gap-5">
-      <Link href="/clients" className="flex items-center gap-1 self-start text-xs font-medium text-dim hover:text-fg">
-        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <div className="flex flex-col gap-6">
+      <Link
+        href="/clients"
+        className="-ml-1 -mb-3 flex items-center gap-0.5 self-start py-1 text-[15px] font-medium text-accent transition-opacity active:opacity-60"
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m15 6-6 6 6 6" />
         </svg>
         All clients
       </Link>
 
       <header className="flex flex-col gap-1.5">
-        <h1 className="text-2xl font-bold text-fg">{c.name}</h1>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted">
+        <h1 className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">{c.name}</h1>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[15px] text-muted">
           {c.email ? <span>{c.email}</span> : null}
           {c.phone ? <span>{c.phone}</span> : null}
         </div>
@@ -78,30 +81,30 @@ export default function ClientDetail({ client: c }) {
       {c.membership === "challenge" ? (
         <Link
           href={`/clients/${c.id}/challenge`}
-          className="flex items-center gap-3 rounded-card border border-accent/40 bg-accent-soft p-4 transition-colors hover:bg-accent/15"
+          className="flex items-center gap-3.5 rounded-2xl bg-accent-soft p-4 transition-transform active:scale-[0.99]"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-black">
-            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-black">
+            <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 21V4M5 4l4-1 6 2 4-1v10l-4 1-6-2-4 1" />
             </svg>
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-sm font-semibold text-fg">View their 14-Day Challenge</span>
-            <span className="text-xs text-muted">The climb, the checklist, day by day</span>
+            <span className="text-[16px] font-semibold text-fg">View their 14-Day Challenge</span>
+            <span className="text-[13px] text-muted">The climb, the checklist, day by day</span>
           </span>
-          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-dim" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m9 6 6 6-6 6" />
           </svg>
         </Link>
       ) : null}
 
-      <section className="flex flex-col gap-2 rounded-card border border-accent/40 bg-accent-soft p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-accent">Worth a conversation?</h2>
-        <p className="text-sm text-fg">{pitchLine(c)}</p>
+      <section className="relative flex flex-col gap-2 overflow-hidden rounded-2xl bg-gradient-to-b from-[var(--panel-warm)] to-surface p-5">
+        <h2 className="font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">Worth a conversation?</h2>
+        <p className="text-[15px] leading-relaxed text-fg">{pitchLine(c)}</p>
         {c.flags.length > 0 ? (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {c.flags.map((f) => (
-              <span key={f.key} className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-muted">
+              <span key={f.key} className="rounded-full bg-fg/10 px-2.5 py-0.5 text-[12px] font-semibold text-muted">
                 {f.label}
               </span>
             ))}
@@ -109,7 +112,7 @@ export default function ClientDetail({ client: c }) {
         ) : null}
       </section>
 
-      <section className="grid grid-cols-2 gap-3 rounded-card border border-border bg-surface p-4 sm:grid-cols-3">
+      <section className="grid grid-cols-2 gap-x-3 gap-y-4 rounded-2xl bg-surface p-4 sm:grid-cols-3">
         <Stat label="This week" value={c.sessionsThisWeek} />
         <Stat label="Week streak" value={c.streak} />
         <Stat label="Workouts" value={c.workoutsTotal} />
@@ -134,105 +137,106 @@ export default function ClientDetail({ client: c }) {
         />
       </section>
 
-      <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Last 8 weeks</h2>
-        <div className="flex gap-1.5">
+      <Section title="Last 8 weeks" footer={`${c.consistency.filter((w) => w.trained).length} of 8 weeks trained`}>
+        <div className="flex gap-1.5 rounded-2xl bg-surface p-4">
           {c.consistency.map((w) => (
             <span
               key={w.week}
               title={w.week}
-              className={`h-8 flex-1 rounded-field ${w.trained ? "bg-accent" : "bg-surface-2"}`}
+              className={`h-8 flex-1 rounded-lg ${w.trained ? "bg-accent" : "bg-fg/10"}`}
             />
           ))}
         </div>
-        <p className="text-xs text-dim">
-          {c.consistency.filter((w) => w.trained).length} of 8 weeks trained
-        </p>
-      </section>
+      </Section>
 
       {c.activeProgram ? (
-        <section className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Current program</h2>
-          <p className="text-sm font-medium text-fg">{c.activeProgram.name}</p>
-          <p className="text-xs text-dim">
-            Week {c.activeProgram.week} of {c.activeProgram.weeks}
-            {c.activeProgram.sessionsPerWeek ? ` · aiming for ${c.activeProgram.sessionsPerWeek} a week` : ""}
-          </p>
-        </section>
+        <Section title="Current program">
+          <div className="flex flex-col rounded-2xl bg-surface px-4 py-3.5">
+            <span className="text-[16px] font-semibold text-fg">{c.activeProgram.name}</span>
+            <span className="text-[13px] text-muted">
+              Week {c.activeProgram.week} of {c.activeProgram.weeks}
+              {c.activeProgram.sessionsPerWeek ? ` · aiming for ${c.activeProgram.sessionsPerWeek} a week` : ""}
+            </span>
+          </div>
+        </Section>
       ) : null}
 
       {tested.length > 0 ? (
-        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Strength, last 6 weeks</h2>
-          <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
+        <Section title="Strength, last 6 weeks">
+          <ul className="overflow-hidden rounded-2xl bg-surface [&>*+*]:border-t [&>*+*]:border-border/70">
             {tested.map((p) => (
-              <li key={p.key} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5 text-sm">
-                <span className="w-[4.75rem] shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted">
+              <li key={p.key} className="flex items-center gap-3 px-4 py-3">
+                <span className="w-[4.75rem] shrink-0 text-[12px] font-semibold uppercase tracking-[0.04em] text-dim">
                   {labelByKey.get(p.key) ?? p.label}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-fg">{p.lift}</span>
-                <span className="tabular shrink-0 font-semibold text-fg">
+                <span className="min-w-0 flex-1 truncate text-[15px] text-fg">{p.lift}</span>
+                <span className="tabular shrink-0 text-[15px] font-semibold text-fg">
                   {Math.round(p.e1rm)} {c.unit}
                 </span>
-                <span
-                  className="shrink-0 text-xs font-semibold"
-                  style={{ color: tierColorFor(p.tierIndex) }}
-                >
+                <span className="shrink-0 text-[13px] font-semibold" style={{ color: tierColorFor(p.tierIndex) }}>
                   {p.tier}
                 </span>
               </li>
             ))}
           </ul>
-        </section>
+        </Section>
       ) : null}
 
       {c.weightSeries.length >= 2 ? (
-        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Body weight</h2>
-          <Sparkline points={c.weightSeries.map((p) => p.weight)} />
-          <div className="flex justify-between text-xs text-dim">
-            <span>{c.weightSeries[0].date}</span>
-            <span className="tabular font-semibold text-fg">
-              {c.weightSeries[c.weightSeries.length - 1].weight} {c.unit}
-            </span>
+        <Section title="Body weight">
+          <div className="flex flex-col gap-2 rounded-2xl bg-surface p-4">
+            <Sparkline points={c.weightSeries.map((p) => p.weight)} />
+            <div className="flex justify-between text-[13px] text-muted">
+              <span>{c.weightSeries[0].date}</span>
+              <span className="tabular font-semibold text-fg">
+                {c.weightSeries[c.weightSeries.length - 1].weight} {c.unit}
+              </span>
+            </div>
           </div>
-        </section>
+        </Section>
       ) : null}
 
       {c.recentWorkouts.length > 0 ? (
-        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Recent workouts</h2>
-          <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
+        <Section title="Recent workouts">
+          <ul className="overflow-hidden rounded-2xl bg-surface [&>*+*]:border-t [&>*+*]:border-border/70">
             {c.recentWorkouts.map((w) => (
-              <li key={w.id} className="flex items-center justify-between gap-3 bg-bg/40 px-3 py-2.5 text-sm">
+              <li key={w.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <span className="min-w-0">
-                  <span className="block truncate text-fg">{w.title}</span>
-                  <span className="text-xs text-dim">{fmtDate(w.date)}</span>
+                  <span className="block truncate text-[16px] text-fg">{w.title}</span>
+                  <span className="text-[13px] text-dim">{fmtDate(w.date)}</span>
                 </span>
-                <span className="tabular shrink-0 text-xs text-muted">
+                <span className="tabular shrink-0 text-[13px] text-muted">
                   {w.sets} sets{w.minutes != null ? ` · ${w.minutes}m` : ""}
                   {w.effort ? ` · RPE ${w.effort}` : ""}
                 </span>
               </li>
             ))}
           </ul>
-        </section>
+        </Section>
       ) : null}
     </div>
   );
 }
 
-function Tag({ children }) {
+function Section({ title, footer = null, children }) {
   return (
-    <span className="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-dim">{children}</span>
+    <section className="flex flex-col gap-2">
+      <h2 className="px-4 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">{title}</h2>
+      {children}
+      {footer ? <p className="px-4 text-[13px] text-dim">{footer}</p> : null}
+    </section>
   );
+}
+
+function Tag({ children }) {
+  return <span className="rounded-full bg-fg/10 px-2.5 py-0.5 text-[12px] font-semibold text-muted">{children}</span>;
 }
 
 function Stat({ label, value }) {
   return (
-    <div className="flex min-w-0 flex-col">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">{label}</span>
-      <span className="tabular truncate text-base font-bold text-fg">{value}</span>
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <span className="text-[12px] font-medium text-muted">{label}</span>
+      <span className="tabular truncate text-[20px] font-bold leading-tight text-fg">{value}</span>
     </div>
   );
 }
