@@ -6,6 +6,7 @@ import TapLink from "@/components/TapLink";
 import LoggedAt from "@/components/LoggedAt";
 import { deleteAllWorkouts } from "@/app/(app)/workouts/actions";
 import { shortDate } from "@/components/progress/chartkit";
+import { useHydrated } from "@/components/useHydrated";
 
 // Every logged workout, grouped by training week, with a type-to-confirm
 // "delete all" at the bottom. Used raw on the /history page and inside
@@ -18,7 +19,12 @@ export default function HistoryList({ sessions, onNavigate }) {
   const [clearing, setClearing] = useState(false);
   const [error, setError] = useState(null);
 
-  const groups = groupByWeek(sessions);
+  // Weeks run Monday to Sunday on the phone's clock, which the server
+  // can't know: the server and the first render in the browser group by
+  // UTC weeks (so they match), the phone's own weeks take over straight
+  // after.
+  const hydrated = useHydrated();
+  const groups = groupByWeek(sessions, hydrated);
 
   async function onClearAll() {
     setClearing(true);
@@ -125,24 +131,37 @@ function IconChevron(props) {
   );
 }
 
-// Monday (local) of the week containing d, at 00:00.
-function weekStart(d) {
+// Monday of the week containing d, at 00:00, on the phone's clock
+// (local) or in UTC.
+function weekStart(d, local) {
   const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  if (local) {
+    x.setHours(0, 0, 0, 0);
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  } else {
+    x.setUTCHours(0, 0, 0, 0);
+    x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7));
+  }
   return x;
 }
 
-function localYmd(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function yearOf(d, local) {
+  return local ? d.getFullYear() : d.getUTCFullYear();
 }
 
-function groupByWeek(sessions) {
-  const thisMon = weekStart(new Date()).getTime();
+function ymdOf(d, local) {
+  const m = local ? d.getMonth() : d.getUTCMonth();
+  const day = local ? d.getDate() : d.getUTCDate();
+  return `${yearOf(d, local)}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function groupByWeek(sessions, local) {
+  const now = new Date();
+  const thisMon = weekStart(now, local).getTime();
   const week = 7 * 86400000;
   const groups = new Map();
   for (const s of sessions) {
-    const mon = weekStart(new Date(s.started_at));
+    const mon = weekStart(new Date(s.started_at), local);
     const key = mon.getTime();
     if (!groups.has(key)) {
       const diff = Math.round((thisMon - key) / week);
@@ -154,8 +173,8 @@ function groupByWeek(sessions) {
             : // The app's own date format, not the device locale's, so the
               // server render and the phone agree (and it reads like
               // every other date in the app).
-              `Week of ${shortDate(localYmd(mon))}${
-                mon.getFullYear() !== new Date().getFullYear() ? ` ${mon.getFullYear()}` : ""
+              `Week of ${shortDate(ymdOf(mon, local))}${
+                yearOf(mon, local) !== yearOf(now, local) ? ` ${yearOf(mon, local)}` : ""
               }`;
       groups.set(key, { label, sessions: [] });
     }

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import TapLink from "@/components/TapLink";
 import { compact } from "@/components/progress/chartkit";
 import { fromKg, unitLabel } from "@/lib/units";
+import { useHydrated } from "@/components/useHydrated";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -16,9 +17,17 @@ function ymd(d) {
 }
 
 export default function Calendar({ sessions, bodyDates, unit = "kg" }) {
-  const today = new Date();
-  const [view, setView] = useState({ year: today.getFullYear(), month: today.getMonth() });
-  const [selected, setSelected] = useState(ymd(today));
+  // Today is the phone's date, which can be a day either side of the
+  // server's (UTC). The server and the first render in the browser both
+  // use the UTC date so they match; the phone's own date takes over
+  // straight after. Until the person picks a day or month, both follow
+  // today.
+  const hydrated = useHydrated();
+  const todayKey = hydrated ? ymd(new Date()) : new Date().toISOString().slice(0, 10);
+  const [pickedView, setView] = useState(null);
+  const [pickedDay, setSelected] = useState(null);
+  const view = pickedView ?? { year: Number(todayKey.slice(0, 4)), month: Number(todayKey.slice(5, 7)) - 1 };
+  const selected = pickedDay ?? todayKey;
 
   const byDay = useMemo(() => {
     const m = new Map();
@@ -33,7 +42,6 @@ export default function Calendar({ sessions, bodyDates, unit = "kg" }) {
   const first = new Date(view.year, view.month, 1);
   const startOffset = (first.getDay() + 6) % 7; // Monday-first
   const daysInMonth = new Date(view.year, view.month + 1, 0).getDate();
-  const todayKey = ymd(today);
 
   const cells = [];
   for (let i = 0; i < startOffset; i++) cells.push(null);
