@@ -5,7 +5,9 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 // A dim + blur veil with a spinner that drops over the whole app while a
 // navigation is in flight, so a slow page load reads as "loading", not
-// "broken". It waits a beat first (fast navigations never flash it) and
+// "broken". It waits over a second first: normal taps land on the new
+// screen or its skeleton well before that, and a spinner over an
+// otherwise ready page makes the app feel slower than it is. It
 // clears the moment the new route commits, with a safety timeout so it
 // can never get stuck. RouteProgress draws the thin top bar; this is the
 // heavier cue for the ones that actually take a moment.
@@ -22,7 +24,7 @@ export default function NavigationOverlay() {
       setVisible(true);
       clearTimeout(safety.current);
       safety.current = setTimeout(() => setVisible(false), 8000);
-    }, 110);
+    }, 1200);
   }
   function stop() {
     clearTimeout(delay.current);
