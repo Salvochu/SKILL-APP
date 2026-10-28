@@ -47,3 +47,6 @@ next-env.d.ts
 
 # claude code local config
 /.claude/
+
+# graphify knowledge graph output (local only)
+graphify-out/
