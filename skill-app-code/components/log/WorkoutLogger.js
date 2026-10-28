@@ -11,7 +11,10 @@ import ExercisePicker from "@/components/log/ExercisePicker";
 import ReorderSheet from "@/components/log/ReorderSheet";
 import LastNumbers from "@/components/log/LastNumbers";
 import VideoModal from "@/components/log/VideoModal";
-import MusclePill from "@/components/MusclePill";
+import SwipeRow from "@/components/log/SwipeRow";
+import StatPill from "@/components/ui/StatPill";
+import Switch from "@/components/ui/Switch";
+import { Group, Row, rowInput } from "@/components/ui/Grouped";
 import Explain from "@/components/Explain";
 import ConfirmModal from "@/components/ConfirmModal";
 import { formatSet, formatElapsed, EFFORT_LABELS, startingWeightHint } from "@/lib/training";
@@ -20,7 +23,7 @@ import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
 import { buildShareImageBlob } from "@/lib/shareCard";
 import { toKg, fromKg, formatWeight } from "@/lib/units";
 import { tierColorFor } from "@/lib/strength";
-import { loomEmbedUrl, isTimeBasedExercise } from "@/lib/exercises";
+import { loomEmbedUrl, isTimeBasedExercise, muscleKey } from "@/lib/exercises";
 
 // Rest-timer start lengths offered in the logger's settings row. The
 // full list also lives in the Settings screen.
@@ -459,32 +462,33 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
 
   return (
     <div className="flex flex-col gap-6 py-2">
-      <header className="flex items-start justify-between gap-2">
-        <h1 className="min-w-0 flex-1 truncate text-2xl font-bold text-fg">
-          {title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "") || "Workout"}
-        </h1>
-        <div className="flex shrink-0 items-center gap-2">
+      {/* iOS large-title layout: a small action row, then the title on
+          its own line so a long workout name wraps instead of truncating. */}
+      <header className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setCancelConfirm(true)}
+            aria-label="Cancel workout"
+            className="-ml-1 rounded-lg px-1 py-1 text-[16px] font-medium text-danger transition-opacity active:opacity-50"
+          >
+            Cancel
+          </button>
           <button
             type="button"
             onClick={() => setSettingsOpen((v) => !v)}
             aria-expanded={settingsOpen}
             aria-label="Workout settings"
-            className={`flex h-[30px] w-[30px] items-center justify-center rounded-field border transition-colors ${
-              settingsOpen
-                ? "border-accent bg-accent-soft text-accent"
-                : "border-border bg-surface text-muted hover:text-fg"
+            className={`flex h-9 w-9 items-center justify-center rounded-full transition-[background-color,color,transform] duration-150 active:scale-90 ${
+              settingsOpen ? "bg-accent text-black" : "bg-surface-2 text-muted hover:text-fg"
             }`}
           >
-            <IconGear className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setCancelConfirm(true)}
-            className="rounded-field border border-danger/40 bg-danger/10 px-3 py-1.5 text-xs font-semibold text-danger transition-colors hover:bg-danger hover:text-black"
-          >
-            Cancel workout
+            <IconGear className="h-[18px] w-[18px]" />
           </button>
         </div>
+        <h1 className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">
+          {title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "") || "Workout"}
+        </h1>
       </header>
 
       {cancelConfirm ? (
@@ -500,84 +504,69 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       ) : null}
 
       {settingsOpen ? (
-        <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
-          <Field label="Workout name">
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-accent"
-            />
-          </Field>
-          <Field label="Date" className="min-w-0">
-            {/* iOS Safari's native date control can paint wider than the
-               width it is given. overflow-hidden on this wrapper clips it
-               to the box regardless; the input itself is borderless so
-               the wrapper's border is the only one drawn. */}
-            <div className="w-full min-w-0 overflow-hidden rounded-field border border-border bg-bg focus-within:border-accent">
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full min-w-0 appearance-none bg-transparent px-3 py-2 text-sm text-fg outline-none"
-              />
-            </div>
-          </Field>
-          <div className="flex flex-col gap-2.5">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-medium text-muted">Rest timer after each set</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={restTimerOn}
-                aria-label="Rest timer"
-                onClick={() => {
-                  setRestTimerOn((v) => !v);
-                  if (restTimerOn) setShowRest(false);
-                }}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition-colors ${
-                  restTimerOn ? "border-accent bg-accent" : "border-border bg-surface-2"
-                }`}
-              >
-                <span
-                  className={`inline-block h-[15px] w-[15px] rounded-full bg-white transition-transform ${
-                    restTimerOn ? "translate-x-[18px]" : "translate-x-[2px]"
-                  }`}
+        <div className="pop-in flex flex-col gap-2">
+          <Group>
+            <Row label="Name" htmlFor="wl-name">
+              <input id="wl-name" value={title} onChange={(e) => setTitle(e.target.value)} className={rowInput} />
+            </Row>
+            <Row label="Date" htmlFor="wl-date">
+              {/* iOS Safari's native date control can paint wider than the
+                 width it is given; overflow-hidden clips it to the row. */}
+              <div className="flex w-full min-w-0 justify-end overflow-hidden">
+                <input
+                  id="wl-date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="min-w-0 appearance-none bg-transparent py-3 text-right text-[16px] text-muted outline-none focus:text-fg [&::-webkit-date-and-time-value]:text-right"
                 />
-              </button>
-            </div>
+              </div>
+            </Row>
+            <Row label="Rest timer">
+              <Switch
+                checked={restTimerOn}
+                label="Rest timer after each set"
+                onChange={(next) => {
+                  setRestTimerOn(next);
+                  if (!next) setShowRest(false);
+                }}
+              />
+            </Row>
             {restTimerOn ? (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="mr-1 text-xs text-dim">Starts at</span>
-                {REST_LENGTHS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => {
-                      setRestSeconds(s);
-                      try {
-                        localStorage.setItem("pref:restSeconds", String(s));
-                      } catch {
-                        /* ignore */
-                      }
-                      saveNotificationPrefs({ defaultRestSeconds: s }).catch(() => {});
-                    }}
-                    className={`rounded-field border px-2.5 py-1 text-xs font-semibold transition-colors ${
-                      restSeconds === s
-                        ? "border-accent bg-accent-soft text-accent"
-                        : "border-border text-muted hover:text-fg"
-                    }`}
-                  >
-                    {s}s
-                  </button>
-                ))}
+              <div className="flex flex-col gap-2 px-4 py-3">
+                <span className="text-[13px] text-muted">Rest length</span>
+                <div role="radiogroup" aria-label="Rest length" className="flex rounded-[10px] bg-surface-2 p-0.5">
+                  {REST_LENGTHS.map((sec) => (
+                    <button
+                      key={sec}
+                      type="button"
+                      role="radio"
+                      aria-checked={restSeconds === sec}
+                      onClick={() => {
+                        setRestSeconds(sec);
+                        try {
+                          localStorage.setItem("pref:restSeconds", String(sec));
+                        } catch {
+                          /* ignore */
+                        }
+                        saveNotificationPrefs({ defaultRestSeconds: sec }).catch(() => {});
+                      }}
+                      className={`flex-1 rounded-[8px] py-1.5 text-[12px] font-semibold tabular-nums transition-colors ${
+                        restSeconds === sec ? "bg-fg text-bg shadow-sm" : "text-muted"
+                      }`}
+                    >
+                      {sec}s
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : null}
-          </div>
+          </Group>
         </div>
       ) : null}
 
       {mesoContext ? (
-        <div className="flex flex-col gap-1.5 rounded-card border border-accent/40 bg-accent-soft px-4 py-3">
+        <div className="flex flex-col gap-1.5 rounded-2xl bg-accent-soft px-4 py-3.5">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             {mesoContext.kind === "foundations" ? (
               <span className="text-sm font-semibold text-accent">
@@ -607,12 +596,15 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       ) : null}
 
       {rows.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-border p-8">
-          <p className="text-sm text-muted">No exercises added yet.</p>
+        <div className="flex flex-col items-center gap-3 rounded-2xl bg-surface px-6 py-10 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
+            <IconPlus />
+          </span>
+          <p className="text-[15px] text-muted">No exercises added yet.</p>
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            className="rounded-field border border-border px-4 py-2 text-sm font-medium text-fg hover:bg-surface-2"
+            className="rounded-full bg-accent px-5 py-2.5 text-[15px] font-semibold text-black transition-transform active:scale-[0.97]"
           >
             Add exercise
           </button>
@@ -655,7 +647,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            className="flex items-center justify-center gap-1.5 rounded-card border border-dashed border-border py-3 text-sm font-medium text-muted transition-colors hover:border-border-strong hover:text-fg"
+            className="flex items-center justify-center gap-1.5 rounded-2xl bg-surface py-4 text-[15px] font-semibold text-accent transition-[transform,background-color] active:scale-[0.98] active:bg-surface-2"
           >
             <IconPlus /> Add another exercise
           </button>
@@ -663,16 +655,16 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       )}
 
       {error ? (
-        <p className="rounded-field border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+        <p className="rounded-2xl bg-danger/10 px-4 py-3 text-[14px] text-danger">{error}</p>
       ) : null}
       {savedOffline ? (
-        <p className="rounded-field border border-accent/40 bg-accent-soft px-3 py-2 text-sm text-accent">
+        <p className="rounded-2xl bg-accent-soft px-4 py-3 text-[14px] text-accent">
           No connection right now. This workout is saved on this device and will sync automatically once
           you are back online.
         </p>
       ) : null}
 
-      <div className="sticky bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-40 flex flex-col gap-2 md:bottom-4">
+      <div className="sticky bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-40 flex flex-col gap-2 md:bottom-4">
         {showRest ? (
           <RestTimer
             key={restKey}
@@ -686,7 +678,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         {barMinimised ? (
         <>
           {!finishHintSeen && !finished ? (
-            <div className="flex items-center gap-2 self-center rounded-full border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-black shadow-lg">
+            <div className="pop-in flex items-center gap-2 self-center rounded-full bg-accent px-3.5 py-1.5 text-xs font-semibold text-black shadow-lg shadow-black/30">
               <span>Total volume and Finish are in here</span>
               <IconChevron className="h-3.5 w-3.5 shrink-0 rotate-90" aria-hidden="true" />
               <button
@@ -708,7 +700,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               dismissFinishHint();
             }}
             aria-label="Expand timer and save"
-            className="flex items-center gap-2 self-center rounded-full border border-accent/30 bg-accent-soft px-4 py-2 backdrop-blur"
+            className="glass flex items-center gap-2 self-center rounded-full px-4 py-2.5 transition-transform active:scale-[0.97]"
           >
             <span
               className={`h-2 w-2 shrink-0 rounded-full ${
@@ -716,16 +708,16 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               }`}
               aria-hidden="true"
             />
-            <span className="clock text-sm font-semibold text-fg">{formatElapsed(elapsedSeconds)}</span>
+            <span className="text-sm font-semibold tabular-nums text-fg">{formatElapsed(elapsedSeconds)}</span>
             <span className="text-dim" aria-hidden="true">·</span>
-            <span className="tabular text-sm font-semibold text-fg">{Math.round(totalVolume)} {U}</span>
+            <span className="text-sm font-semibold tabular-nums text-fg">{Math.round(totalVolume).toLocaleString("en-GB")} {U}</span>
             <span className="text-dim" aria-hidden="true">·</span>
-            <span className="tabular text-sm font-semibold text-fg">{totalSets} {totalSets === 1 ? "set" : "sets"}</span>
+            <span className="text-sm font-semibold tabular-nums text-fg">{totalSets} {totalSets === 1 ? "set" : "sets"}</span>
             <IconChevron className="h-3.5 w-3.5 shrink-0 -rotate-90 text-dim" />
           </button>
         </>
       ) : (
-        <div className="flex flex-col gap-2 rounded-card border border-accent/30 bg-accent-soft p-3 backdrop-blur">
+        <div className="glass-strong pop-in flex flex-col gap-4 rounded-3xl p-4">
           <div className="flex items-center gap-2">
             <span
               className={`h-2 w-2 shrink-0 rounded-full ${
@@ -733,17 +725,17 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               }`}
               aria-hidden="true"
             />
-            <span className="clock text-sm font-semibold text-fg">{formatElapsed(elapsedSeconds)}</span>
-            <span className="text-xs text-muted">
+            <span className="text-[15px] font-semibold tabular-nums text-fg">{formatElapsed(elapsedSeconds)}</span>
+            <span className="text-[13px] text-muted">
               {finished ? "stopped" : pausedAt ? "paused" : "recording"}
             </span>
-            <div className="ml-auto flex shrink-0 items-center gap-1">
+            <div className="ml-auto flex shrink-0 items-center gap-1.5">
               {!finished ? (
                 <button
                   type="button"
                   onClick={togglePause}
                   aria-label={pausedAt ? "Resume timer" : "Pause timer"}
-                  className="flex h-7 w-7 items-center justify-center rounded-field text-muted transition-colors hover:bg-accent/10 hover:text-fg"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90"
                 >
                   {pausedAt ? <IconPlay className="h-4 w-4" /> : <IconPause className="h-4 w-4" />}
                 </button>
@@ -752,30 +744,33 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
                 type="button"
                 onClick={() => setBarMinimised(true)}
                 aria-label="Minimise timer bar"
-                className="flex h-7 w-7 items-center justify-center rounded-field text-muted transition-colors hover:bg-accent/10 hover:text-fg"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90"
               >
                 <IconChevron className="h-4 w-4 rotate-90" />
               </button>
             </div>
           </div>
-          <div className="flex flex-col gap-2 border-t border-accent/20 pt-2">
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs text-muted">Total volume</span>
-              <span className="tabular text-lg font-bold text-fg">{Math.round(totalVolume)} {U}</span>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[12px] font-medium text-muted">Total volume</span>
+              <span className="text-[26px] font-bold leading-none tabular-nums tracking-[-0.02em] text-fg">
+                {Math.round(totalVolume).toLocaleString("en-GB")}
+                <span className="ml-1 text-[15px] font-semibold tracking-normal text-muted">{U}</span>
+              </span>
             </div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs text-muted">Sets logged</span>
-              <span className="tabular text-sm font-semibold text-fg">{totalSets}</span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[12px] font-medium text-muted">Sets logged</span>
+              <span className="text-[26px] font-bold leading-none tabular-nums tracking-[-0.02em] text-fg">{totalSets}</span>
             </div>
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={saving || savedOffline}
-              className="w-full rounded-field bg-accent py-3 text-center font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
-            >
-              {savedOffline ? "Saved on this device" : saving ? "Finishing..." : "Finish"}
-            </button>
           </div>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving || savedOffline}
+            className="w-full rounded-2xl bg-accent py-4 text-center text-[16px] font-semibold text-black transition-[transform,background-color] hover:bg-accent-2 active:scale-[0.98] disabled:opacity-60"
+          >
+            {savedOffline ? "Saved on this device" : saving ? "Finishing..." : "Finish workout"}
+          </button>
         </div>
         )}
       </div>
@@ -854,7 +849,7 @@ function ShareCard({ summary, timeLabel, effortLabel, unit = "kg", muscles = nul
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
+    <section className="flex flex-col gap-3 rounded-2xl bg-accent-soft p-4">
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-black">
           <IconShare className="h-5 w-5" />
@@ -871,7 +866,7 @@ function ShareCard({ summary, timeLabel, effortLabel, unit = "kg", muscles = nul
         type="button"
         onClick={onShare}
         disabled={status === "preparing"}
-        className="rounded-field border border-accent/40 bg-surface px-4 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-black disabled:opacity-60"
+        className="rounded-full bg-surface px-4 py-3 text-[15px] font-semibold text-accent transition-transform active:scale-[0.98] disabled:opacity-60"
       >
         {status === "preparing"
           ? "Preparing..."
@@ -947,7 +942,7 @@ function SaveWorkoutModal({ defaultName, exercises, sourceMyWorkoutId, sourceNam
       aria-label="Save to My workouts"
     >
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
+      <div className="glass-strong pop-in relative flex w-full max-w-sm flex-col gap-4 rounded-3xl p-5">
         {state === "saved" ? (
           <>
             <div className="flex items-center gap-3">
@@ -961,7 +956,7 @@ function SaveWorkoutModal({ defaultName, exercises, sourceMyWorkoutId, sourceNam
             <button
               type="button"
               onClick={onClose}
-              className="rounded-field bg-accent py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+              className="rounded-2xl bg-accent py-3 text-[15px] font-semibold text-black transition-[transform,background-color] hover:bg-accent-2 active:scale-[0.98]"
             >
               Done
             </button>
@@ -983,7 +978,7 @@ function SaveWorkoutModal({ defaultName, exercises, sourceMyWorkoutId, sourceNam
                 onFocus={selectOnFocus}
                 autoFocus
                 placeholder="Workout name"
-                className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent"
+                className="w-full rounded-xl bg-fg/10 px-3.5 py-3 text-[16px] text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-accent/60"
               />
             </label>
             {error ? <p className="text-xs text-danger">{error}</p> : null}
@@ -993,7 +988,7 @@ function SaveWorkoutModal({ defaultName, exercises, sourceMyWorkoutId, sourceNam
                   type="button"
                   onClick={() => run("update")}
                   disabled={state === "saving"}
-                  className="rounded-field border border-border py-2.5 text-sm font-semibold text-fg transition-colors hover:bg-surface-2 disabled:opacity-60"
+                  className="rounded-2xl bg-fg/10 py-3 text-[15px] font-semibold text-fg transition-transform active:scale-[0.98] disabled:opacity-60"
                 >
                   Update &ldquo;{sourceName}&rdquo;
                 </button>
@@ -1002,7 +997,7 @@ function SaveWorkoutModal({ defaultName, exercises, sourceMyWorkoutId, sourceNam
                 type="button"
                 onClick={() => run("new")}
                 disabled={state === "saving"}
-                className="rounded-field bg-accent py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+                className="rounded-2xl bg-accent py-3 text-[15px] font-semibold text-black transition-[transform,background-color] hover:bg-accent-2 active:scale-[0.98] disabled:opacity-60"
               >
                 {state === "saving" ? "Saving..." : canUpdate ? "Save as a new workout" : "Save workout"}
               </button>
@@ -1043,17 +1038,17 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
   return (
     <div className="flex flex-col gap-6 py-2">
       <header className="relative flex flex-col items-center gap-1 pt-2 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent">
-          <IconCheck className="h-7 w-7" />
+        <span className="check-pop flex h-16 w-16 items-center justify-center rounded-full bg-accent text-black shadow-[0_10px_30px_-8px_rgba(252,118,5,0.6)]">
+          <IconCheck className="h-8 w-8" />
         </span>
-        <h1 className="mt-2 text-2xl font-bold text-fg">Workout completed!</h1>
-        <p className="text-sm text-muted">Nice work. Here is how it went.</p>
+        <h1 className="mt-3 text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Workout completed!</h1>
+        <p className="text-[15px] text-muted">Nice work. Here is how it went.</p>
         {canSave ? (
           <button
             type="button"
             onClick={() => setSaveOpen(true)}
             aria-label="Save this workout to My workouts"
-            className="absolute right-0 top-1 flex h-10 w-10 items-center justify-center rounded-field border border-border bg-surface text-muted transition-colors hover:border-border-strong hover:text-fg"
+            className="absolute right-0 top-1 flex h-10 w-10 items-center justify-center rounded-full bg-surface-2 text-muted transition-[color,transform] hover:text-fg active:scale-90"
           >
             <IconBookmark className="h-5 w-5" />
           </button>
@@ -1064,7 +1059,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
         <button
           type="button"
           onClick={() => setSaveOpen(true)}
-          className="flex items-center justify-between gap-3 rounded-card border border-accent/40 bg-accent-soft px-4 py-3 text-left transition-colors hover:bg-accent/15"
+          className="flex items-center justify-between gap-3 rounded-2xl bg-accent-soft px-4 py-3.5 text-left transition-transform active:scale-[0.98]"
         >
           <span className="text-sm text-fg">
             {saveAsWorkout.sourceMyWorkoutId
@@ -1076,7 +1071,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
       ) : null}
 
       {prs.length > 0 ? (
-        <section className="flex flex-col gap-2 rounded-card border border-accent bg-accent-soft p-4">
+        <section className="flex flex-col gap-2 rounded-2xl bg-accent-soft p-4">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-accent">
             <IconTrophy className="h-4 w-4" />
             {prs.length === 1 ? "New personal record" : `${prs.length} new personal records`}
@@ -1114,7 +1109,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
           const comparable = rows.filter((r) => r.prev && r.prev.e1rm > 0).length;
           const up = rows.filter((r) => r.gain > 0).length;
           return (
-            <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+            <section className="flex flex-col gap-3 rounded-2xl bg-surface p-4">
               <div className="flex flex-col gap-0.5">
                 <h2 className="font-display text-base font-semibold text-fg">Strength Check</h2>
                 <span className="text-xs text-dim">
@@ -1123,9 +1118,9 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
                     : "Your baseline. Re-test in 4 to 6 weeks to see it move."}
                 </span>
               </div>
-              <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
+              <ul className="flex flex-col [&>li+li]:border-t [&>li+li]:border-border/70">
                 {rows.map(({ p, prev, gain, moved }) => (
-                  <li key={p.key} className="flex items-center gap-3 bg-bg/40 px-3 py-2.5">
+                  <li key={p.key} className="flex items-center gap-3 py-2.5">
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-fg">{p.lift}</span>
                       {moved ? (
@@ -1159,7 +1154,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
         })()
       ) : null}
 
-      <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4">
+      <section className="flex flex-col gap-4 rounded-2xl bg-surface p-4">
         <div className={`grid gap-3 ${showLevel ? "grid-cols-2" : "grid-cols-3"}`}>
           <Metric label="Volume" value={`${Math.round(summary.totalVolume)} ${unit}`} />
           <Metric label="Sets" value={summary.totalSets ?? 0} />
@@ -1196,7 +1191,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
 
         {established && j?.rankedUp ? (
           <p
-            className="flex items-center gap-1.5 rounded-field px-3 py-2 text-sm font-semibold"
+            className="flex items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold"
             style={{ backgroundColor: `${j.tierColor}1f`, color: j.tierColor }}
           >
             <IconLevelUp className="h-4 w-4" />
@@ -1204,14 +1199,14 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
             {j.leveledUp ? ` · Level ${j.level}` : ""}
           </p>
         ) : established && j?.leveledUp ? (
-          <p className="flex items-center gap-1.5 rounded-field bg-good/10 px-3 py-2 text-sm font-semibold text-good">
+          <p className="flex items-center gap-1.5 rounded-xl bg-good/10 px-3 py-2.5 text-sm font-semibold text-good">
             <IconLevelUp className="h-4 w-4" />
             Level up. You reached Level {j.level}.
           </p>
         ) : null}
       </section>
 
-      <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+      <section className="flex flex-col gap-3 rounded-2xl bg-surface p-4">
         <h2 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-dim">
           How hard was this workout?
           <Explain k="effort" />
@@ -1223,8 +1218,8 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
               type="button"
               onClick={() => onSelectEffort(n)}
               disabled={savingEffort}
-              className={`flex-1 rounded-field border py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${
-                effort === n ? "border-accent bg-accent-soft text-accent" : "border-border text-muted hover:text-fg"
+              className={`flex-1 rounded-xl py-3 text-[15px] font-semibold transition-[background-color,color,transform] active:scale-95 disabled:opacity-60 ${
+                effort === n ? "bg-accent text-black" : "bg-surface-2 text-muted hover:text-fg"
               }`}
             >
               {n}
@@ -1243,7 +1238,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
       <button
         type="button"
         onClick={onDone}
-        className="rounded-field bg-accent px-4 py-2.5 font-semibold text-black transition-colors hover:bg-accent-2"
+        className="rounded-2xl bg-accent px-4 py-4 text-[16px] font-semibold text-black transition-[transform,background-color] hover:bg-accent-2 active:scale-[0.98]"
       >
         Done
       </button>
@@ -1332,11 +1327,12 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
   // RIR 0). Same column slot.
   const withFailure = showFailure && !timeBased;
   const midCol = withRir || withFailure;
+  // No delete column: a set is deleted by swiping its row (SwipeRow).
   const gridCls = timeBased
-    ? "grid grid-cols-[2rem_minmax(0,1fr)_2.25rem_1.5rem] items-center gap-1.5"
+    ? "grid grid-cols-[2.25rem_minmax(0,1fr)_2.75rem] items-center gap-2"
     : midCol
-      ? "grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_3rem_2.25rem_1.5rem] items-center gap-1.5"
-      : "grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.25rem_1.5rem] items-center gap-1.5";
+      ? "grid grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1fr)_3.25rem_2.75rem] items-center gap-2"
+      : "grid grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1fr)_2.75rem] items-center gap-2";
   const workSets = sets.filter((s) => !s.warmup);
   const best1rm = Math.max(0, ...workSets.map((s) => epley1rm(s.weight, s.reps)));
   const volume = workSets.reduce(
@@ -1350,69 +1346,71 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
       ? last.sets
           .filter((s) => s.weight != null || s.reps != null)
           .map(formatSet)
-          .join("  .  ")
+          .join("  ·  ")
       : null;
 
-  const targetParts = [];
-  if (row.targetSets) targetParts.push(`${row.targetSets} sets`);
-  if (row.targetReps) targetParts.push(timeBased ? `${row.targetReps}` : `${row.targetReps} reps`);
-  if (rirTarget != null && !timeBased) targetParts.push(`RIR ${rirTarget}`);
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-      <div className="flex items-start gap-2">
-        <div className="flex-1">
-          <span className="font-display text-base font-semibold text-fg">{exercise.name}</span>
-          <span className="mt-1 flex flex-wrap items-center gap-2">
-            <MusclePill muscle={exercise.muscle} />
-            {targetParts.length ? (
-              <span className="tabular rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent">
-                {targetParts.join("  .  ")}
-              </span>
-            ) : null}
-          </span>
+    <section className="flex flex-col gap-3 rounded-2xl bg-surface p-4">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-sans text-[17px] font-semibold leading-snug tracking-[-0.01em] text-fg">{exercise.name}</h3>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+            <span className="flex items-center gap-1.5 text-[13px] text-dim">
+              <span
+                aria-hidden="true"
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: `var(--muscle-${muscleKey(exercise.muscle)})` }}
+              />
+              {exercise.muscle}
+            </span>
+            {row.targetSets ? <StatPill label="Sets" value={row.targetSets} /> : null}
+            {row.targetReps ? <StatPill label={timeBased ? "Time" : "Reps"} value={row.targetReps} /> : null}
+            {rirTarget != null && !timeBased ? <StatPill label="RIR" value={rirTarget} tone="accent" /> : null}
+          </div>
         </div>
-        {exercise.video_url && !inlineVideo ? (
-          <button type="button" onClick={onVideo} aria-label="Watch form video" className="rounded-field p-1.5 text-dim hover:text-fg">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M8 5.5v13l11-6.5z" /></svg>
-          </button>
-        ) : null}
-        <div ref={menuRef} className="relative shrink-0">
-          <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Exercise options"
-            aria-expanded={menuOpen}
-            className="rounded-field p-1.5 text-dim transition-colors hover:bg-surface-2 hover:text-fg"
-          >
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
-          </button>
-          {menuOpen ? (
-            <div className="absolute right-0 top-full z-20 mt-1 flex w-44 flex-col overflow-hidden rounded-card border border-border bg-surface py-1 shadow-lg">
-              <button type="button" onClick={() => { setMenuOpen(false); onSwap?.(); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2">
-                Swap exercise
-              </button>
-              {onReorder ? (
-                <button type="button" onClick={() => { setMenuOpen(false); onReorder(); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2">
-                  Reorder exercises
-                </button>
-              ) : null}
-              {!row.showNote ? (
-                <button type="button" onClick={() => { setMenuOpen(false); onPatch({ showNote: true }); }} className="px-3 py-2 text-left text-sm text-fg transition-colors hover:bg-surface-2">
-                  Add a note
-                </button>
-              ) : null}
-              <div className="my-1 border-t border-border" />
-              <button type="button" onClick={() => { setMenuOpen(false); onRemove(); }} className="px-3 py-2 text-left text-sm text-danger transition-colors hover:bg-danger/10">
-                Remove exercise
-              </button>
-            </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {exercise.video_url && !inlineVideo ? (
+            <button
+              type="button"
+              onClick={onVideo}
+              aria-label="Watch form video"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-accent transition-transform active:scale-90"
+            >
+              <svg viewBox="0 0 24 24" className="ml-0.5 h-4 w-4" fill="currentColor"><path d="M8 5.5v13l11-6.5z" /></svg>
+            </button>
           ) : null}
+          <div ref={menuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Exercise options"
+              aria-expanded={menuOpen}
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition-[background-color,color,transform] active:scale-90 ${
+                menuOpen ? "bg-fg text-bg" : "bg-surface-2 text-muted hover:text-fg"
+              }`}
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
+            </button>
+            {menuOpen ? (
+              <div className="glass-strong pop-in absolute right-0 top-full z-30 mt-2 flex w-56 origin-top-right flex-col overflow-hidden rounded-2xl py-1.5">
+                <MenuItem onClick={() => { setMenuOpen(false); onSwap?.(); }}>Swap exercise</MenuItem>
+                {onReorder ? (
+                  <MenuItem onClick={() => { setMenuOpen(false); onReorder(); }}>Reorder exercises</MenuItem>
+                ) : null}
+                {!row.showNote ? (
+                  <MenuItem onClick={() => { setMenuOpen(false); onPatch({ showNote: true }); }}>Add a note</MenuItem>
+                ) : null}
+                <div className="mx-4 my-1 h-px bg-fg/10" />
+                <MenuItem danger onClick={() => { setMenuOpen(false); onRemove(); }}>Remove exercise</MenuItem>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
       {embedUrl ? (
-        <div className="relative w-full max-w-[240px] overflow-hidden rounded-field border border-border bg-black">
+        <div className="relative w-full max-w-[260px] overflow-hidden rounded-xl bg-black">
           <div className="aspect-video">
             <iframe
               src={embedUrl}
@@ -1426,7 +1424,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
             type="button"
             onClick={onVideo}
             aria-label="Open video full size"
-            className="absolute right-1 top-1 rounded bg-black/60 p-1 text-white/90 transition-colors hover:bg-black/80"
+            className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1.5 text-white/90 transition-colors hover:bg-black/80"
           >
             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
@@ -1437,7 +1435,7 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
         <button
           type="button"
           onClick={onVideo}
-          className="self-start text-xs font-medium text-accent hover:underline"
+          className="self-start text-[13px] font-semibold text-accent active:opacity-60"
         >
           Watch form video
         </button>
@@ -1447,18 +1445,21 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
         <button
           type="button"
           onClick={() => setShowHistory(true)}
-          className="flex items-center gap-2 rounded-field border border-border bg-bg/40 px-3 py-2 text-left transition-colors hover:border-border-strong active:bg-accent-soft"
+          className="-mx-1.5 flex items-center gap-2 rounded-lg px-1.5 py-1 text-left text-[13px] leading-snug transition-colors active:bg-surface-2"
         >
-          <span className="tabular flex-1 text-xs text-muted">
-            <span className={beatLabel ? "font-semibold text-accent" : "text-dim"}>
-              {beatLabel ?? `Last${last?.date ? ` (${last.date})` : ""}`}:
-            </span>{" "}
+          <IconClock className="h-3.5 w-3.5 shrink-0 text-dim" />
+          <span className="min-w-0 flex-1 text-muted">
+            <span className={beatLabel ? "font-semibold text-accent" : "font-medium text-dim"}>
+              {beatLabel ?? `Last${last?.date ? ` (${last.date})` : ""}`}
+            </span>
+            <span className="text-dim">{"  "}</span>
             {lastLine}
           </span>
-          <IconClock className="h-3.5 w-3.5 shrink-0 text-dim" />
+          <IconChevron className="h-3.5 w-3.5 shrink-0 text-dim" />
         </button>
       ) : startHint ? (
-        <p className="rounded-field border border-accent/20 bg-accent-soft/40 px-3 py-2 text-xs text-muted">
+        <p className="flex items-start gap-2 text-[13px] leading-snug text-muted">
+          <span aria-hidden="true" className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
           {startHint}
         </p>
       ) : null}
@@ -1472,139 +1473,155 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
         />
       ) : null}
 
-      <div className={`${gridCls} text-[11px] font-semibold uppercase tracking-wider text-dim`}>
-        <span>Set</span>
-        {showWeight ? <span>Weight ({unit})</span> : null}
-        <span>{timeBased ? "Time (s)" : "Reps"}</span>
-        {withRir ? (
-          <span className="flex items-center justify-center gap-0.5">RIR <Explain k="rir" label="RIR" /></span>
-        ) : withFailure ? (
-          <span className="flex items-center justify-center gap-0.5">
-            <IconFlame className="h-3 w-3" /> <Explain k="failure" label="to failure" />
-          </span>
-        ) : null}
-        <span className="text-center">Log</span>
-        <span />
-      </div>
-      {sets.map((set, i) => {
-        const fieldCls = set.warmup
-          ? "border-border bg-bg text-muted"
-          : set.completed
-            ? "border-accent/50 bg-accent-soft"
-            : "border-border bg-bg";
-        const failed = set.rir === "0" || set.rir === 0;
-        return (
-        <div
-          key={i}
-          className={`${gridCls} rounded-field -mx-1.5 px-1.5 py-1 transition-colors ${
-            set.warmup ? "opacity-60" : set.completed ? "bg-accent-soft" : ""
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => onPatchSet(i, { warmup: !set.warmup })}
-            aria-label={set.warmup ? "Warm-up set. Make it a working set" : "Working set. Mark as warm-up"}
-            aria-pressed={set.warmup}
-            className={`tabular flex h-7 w-7 items-center justify-center rounded-field border text-sm font-semibold transition-colors ${
-              set.warmup
-                ? "border-accent bg-accent-soft text-accent"
-                : "border-border bg-bg text-dim hover:border-border-strong hover:text-fg"
-            }`}
-          >
-            {set.warmup ? "W" : sets.slice(0, i + 1).filter((x) => !x.warmup).length}
-          </button>
-          {showWeight ? (
-            <input
-              type="number"
-              inputMode="decimal"
-              value={set.weight}
-              onChange={(e) => onPatchSet(i, { weight: e.target.value })}
-              onFocus={selectOnFocus}
-              aria-label={`Set ${i + 1} weight`}
-              className={`tabular w-full rounded-field border px-2 py-1.5 text-sm text-fg focus:border-accent ${fieldCls}`}
-            />
-          ) : null}
-          <input
-            type="number"
-            inputMode="numeric"
-            value={set.reps}
-            onChange={(e) => onPatchSet(i, { reps: e.target.value })}
-            onFocus={selectOnFocus}
-            aria-label={`Set ${i + 1} ${timeBased ? "seconds" : "reps"}`}
-            className={`tabular w-full rounded-field border px-2 py-1.5 text-sm text-fg focus:border-accent ${fieldCls}`}
-          />
+      <div className="flex flex-col gap-1">
+        <div className={`${gridCls} px-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-dim`}>
+          <span className="text-center">Set</span>
+          {showWeight ? <span className="text-center">{unit}</span> : null}
+          <span className="text-center">{timeBased ? "Secs" : "Reps"}</span>
           {withRir ? (
-            <input
-              type="number"
-              inputMode="numeric"
-              value={set.rir}
-              onChange={(e) => onPatchSet(i, { rir: e.target.value })}
-              onFocus={selectOnFocus}
-              aria-label={`Set ${i + 1} reps in reserve`}
-              className={`tabular w-full rounded-field border px-1.5 py-1.5 text-center text-sm text-fg focus:border-accent ${fieldCls}`}
-            />
+            <span className="flex items-center justify-center gap-0.5">RIR <Explain k="rir" label="RIR" /></span>
           ) : withFailure ? (
-            <button
-              type="button"
-              onClick={() => onPatchSet(i, { rir: failed ? "" : "0" })}
-              aria-pressed={failed}
-              aria-label={`Set ${i + 1} taken to failure`}
-              className={`flex h-[34px] w-full items-center justify-center rounded-field border transition-colors ${
-                failed ? "border-accent bg-accent text-black" : `text-dim ${fieldCls}`
-              }`}
-            >
-              <IconFlame className="h-4 w-4" />
-            </button>
+            <span className="flex items-center justify-center gap-0.5">
+              <IconFlame className="h-3 w-3" /> <Explain k="failure" label="to failure" />
+            </span>
           ) : null}
-          <button
-            type="button"
-            onClick={() => onToggleSet(i)}
-            aria-label={set.completed ? "Mark set not done" : "Mark set done"}
-            aria-pressed={set.completed}
-            className={`flex h-8 w-8 items-center justify-center justify-self-center rounded-field border transition-colors ${
-              set.completed ? "border-accent bg-accent text-black" : "border-border text-dim hover:text-fg"
-            }`}
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
-          </button>
-          <button type="button" onClick={() => onRemoveSet(i)} aria-label="Delete set" className="justify-self-center rounded-field p-1 text-dim hover:text-danger">
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></svg>
-          </button>
+          <span />
         </div>
-        );
-      })}
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <button type="button" onClick={onAddSet} className="flex items-center gap-1 rounded-field border border-border px-3 py-1.5 text-sm font-medium text-fg hover:bg-surface-2">
+        {sets.map((set, i) => {
+          const failed = set.rir === "0" || set.rir === 0;
+          // A logged set reads as "printed": the input wells drop away and
+          // the row takes a soft accent tint (layered over the solid
+          // surface, so the swipe action underneath never shows through).
+          const inputCls = `h-11 w-full min-w-0 rounded-xl text-center text-[17px] font-semibold tabular-nums text-fg outline-none transition-colors placeholder:text-dim focus:bg-surface-2 focus:ring-2 focus:ring-accent/60 ${
+            set.completed ? "bg-transparent" : "bg-surface-2"
+          }`;
+          return (
+            <SwipeRow
+              key={i}
+              onDelete={() => onRemoveSet(i)}
+              deleteLabel={`Delete set ${i + 1}`}
+              className={
+                set.completed
+                  ? "bg-surface [background-image:linear-gradient(var(--color-accent-soft),var(--color-accent-soft))]"
+                  : "bg-surface"
+              }
+            >
+              <div className={`${gridCls} px-1 py-1 ${set.warmup ? "opacity-60" : ""}`}>
+                <button
+                  type="button"
+                  onClick={() => onPatchSet(i, { warmup: !set.warmup })}
+                  aria-label={set.warmup ? "Warm-up set. Make it a working set" : "Working set. Mark as warm-up"}
+                  aria-pressed={set.warmup}
+                  className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-[15px] font-semibold tabular-nums transition-colors ${
+                    set.warmup ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-2 hover:text-fg"
+                  }`}
+                >
+                  {set.warmup ? "W" : sets.slice(0, i + 1).filter((x) => !x.warmup).length}
+                </button>
+                {showWeight ? (
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={set.weight}
+                    onChange={(e) => onPatchSet(i, { weight: e.target.value })}
+                    onFocus={selectOnFocus}
+                    aria-label={`Set ${i + 1} weight`}
+                    className={inputCls}
+                  />
+                ) : null}
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={set.reps}
+                  onChange={(e) => onPatchSet(i, { reps: e.target.value })}
+                  onFocus={selectOnFocus}
+                  aria-label={`Set ${i + 1} ${timeBased ? "seconds" : "reps"}`}
+                  className={inputCls}
+                />
+                {withRir ? (
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={set.rir}
+                    onChange={(e) => onPatchSet(i, { rir: e.target.value })}
+                    onFocus={selectOnFocus}
+                    aria-label={`Set ${i + 1} reps in reserve`}
+                    className={inputCls}
+                  />
+                ) : withFailure ? (
+                  <button
+                    type="button"
+                    onClick={() => onPatchSet(i, { rir: failed ? "" : "0" })}
+                    aria-pressed={failed}
+                    aria-label={`Set ${i + 1} taken to failure`}
+                    className={`flex h-11 w-full items-center justify-center rounded-xl transition-[background-color,color,transform] active:scale-95 ${
+                      failed ? "bg-accent text-black" : set.completed ? "text-dim" : "bg-surface-2 text-dim"
+                    }`}
+                  >
+                    <IconFlame className="h-[18px] w-[18px]" />
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    // A light tick on the same frame the check lands
+                    // (Android; iOS Safari has no vibration API).
+                    if (!set.completed) navigator.vibrate?.(10);
+                    onToggleSet(i);
+                  }}
+                  aria-label={set.completed ? "Mark set not done" : "Mark set done"}
+                  aria-pressed={set.completed}
+                  className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full transition-[background-color,color] duration-150 ${
+                    set.completed ? "check-pop bg-accent text-black" : "bg-surface-2 text-dim hover:text-fg"
+                  }`}
+                >
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+                </button>
+              </div>
+            </SwipeRow>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={onAddSet}
+          className="flex items-center gap-1.5 rounded-full bg-accent-soft px-4 py-2 text-[14px] font-semibold text-accent transition-transform active:scale-95"
+        >
           <IconPlus /> Add set
         </button>
         {volume > 0 ? (
-          <span className="tabular text-xs text-dim">
-            Vol {Math.round(volume)} {unit}{best1rm ? ` . 1RM ~${Math.round(best1rm)} ${unit}` : ""}
+          <span className="text-right text-[12px] tabular-nums text-dim">
+            Vol {Math.round(volume).toLocaleString("en-GB")} {unit}
+            {best1rm ? ` · 1RM ~${Math.round(best1rm)} ${unit}` : ""}
           </span>
         ) : null}
       </div>
-      <p className="flex items-center gap-1 text-[11px] text-dim">
-        Tap a set number to mark it a warm-up. Warm-ups are not counted.
-        <Explain k="warmup" />
+      <p className="text-[12px] leading-snug text-dim">
+        Tap a set number for a warm-up. Swipe left to delete.{" "}
+        <span className="inline-flex align-middle">
+          <Explain k="warmup" />
+        </span>
       </p>
 
       {row.showNote ? (
-        <div className="flex items-start gap-1 rounded-field border border-border bg-bg/40 p-2">
+        <div className="flex items-start gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
           <textarea
             value={row.note}
             onChange={(e) => onPatch({ note: e.target.value })}
             rows={2}
             autoFocus
             placeholder="Cues, tempo, how it felt."
-            className="w-full resize-y bg-transparent text-sm text-fg placeholder:text-dim focus:outline-none"
+            className="w-full resize-y bg-transparent text-[15px] text-fg placeholder:text-dim focus:outline-none"
           />
           {!row.note ? (
             <button
               type="button"
               onClick={() => onPatch({ showNote: false })}
               aria-label="Remove note"
-              className="shrink-0 rounded p-1 text-dim hover:text-fg"
+              className="shrink-0 rounded-full p-1 text-dim hover:text-fg"
             >
               <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
@@ -1612,6 +1629,20 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
         </div>
       ) : null}
     </section>
+  );
+}
+
+function MenuItem({ onClick, danger = false, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-4 py-2.5 text-left text-[15px] transition-colors hover:bg-fg/5 active:bg-fg/10 ${
+        danger ? "text-danger" : "text-fg"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 

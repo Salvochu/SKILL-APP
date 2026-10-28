@@ -4,6 +4,7 @@ import { useState } from "react";
 import GuardedStartLink from "@/components/log/GuardedStartLink";
 import ProgramSetup from "@/components/splits/ProgramSetup";
 import VideoModal from "@/components/log/VideoModal";
+import StatPill from "@/components/ui/StatPill";
 import WeekGrid from "@/components/splits/WeekGrid";
 import { weekLayout, cleanFocus } from "@/lib/splitWeek";
 import { sortVariants, muscleKey } from "@/lib/exercises";
@@ -156,8 +157,8 @@ function DaySession({ day, split, eyebrow, programWeeks, onStartProgram }) {
                       </span>
                     </span>
                     <span className="mt-2 flex flex-wrap gap-1.5">
-                      <Stat label="Sets" value={item.sets} />
-                      <Stat label="Reps" value={item.reps} />
+                      <StatPill label="Sets" value={item.sets} />
+                      <StatPill label="Reps" value={item.reps} />
                     </span>
                   </span>
                 </span>
@@ -208,17 +209,6 @@ function DaySession({ day, split, eyebrow, programWeeks, onStartProgram }) {
 
       {videoFor ? <VideoModal exercise={videoFor} onClose={() => setVideoFor(null)} /> : null}
     </section>
-  );
-}
-
-// A small sets/reps pill: the label quiet, the number in the body font
-// (not the condensed stats face) so it reads like the rest of the row.
-function Stat({ label, value }) {
-  return (
-    <span className="inline-flex items-baseline gap-1 rounded-full bg-surface-2 px-2.5 py-1 font-sans text-[12px] leading-none">
-      <span className="text-dim">{label}</span>
-      <span className="font-semibold text-fg">{value}</span>
-    </span>
   );
 }
 
