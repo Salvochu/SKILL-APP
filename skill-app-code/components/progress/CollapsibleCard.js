@@ -6,15 +6,15 @@ export default function CollapsibleCard({ title, aside = null, defaultOpen = fal
   return (
     <details
       open={defaultOpen}
-      className="group flex flex-col rounded-card border border-border bg-surface [&_summary::-webkit-details-marker]:hidden"
+      className="group/card flex flex-col rounded-2xl bg-surface [&_summary::-webkit-details-marker]:hidden"
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
-        <span className="font-display text-base font-semibold text-fg">{title}</span>
-        <span className="flex min-w-0 items-center gap-2 text-sm text-muted">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-4 transition-colors active:bg-surface-2">
+        <span className="text-[17px] font-semibold tracking-[-0.01em] text-fg">{title}</span>
+        <span className="flex min-w-0 items-center gap-2 text-[15px] text-muted">
           {aside}
           <svg
             viewBox="0 0 24 24"
-            className="h-4 w-4 shrink-0 text-dim transition-transform group-open:rotate-90"
+            className="h-4 w-4 shrink-0 text-dim transition-transform group-open/card:rotate-90"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
@@ -25,7 +25,7 @@ export default function CollapsibleCard({ title, aside = null, defaultOpen = fal
           </svg>
         </span>
       </summary>
-      <div className="border-t border-border p-4">{children}</div>
+      <div className="px-4 pb-5">{children}</div>
     </details>
   );
 }

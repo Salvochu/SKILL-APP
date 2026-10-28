@@ -35,7 +35,7 @@ export default function RangeFilter({ mesoAvailable = false }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden">
         {mesoAvailable ? (
           <Chip active={isMeso} onClick={() => setRange(MESO_TOKEN)}>
             This mesocycle
@@ -56,18 +56,18 @@ export default function RangeFilter({ mesoAvailable = false }) {
       </div>
 
       {openCustom ? (
-        <div className="flex flex-wrap items-end gap-2 rounded-card border border-border bg-surface p-3">
-          <label className="flex flex-col gap-1 text-xs text-dim">
+        <div className="flex flex-wrap items-end gap-2.5 pt-1">
+          <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-[13px] font-medium text-muted">
             From
             <input
               type="date"
               value={from}
               max={to || today}
               onChange={(e) => setFrom(e.target.value)}
-              className="rounded-field border border-border bg-bg px-2 py-1.5 text-sm text-fg focus:border-accent"
+              className="w-full rounded-xl bg-fg/[0.06] px-3 py-2.5 text-[16px] text-fg outline-none focus:ring-2 focus:ring-accent/60"
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs text-dim">
+          <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-[13px] font-medium text-muted">
             To
             <input
               type="date"
@@ -75,14 +75,14 @@ export default function RangeFilter({ mesoAvailable = false }) {
               min={from || undefined}
               max={today}
               onChange={(e) => setTo(e.target.value)}
-              className="rounded-field border border-border bg-bg px-2 py-1.5 text-sm text-fg focus:border-accent"
+              className="w-full rounded-xl bg-fg/[0.06] px-3 py-2.5 text-[16px] text-fg outline-none focus:ring-2 focus:ring-accent/60"
             />
           </label>
           <button
             type="button"
             onClick={applyCustom}
             disabled={!from || !to}
-            className="rounded-field bg-accent px-3 py-1.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-40"
+            className="rounded-xl bg-accent px-4 py-2.5 text-[16px] font-semibold text-black transition-[transform,opacity] active:scale-[0.97] disabled:opacity-40"
           >
             Apply
           </button>
@@ -97,8 +97,9 @@ function Chip({ active, onClick, children }) {
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-        active ? "border-accent bg-accent-soft text-accent" : "border-border text-muted hover:text-fg"
+      aria-pressed={active}
+      className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+        active ? "bg-fg text-bg" : "bg-surface-2 text-muted hover:text-fg"
       }`}
     >
       {children}

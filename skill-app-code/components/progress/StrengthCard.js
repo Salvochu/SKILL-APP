@@ -45,14 +45,21 @@ export default function StrengthCard({
   if (tested.length === 0) {
     if (!showStrengthCheck) return null;
     return (
-      <section className="flex flex-col items-start gap-3 rounded-card border border-border bg-surface p-5">
-        <h2 className="font-display text-base font-semibold text-fg">Take your first Strength Check</h2>
-        <p className="text-sm text-muted">
-          One hard top set on six main lifts. See where each one stands, then re-test every 4 to 6 weeks.
-        </p>
+      <section className="flex flex-col gap-4 rounded-2xl bg-surface p-5">
+        <div className="flex items-start gap-3.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+            <IconGauge className="h-5 w-5" />
+          </span>
+          <div className="flex min-w-0 flex-col gap-1">
+            <h2 className="font-sans text-[17px] font-semibold tracking-[-0.01em] text-fg">Take your first Strength Check</h2>
+            <p className="text-[15px] leading-relaxed text-muted">
+              One hard top set on six main lifts. See where each one stands, then re-test every 4 to 6 weeks.
+            </p>
+          </div>
+        </div>
         <Link
           href="/splits/strength-check"
-          className="rounded-field bg-accent px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+          className="flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-3.5 text-[16px] font-semibold text-black transition-transform active:scale-[0.98]"
         >
           Start Strength Check
         </Link>
@@ -61,45 +68,45 @@ export default function StrengthCard({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {showStrengthCheck ? (
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-dim">{checkLine}</span>
+          <span className="text-[14px] text-muted">{checkLine}</span>
           <Link
             href="/splits/strength-check"
-            className="shrink-0 rounded-field border border-border px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:border-border-strong"
+            className="shrink-0 rounded-full bg-accent-soft px-3.5 py-1.5 text-[14px] font-semibold text-accent transition-transform active:scale-95"
           >
             {lastCheck ? "Re-test" : "Start"}
           </Link>
         </div>
       ) : null}
 
-      <ul className="flex flex-col gap-3.5">
+      <ul className="flex flex-col gap-4">
         {tested.map((p) => {
           const color = tierColorFor(p.tierIndex);
           return (
             <li key={p.key}>
               <Link
                 href={p.exId ? `/library/exercises/${p.exId}` : "/progress"}
-                className="group flex flex-col gap-1.5"
+                className="group flex flex-col gap-2"
               >
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="truncate text-sm font-medium text-fg group-hover:text-accent">
+                  <span className="truncate text-[16px] font-medium text-fg group-hover:text-accent">
                     {p.lift}
                   </span>
-                  <span className="tabular shrink-0 text-xs text-muted">
+                  <span className="tabular shrink-0 text-[14px] text-muted">
                     <span className="font-semibold text-fg">{conv(p.e1rm)} {U}</span>
-                    <span className="mx-1 text-dim">·</span>
+                    <span className="mx-1.5 text-dim">·</span>
                     <span className="font-semibold" style={{ color }}>{p.tier}</span>
                   </span>
                 </div>
-                <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-2">
+                <div className="relative h-2 overflow-hidden rounded-full bg-fg/10">
                   <div
                     className="bar-fill absolute inset-y-0 left-0 rounded-full"
                     style={{ width: `${Math.round((p.barFrac ?? 0) * 100)}%`, backgroundColor: color }}
                   />
                 </div>
-                <div className="flex justify-between text-[10px] uppercase tracking-wide text-dim">
+                <div className="flex justify-between text-[11px] font-medium uppercase tracking-[0.04em] text-dim">
                   <span>Beginner</span>
                   <span>Elite</span>
                 </div>
@@ -109,8 +116,8 @@ export default function StrengthCard({
         })}
       </ul>
 
-      <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-xs">
-        <span className="text-dim">
+      <div className="flex items-center justify-between gap-3 border-t border-border/70 pt-3.5 text-[13px]">
+        <span className="text-muted">
           {untested > 0
             ? `${untested} lift${untested === 1 ? "" : "s"} ${
                 showStrengthCheck ? "not tested yet" : "not trained lately"
@@ -120,7 +127,7 @@ export default function StrengthCard({
               : "All six patterns trained"}
         </span>
         {totalLabel ? (
-          <span className="tabular flex items-center gap-1 text-dim">
+          <span className="tabular flex items-center gap-1.5 text-muted">
             total {totalLabel}
             <Explain k="strengthScore" />
           </span>
@@ -132,18 +139,18 @@ export default function StrengthCard({
           <button
             type="button"
             onClick={() => setShowAll((v) => !v)}
-            className="self-start text-xs font-medium text-accent hover:underline"
+            className="-my-1 self-start rounded-lg py-1 text-[15px] font-semibold text-accent transition-opacity active:opacity-60"
           >
             {showAll ? "Hide all lifts" : `Show all ${records.length} lifts`}
           </button>
 
           {showAll ? (
-            <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-field border border-border">
+            <ul className="-mt-2 flex flex-col [&>*+*]:border-t [&>*+*]:border-border/70">
               {records.map((r) => (
-                <li key={r.name} className="flex items-center justify-between gap-3 bg-bg/40 px-3 py-2.5">
+                <li key={r.name} className="flex items-center justify-between gap-3 py-3">
                   <span className="flex min-w-0 flex-col gap-1">
-                    <span className="truncate text-sm font-medium text-fg">{r.name}</span>
-                    <span className="flex items-center gap-2 text-xs text-dim">
+                    <span className="truncate text-[16px] font-medium text-fg">{r.name}</span>
+                    <span className="flex items-center gap-2 text-[13px] text-muted">
                       {r.muscle ? <MusclePill muscle={r.muscle} /> : null}
                       <span className="tabular">
                         {formatWeight(r.topWeight, unit, { decimals: 0 })} x {r.topWeightReps}
@@ -151,7 +158,7 @@ export default function StrengthCard({
                       </span>
                     </span>
                   </span>
-                  <span className="tabular shrink-0 text-sm font-semibold text-fg">
+                  <span className="tabular shrink-0 text-[16px] font-semibold text-fg">
                     {formatWeight(r.best1rm, unit, { decimals: 0 })}
                   </span>
                 </li>
@@ -161,5 +168,15 @@ export default function StrengthCard({
         </>
       ) : null}
     </div>
+  );
+}
+
+function IconGauge(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4.5 18a9 9 0 1 1 15 0" />
+      <path d="m12 13 3.5-4" />
+      <circle cx="12" cy="13" r="1.2" fill="currentColor" />
+    </svg>
   );
 }

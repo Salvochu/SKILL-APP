@@ -23,6 +23,15 @@ export function niceScale(maxValue, tickCount = 4) {
   return { max, ticks };
 }
 
+// A round gridline step, about four to five across a range that does
+// not start at zero (a zoomed-in strength line, say).
+export function niceStep(range) {
+  const target = Math.max(1, range) / 4;
+  const mag = Math.pow(10, Math.floor(Math.log10(target)));
+  const n = target / mag;
+  return (n >= 5 ? 5 : n >= 2 ? 2 : 1) * mag;
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // Locale-independent so server and client render identical text (no

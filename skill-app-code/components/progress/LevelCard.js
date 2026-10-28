@@ -2,31 +2,29 @@ import LevelBadge from "@/components/dashboard/LevelBadge";
 
 // The Journey level: a distinct axis from strength (this one only ever
 // goes up). Body only - the page wraps it in a CollapsibleCard titled
-// "Level".
-export default function LevelCard({ journey }) {
+// "Level". `footer` sits under it (the share button).
+export default function LevelCard({ journey, footer = null }) {
   if (!journey) return null;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-3xl font-bold text-fg">
+      <div className="flex items-end justify-between gap-3">
+        <span className="tabular text-[44px] font-bold leading-[0.9] tracking-[-0.02em] text-fg">
           {journey.level}
-          <span className="ml-1 text-base font-semibold text-dim">/ {journey.maxLevel}</span>
+          <span className="ml-1.5 text-[17px] font-semibold tracking-normal text-muted">/ {journey.maxLevel}</span>
         </span>
-        <div className="mt-1">
-          <LevelBadge journey={journey} compact />
-        </div>
+        <LevelBadge journey={journey} compact />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
+      <div className="flex flex-col gap-2">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-fg/10">
           <div
             className="bar-fill h-full rounded-full"
             style={{ width: `${journey.pctToNextLevel}%`, backgroundColor: journey.tierColor }}
           />
         </div>
-        <div className="flex items-center justify-between text-xs text-dim">
-          <span className="tabular">{journey.xp.toLocaleString()} XP</span>
+        <div className="flex items-center justify-between gap-3 text-[13px] text-muted">
+          <span className="tabular font-semibold text-fg">{journey.xp.toLocaleString()} XP</span>
           <span>
             {journey.atMax
               ? "Max level"
@@ -34,7 +32,7 @@ export default function LevelCard({ journey }) {
           </span>
         </div>
         {journey.nextTier ? (
-          <p className="text-xs text-dim">
+          <p className="text-[13px] text-muted">
             Next rank{" "}
             <span className="font-semibold" style={{ color: journey.nextTier.color }}>
               {journey.nextTier.name}
@@ -43,6 +41,8 @@ export default function LevelCard({ journey }) {
           </p>
         ) : null}
       </div>
+
+      {footer}
     </div>
   );
 }

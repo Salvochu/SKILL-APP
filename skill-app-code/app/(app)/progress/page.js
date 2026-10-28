@@ -26,13 +26,13 @@ export const metadata = { title: "Progress" };
 export default function ProgressPage({ searchParams }) {
   return (
     <div className="flex flex-col gap-6 py-2">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-fg">Progress</h1>
-        <Suspense fallback={<div className="h-5 w-52 rounded skeleton bg-surface-2" />}>
+      <header className="flex flex-col gap-2">
+        <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Progress</h1>
+        <Suspense fallback={<div className="h-5 w-60 rounded-full skeleton bg-surface-2" />}>
           <LifetimeStrip />
         </Suspense>
-      </div>
-      <Suspense fallback={<div className="h-64 rounded-card skeleton bg-surface-2" />}>
+      </header>
+      <Suspense fallback={<ProgressSkeleton />}>
         <ProgressBody searchParams={searchParams} />
       </Suspense>
     </div>
@@ -47,7 +47,7 @@ async function LifetimeStrip() {
   const h = Math.floor(summary.minutes / 60);
   const m = summary.minutes % 60;
   return (
-    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-muted">
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[15px] text-muted">
       <span>
         <span className="tabular font-semibold text-fg">{summary.workouts}</span> workout
         {summary.workouts === 1 ? "" : "s"}
@@ -92,8 +92,14 @@ async function ProgressBody({ searchParams }) {
 
   if (rawData.workouts === 0) {
     return (
-      <div className="rounded-card border border-dashed border-border bg-surface p-10 text-center text-sm text-muted">
-        No data yet. Log a workout to start tracking progress.
+      <div className="flex flex-col items-center gap-3 rounded-2xl bg-surface px-6 py-10 text-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
+          <IconChart className="h-6 w-6" />
+        </span>
+        <div className="flex flex-col gap-1">
+          <p className="text-[17px] font-semibold text-fg">No data yet</p>
+          <p className="text-[15px] text-muted">Log a workout to start tracking progress.</p>
+        </div>
       </div>
     );
   }
@@ -141,20 +147,21 @@ async function ProgressBody({ searchParams }) {
   const hasTrends =
     !beginner.simplified && (strongExercises.length > 0 || data.sessionVolumes.length > 0);
 
-  return (
-    <>
-      <div className="flex justify-end">
-        <ShareProgress
-          levelLabel={journey ? `Level ${journey.level}` : null}
-          tierLabel={journey?.tier ?? null}
-          tierColor={journey?.tierColor ?? null}
-          xpPct={journey ? (journey.atMax ? 100 : journey.pctToNextLevel) : null}
-          stats={shareStats}
-          muscles={shareMuscles}
-          caption={shareCaption}
-        />
-      </div>
+  // The share card is all about the level, so it lives in that card.
+  const share = (
+    <ShareProgress
+      levelLabel={journey ? `Level ${journey.level}` : null}
+      tierLabel={journey?.tier ?? null}
+      tierColor={journey?.tierColor ?? null}
+      xpPct={journey ? (journey.atMax ? 100 : journey.pctToNextLevel) : null}
+      stats={shareStats}
+      muscles={shareMuscles}
+      caption={shareCaption}
+    />
+  );
 
+  return (
+    <div className="flex flex-col gap-3">
       {journey ? (
         <CollapsibleCard
           title="Level"
@@ -165,15 +172,17 @@ async function ProgressBody({ searchParams }) {
             </span>
           }
         >
-          <LevelCard journey={journey} />
+          <LevelCard journey={journey} footer={share} />
         </CollapsibleCard>
-      ) : null}
+      ) : (
+        share
+      )}
 
       {strength && strength.covered > 0 ? (
         <CollapsibleCard
           title="Your lifts"
           aside={
-            <span className="text-xs text-dim">
+            <span className="text-[15px] text-muted">
               {strength.covered} of 6 {showStrengthCheck ? "tested" : "trained"}
             </span>
           }
@@ -202,19 +211,18 @@ async function ProgressBody({ searchParams }) {
 
       {hasTrends ? (
         <CollapsibleCard title="Trends">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <Suspense fallback={<div className="h-8" />}>
               <RangeFilter mesoAvailable={Boolean(mesoRange)} />
             </Suspense>
-            <p className="text-xs text-dim">
+            <p className="text-[13px] text-muted">
               Showing {range.sinceISO ? range.label : "all time"}
             </p>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold text-fg">Training volume</h3>
-            <p className="text-xs text-dim">Total {U} lifted per session</p>
+          <div className="flex flex-col gap-3">
+            <ChartTitle title="Training volume" caption={`Total ${U} lifted per session`} />
             <BarChart data={data.sessionVolumes} unit={U} />
             <DataTable
               headers={["Session", "Date", "Volume"]}
@@ -226,9 +234,8 @@ async function ProgressBody({ searchParams }) {
           </div>
 
           {strongExercises.length > 0 ? (
-            <div className="flex flex-col gap-2 border-t border-border pt-4">
-              <h3 className="text-sm font-semibold text-fg">Strength over time</h3>
-              <p className="text-xs text-dim">Estimated 1RM (Epley) from your best set</p>
+            <div className="flex flex-col gap-3 border-t border-border/70 pt-5">
+              <ChartTitle title="Strength over time" caption="Estimated 1RM (Epley) from your best set" />
               <StrengthChart exercises={data.exercises} unit={U} />
               <DataTable
                 headers={["Exercise", "Sessions", "Latest est. 1RM"]}
@@ -241,16 +248,15 @@ async function ProgressBody({ searchParams }) {
           ) : null}
 
           {strongExercises.length >= 2 ? (
-            <div className="flex flex-col gap-2 border-t border-border pt-4">
-              <h3 className="text-sm font-semibold text-fg">Compare two lifts</h3>
-              <p className="text-xs text-dim">Pick any two lifts you have logged and see how each is going</p>
+            <div className="flex flex-col gap-3 border-t border-border/70 pt-5">
+              <ChartTitle title="Compare two lifts" caption="Pick any two lifts you have logged and see how each is going" />
               <CompareExercises exercises={data.exercises} unit={U} />
             </div>
           ) : null}
           </div>
         </CollapsibleCard>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -260,22 +266,28 @@ function DataTable({ headers, rows }) {
   const norm = rows.map((r) => (Array.isArray(r) ? { href: null, cells: r } : r));
   const linked = norm.some((r) => r.href);
   return (
-    <details className="text-sm">
-      <summary className="cursor-pointer text-xs font-medium text-dim hover:text-fg">Show data</summary>
+    <details className="group/data [&_summary::-webkit-details-marker]:hidden">
+      <summary className="flex w-fit cursor-pointer list-none items-center gap-1 rounded-lg py-1 text-[14px] font-semibold text-accent transition-opacity active:opacity-60">
+        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 transition-transform group-open/data:rotate-90" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+        <span className="group-open/data:hidden">Show data</span>
+        <span className="hidden group-open/data:inline">Hide data</span>
+      </summary>
       <div className="mt-2 overflow-x-auto">
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-left text-[14px]">
           <thead>
-            <tr className="text-dim">
+            <tr className="text-[12px] uppercase tracking-[0.04em] text-dim">
               {headers.map((h) => (
-                <th key={h} className="py-1 pr-4 font-medium">{h}</th>
+                <th key={h} className="py-1.5 pr-4 font-semibold">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="text-muted">
+          <tbody className="text-muted tabular-nums">
             {norm.map((r, i) => (
-              <tr key={i} className="border-t border-border transition-colors hover:bg-surface-2">
+              <tr key={i} className="border-t border-border/70 transition-colors hover:bg-surface-2">
                 {r.cells.map((c, j) => (
-                  <td key={j} className="py-1.5 pr-4">
+                  <td key={j} className="py-2 pr-4">
                     {j === 0 && r.href ? (
                       <Link href={r.href} className="font-medium text-fg hover:text-accent hover:underline">
                         {c}
@@ -290,9 +302,38 @@ function DataTable({ headers, rows }) {
           </tbody>
         </table>
         {linked ? (
-          <p className="mt-1.5 text-[11px] text-dim">Tap a row to open it.</p>
+          <p className="mt-2 text-[13px] text-dim">Tap a row to open it.</p>
         ) : null}
       </div>
     </details>
+  );
+}
+
+function ChartTitle({ title, caption }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <h3 className="font-sans text-[16px] font-semibold tracking-[-0.01em] text-fg">{title}</h3>
+      <p className="text-[13px] text-muted">{caption}</p>
+    </div>
+  );
+}
+
+function ProgressSkeleton() {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="h-44 rounded-2xl skeleton bg-surface-2" />
+      <div className="h-16 rounded-2xl skeleton bg-surface-2" />
+      <div className="h-16 rounded-2xl skeleton bg-surface-2" />
+      <div className="h-16 rounded-2xl skeleton bg-surface-2" />
+    </div>
+  );
+}
+
+function IconChart(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 19V5M4 19h16" />
+      <path d="M8 16v-4M13 16V8M18 16v-6" />
+    </svg>
   );
 }
