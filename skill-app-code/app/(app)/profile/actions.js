@@ -165,6 +165,12 @@ export async function deleteAccount() {
   if (!user) return { error: "Please sign in again." };
 
   const admin = createAdminClient();
+  // Photos live in storage, which the cascade doesn't reach. They go
+  // first, so progress photos never outlive the account; if that fails
+  // the account stays and the person can try again.
+  if (!(await removeStoredPhotos(admin, user.id))) {
+    return { error: "Couldn't delete your photos just now. Try again." };
+  }
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) return { error: error.message };
 
@@ -176,4 +182,22 @@ export async function deleteAccount() {
   }
 
   return { ok: true };
+}
+
+// Every file in the user's own folder of each photo bucket. True once
+// they're all gone.
+async function removeStoredPhotos(admin, userId) {
+  for (const bucket of ["avatars", "progress-photos"]) {
+    for (;;) {
+      const { data: files, error } = await admin.storage.from(bucket).list(userId, { limit: 1000 });
+      if (error) return false;
+      if (!files?.length) break;
+      const { error: removeError } = await admin.storage
+        .from(bucket)
+        .remove(files.map((f) => `${userId}/${f.name}`));
+      if (removeError) return false;
+      if (files.length < 1000) break;
+    }
+  }
+  return true;
 }

@@ -2,26 +2,31 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { safeNext } from "@/lib/safeNext";
 
 export async function login(formData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "") || "/dashboard";
+  // The form's hidden "next" field can be edited like anything else the
+  // browser sends, so it is checked here too, not only on the page.
+  const next = safeNext(String(formData.get("next") ?? ""));
+  const retry = (code) =>
+    redirect(`/login?error=${code}&next=${encodeURIComponent(next)}`);
 
-  if (!email || !password) {
-    redirect(
-      `/login?error=${encodeURIComponent("Enter your email and password.")}&next=${encodeURIComponent(next)}`
-    );
-  }
+  if (!email || !password) retry("missing");
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) {
-    redirect(
-      `/login?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`
-    );
-  }
+  if (error) retry(errorCode(error));
 
   redirect(next);
+}
+
+// Supabase's own message never reaches the page (see ERRORS in page.js).
+function errorCode(error) {
+  if (error.code === "email_not_confirmed") return "unconfirmed";
+  if (error.status === 429) return "rate";
+  if (error.status === 400 || error.status === 401 || error.status === 422) return "invalid";
+  return "failed";
 }

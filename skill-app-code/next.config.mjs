@@ -2,17 +2,50 @@
 // Sent with every response. HTTPS only; no other site may show the app
 // in a frame (clickjacking); browsers must trust the declared content
 // type; links to other sites don't carry the full URL; the app has no
-// use for the camera stream, microphone or location. The CSP sticks to
-// directives that can't break scripts, styles, Supabase or the Loom
-// embeds.
+// use for the camera stream, microphone or location; a page this app
+// opens in a new tab can't reach back into it (and the other way round).
 const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), browsing-topics=()" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'" },
+  { key: "Content-Security-Policy-Report-Only", value: strictCsp() },
 ];
+
+// The full policy: the app may only load and send data to itself,
+// Supabase (data, sign-in, photos) and Loom (form videos). If a script
+// ever got injected it could not call home to another server. Sent as
+// Report-Only for now, so the browser only logs what it would block:
+// once the live app shows no reports, it replaces the short policy
+// above. Inline scripts stay allowed because Next.js writes its page
+// data as inline scripts.
+function strictCsp() {
+  let supabase = "https://*.supabase.co";
+  try {
+    supabase = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin;
+  } catch {}
+  // next dev needs eval (fast refresh) and a websocket to the dev server.
+  const dev = process.env.NODE_ENV === "development";
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data: blob: ${supabase}`,
+    "font-src 'self' data:",
+    `connect-src 'self' ${supabase}${dev ? " ws: wss:" : ""}`,
+    `media-src 'self' blob: ${supabase}`,
+    "frame-src https://www.loom.com",
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "object-src 'none'",
+  ].join("; ");
+}
 
 const nextConfig = {
   poweredByHeader: false,

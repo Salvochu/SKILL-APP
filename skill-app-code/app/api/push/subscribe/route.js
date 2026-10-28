@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isPushServiceEndpoint } from "@/lib/push";
 
 // POST { subscription } : save this browser's push subscription.
 // DELETE { endpoint }   : remove it (reminders off on this device).
@@ -22,6 +23,10 @@ export async function POST(request) {
   const p256dh = sub?.keys?.p256dh;
   const auth = sub?.keys?.auth;
   if (!endpoint || !p256dh || !auth) return json({ error: "incomplete subscription" }, 400);
+  if (!isPushServiceEndpoint(endpoint)) return json({ error: "not a push service" }, 400);
+  if (typeof p256dh !== "string" || typeof auth !== "string" || p256dh.length > 200 || auth.length > 100) {
+    return json({ error: "bad keys" }, 400);
+  }
 
   const { error } = await supabase
     .from("push_subscriptions")

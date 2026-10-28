@@ -18,11 +18,30 @@ function configure() {
   return true;
 }
 
+// The push services browsers actually use: Chrome, Android, Opera and
+// Samsung (Google), Firefox (Mozilla), Safari and iPhone (Apple), Edge
+// (Microsoft). The server POSTs to whatever endpoint is saved, so
+// anything else would let a signed-in person point it at any address
+// they like.
+const PUSH_SERVICE_HOST =
+  /^(fcm\.googleapis\.com|android\.googleapis\.com|([a-z0-9-]+\.)*push\.services\.mozilla\.com|([a-z0-9-]+\.)*push\.apple\.com|([a-z0-9-]+\.)*notify\.windows\.com)$/;
+
+export function isPushServiceEndpoint(endpoint) {
+  if (typeof endpoint !== "string" || endpoint.length > 2048) return false;
+  try {
+    const url = new URL(endpoint);
+    return url.protocol === "https:" && !url.port && PUSH_SERVICE_HOST.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 // Send one notification. Returns { ok } or { gone } when the push
-// service reports the subscription is dead (404/410) so the caller can
-// delete it.
+// service reports the subscription is dead (404/410), or the endpoint
+// is not a push service at all, so the caller can delete it.
 export async function sendPush(subscription, payload) {
   if (!configure()) return { ok: false, error: "push not configured" };
+  if (!isPushServiceEndpoint(subscription.endpoint)) return { ok: false, gone: true };
   try {
     await webpush.sendNotification(
       {

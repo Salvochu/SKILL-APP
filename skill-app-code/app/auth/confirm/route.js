@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { safeNext } from "@/lib/safeNext";
 
 // Landing point for Supabase email links (password recovery, magic link,
 // email change). Handles both link styles:
@@ -25,16 +26,5 @@ export async function GET(request) {
     if (!error) return NextResponse.redirect(new URL(next, origin));
   }
 
-  return NextResponse.redirect(
-    new URL(
-      `/login?error=${encodeURIComponent("That link has expired. Request a new one.")}`,
-      origin,
-    ),
-  );
-}
-
-function safeNext(value) {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
-    ? value
-    : "/dashboard";
+  return NextResponse.redirect(new URL("/login?error=expired", origin));
 }

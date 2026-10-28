@@ -1,6 +1,20 @@
 import Link from "next/link";
 import { login } from "./actions";
 import AuthShell from "@/components/auth/AuthShell";
+import { safeNext } from "@/lib/safeNext";
+
+// The error box only ever shows one of these, picked by a short code in
+// the URL. Showing the URL's own text would let anyone send a link to
+// the real sign-in page with their own words in it ("your account is
+// locked, call this number").
+const ERRORS = {
+  missing: "Enter your email and password.",
+  invalid: "That email and password don't match. Try again, or reset your password below.",
+  unconfirmed: "Confirm your email first, then sign in.",
+  rate: "Too many attempts. Wait a few minutes, then try again.",
+  failed: "We couldn't sign you in just now. Try again in a minute.",
+  expired: "That link has expired. Request a new one.",
+};
 
 // This page reads searchParams (for the "next" redirect target and any
 // error message), which makes it request-time. It's a low-traffic auth
@@ -11,8 +25,9 @@ export const instant = false;
 
 export default async function LoginPage({ searchParams }) {
   const params = await searchParams;
-  const error = typeof params?.error === "string" ? params.error : null;
-  const next = typeof params?.next === "string" ? params.next : "/dashboard";
+  const code = typeof params?.error === "string" ? params.error : "";
+  const error = Object.hasOwn(ERRORS, code) ? ERRORS[code] : null;
+  const next = safeNext(params?.next);
 
   return (
     <AuthShell
