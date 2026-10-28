@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getWorkoutCalendar } from "@/lib/data/calendar";
+import { getUnitPreference } from "@/lib/data/profile";
 import Calendar from "@/components/calendar/Calendar";
 
 export const metadata = { title: "Calendar" };
@@ -20,6 +21,6 @@ export default function CalendarPage() {
 }
 
 async function CalendarBody() {
-  const { sessions, bodyDates } = await getWorkoutCalendar();
-  return <Calendar sessions={sessions} bodyDates={bodyDates} />;
+  const [{ sessions, bodyDates }, unit] = await Promise.all([getWorkoutCalendar(), getUnitPreference()]);
+  return <Calendar sessions={sessions} bodyDates={bodyDates} unit={unit} />;
 }

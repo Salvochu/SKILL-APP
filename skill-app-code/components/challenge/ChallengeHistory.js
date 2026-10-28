@@ -1,12 +1,13 @@
 import Link from "next/link";
 import ChallengeClimb from "@/components/challenge/ChallengeClimb";
 import ChallengeTimeline from "@/components/challenge/ChallengeTimeline";
+import { fromKg, unitLabel } from "@/lib/units";
 
 // The read-only recap of a finished 14-Day Challenge, reached from Menu
 // once someone has left the challenge tier (almost always by converting
 // to a paying member). Same climb and day-by-day state they saw on the
 // live Challenge tab, just no longer editable.
-export default function ChallengeHistory({ data }) {
+export default function ChallengeHistory({ data, unit = "kg" }) {
   return (
     <div className="flex flex-col gap-6 py-2">
       <Link
@@ -34,7 +35,10 @@ export default function ChallengeHistory({ data }) {
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Sessions" value={`${data.sessions}/${data.targetSessions}`} />
         <Stat label="Perfect days" value={`${data.perfectDays}/${data.totalDays}`} />
-        <Stat label="Volume" value={`${data.volumeKg.toLocaleString("en-GB")} kg`} />
+        <Stat
+          label="Volume"
+          value={`${Math.round(fromKg(data.volumeKg, unit)).toLocaleString("en-GB")} ${unitLabel(unit)}`}
+        />
         <Stat label="Best streak" value={data.streak} />
       </section>
 

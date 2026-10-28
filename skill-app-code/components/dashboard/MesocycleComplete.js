@@ -4,15 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { compact } from "@/components/progress/chartkit";
+import { fromKg, unitLabel } from "@/lib/units";
 import { finishMesocycle } from "@/app/(app)/dashboard/actions";
 
 // The end-of-block moment: what got done, where strength moved, and the
 // nudge to check in and start the next block.
-export default function MesocycleComplete({ active, summary }) {
+export default function MesocycleComplete({ active, summary, unit = "kg" }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const gains = summary?.gains ?? [];
+  // The summary is in kg (how weights are stored); show the user's unit.
+  const U = unitLabel(unit);
+  const conv = (kg) => Math.round(fromKg(kg, unit));
 
   async function onFinish() {
     setBusy(true);
@@ -44,7 +48,7 @@ export default function MesocycleComplete({ active, summary }) {
       {summary && summary.sessionCount > 0 ? (
         <div className="relative grid grid-cols-2 gap-4">
           <BigStat label="Sessions" value={summary.sessionCount} />
-          <BigStat label="Volume" value={compact(summary.totalVolume)} unit="kg" />
+          <BigStat label="Volume" value={compact(conv(summary.totalVolume))} unit={U} />
         </div>
       ) : null}
 
@@ -59,7 +63,7 @@ export default function MesocycleComplete({ active, summary }) {
                 <span className="min-w-0 truncate text-[15px] text-fg">{g.name}</span>
                 <span className="flex shrink-0 items-center gap-2">
                   <span className="tabular text-[15px] text-muted">
-                    {g.from} <span className="text-dim">&rarr;</span> <span className="text-fg">{g.to}</span> kg
+                    {conv(g.from)} <span className="text-dim">&rarr;</span> <span className="text-fg">{conv(g.to)}</span> {U}
                   </span>
                   <span
                     className={`tabular rounded-full px-2 py-0.5 text-[12px] font-semibold ${

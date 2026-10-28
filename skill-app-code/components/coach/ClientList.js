@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { fromKg, unitLabel } from "@/lib/units";
 
 const FLAG_TONE = {
   accent: "bg-accent-soft text-accent",
@@ -26,7 +27,8 @@ const DIR = {
   none: { sym: "·", cls: "text-dim" },
 };
 
-export default function ClientList({ data }) {
+// `unit` is the coach's own display unit; client numbers arrive in kg.
+export default function ClientList({ data, unit = "kg" }) {
   const { clients, totals } = data;
   const [filter, setFilter] = useState("all");
 
@@ -120,7 +122,8 @@ export default function ClientList({ data }) {
                             <span>
                               Weight{" "}
                               <span className="font-semibold text-fg tabular-nums">
-                                {c.weightDelta > 0 ? "+" : ""}{c.weightDelta} {c.unit}
+                                {c.weightDelta > 0 ? "+" : ""}
+                                {Math.round(fromKg(c.weightDelta, unit) * 10) / 10} {unitLabel(unit)}
                               </span>
                               <span className="text-dim">/mo</span>
                             </span>

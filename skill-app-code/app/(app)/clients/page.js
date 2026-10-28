@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getClients } from "@/lib/data/coach";
+import { getUnitPreference } from "@/lib/data/profile";
 import ClientList from "@/components/coach/ClientList";
 import InviteButton from "@/components/coach/InviteButton";
 
@@ -18,7 +19,7 @@ export default function ClientsPage() {
 }
 
 async function Body() {
-  const data = await getClients();
+  const [data, unit] = await Promise.all([getClients(), getUnitPreference()]);
   if (!data) notFound();
   return (
     <div className="flex flex-col gap-5">
@@ -29,7 +30,7 @@ async function Body() {
         </div>
         <p className="text-[15px] text-muted">Who is training, who is progressing, who to talk to.</p>
       </header>
-      <ClientList data={data} />
+      <ClientList data={data} unit={unit} />
     </div>
   );
 }

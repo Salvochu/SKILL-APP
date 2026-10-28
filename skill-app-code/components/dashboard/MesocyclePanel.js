@@ -25,6 +25,7 @@ export default function MesocyclePanel({
   isBeginner = false,
   challengeLapsed = false,
   hasChallengeHistory = false,
+  unit = "kg",
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -177,7 +178,7 @@ export default function MesocyclePanel({
   // never hard-stops - it just adds a "ready to graduate" nudge to the
   // normal panel once the month is done (below).
   if (active.isComplete && !linear) {
-    return <MesocycleComplete active={active} summary={summary} />;
+    return <MesocycleComplete active={active} summary={summary} unit={unit} />;
   }
 
   const dayHref = (dayTemplateId) =>

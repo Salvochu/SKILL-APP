@@ -1,10 +1,11 @@
 import Link from "next/link";
 import ChallengeClimb from "@/components/challenge/ChallengeClimb";
 import ChallengeTimeline from "@/components/challenge/ChallengeTimeline";
+import { fromKg, unitLabel } from "@/lib/units";
 
 // The coach's read-only view of a client's 14-Day Challenge - the same
 // climb, numbers and checklist state the client sees on their own tab.
-export default function ClientChallengeView({ clientId, data }) {
+export default function ClientChallengeView({ clientId, data, unit = "kg" }) {
   const name = data.name || "This client";
 
   return (
@@ -47,7 +48,10 @@ export default function ClientChallengeView({ clientId, data }) {
             <Stat label="Day" value={`${Math.min(data.challengeDay, data.challengeDays)}/${data.challengeDays}`} />
             <Stat label="Sessions" value={`${data.sessions}/${data.targetSessions}`} />
             <Stat label="Perfect days" value={`${data.perfectDays}/14`} />
-            <Stat label="Volume" value={`${data.volumeKg.toLocaleString("en-GB")} kg`} />
+            <Stat
+              label="Volume"
+              value={`${Math.round(fromKg(data.volumeKg, unit)).toLocaleString("en-GB")} ${unitLabel(unit)}`}
+            />
           </section>
 
           {data.complete ? (

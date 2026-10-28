@@ -1,17 +1,18 @@
 import { getActiveMesocycle, getMesocycleSummary } from "@/lib/data/mesocycles";
 import { getWorkoutSummary } from "@/lib/data/workouts";
-import { getBeginnerContext } from "@/lib/data/profile";
+import { getBeginnerContext, getUnitPreference } from "@/lib/data/profile";
 import { getChallengeAccess, hasRunChallenge } from "@/lib/data/challenge";
 import MesocyclePanel from "@/components/dashboard/MesocyclePanel";
 import ChallengePrepCard from "@/components/dashboard/ChallengePrepCard";
 
 export default async function MesocycleSection() {
-  const [active, workoutSummary, beginner, access, challengeGraduate] = await Promise.all([
+  const [active, workoutSummary, beginner, access, challengeGraduate, unit] = await Promise.all([
     getActiveMesocycle(),
     getWorkoutSummary(),
     getBeginnerContext(),
     getChallengeAccess(),
     hasRunChallenge(),
+    getUnitPreference(),
   ]);
 
   // Prep window: the challenge run exists but the clock is not running.
@@ -29,6 +30,7 @@ export default async function MesocycleSection() {
       isBeginner={beginner.isBeginner}
       challengeLapsed={access.lapsed}
       hasChallengeHistory={challengeGraduate}
+      unit={unit}
     />
   );
 }

@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPush, pushConfigured } from "@/lib/push";
 import { selectAll } from "@/lib/supabase/selectAll";
+import { fromKg, unitLabel } from "@/lib/units";
 import { CHALLENGE_TEMPLATE_ID, CHALLENGE_DAYS, GRACE_DAYS, isChallengeDayComplete } from "@/lib/data/challenge";
 
 // The one scheduled job. Runs daily (Vercel Cron, Authorization: Bearer
@@ -192,6 +193,14 @@ export async function GET(request) {
     ? [...prefsByUser.entries()].filter(([, p]) => p.weekly_recap).map(([id]) => id)
     : [];
   const lastWeekVolume = new Map();
+  // Each recap is written in that person's own unit (kg or lb).
+  const unitByUser = new Map();
+  if (recapUserIds.length) {
+    const { data: unitRows } = await selectAll(() =>
+      admin.from("profiles").select("user_id, unit_preference").in("user_id", recapUserIds).order("user_id"),
+    );
+    for (const r of unitRows ?? []) unitByUser.set(r.user_id, r.unit_preference);
+  }
   if (recapUserIds.length) {
     const ids = recapUserIds.flatMap((id) => stats.get(id)?.lastWeekIds ?? []);
     if (ids.length) {
@@ -231,8 +240,9 @@ export async function GET(request) {
     const st = stats.get(userId) ?? EMPTY_STATS;
 
     if (isMonday && p.weekly_recap && st.trainedLastWeek) {
-      const kg = Math.round(lastWeekVolume.get(userId) || 0);
-      const vol = kg >= 1000 ? `${(kg / 1000).toFixed(1)}k kg` : `${kg} kg`;
+      const unit = unitLabel(unitByUser.get(userId));
+      const lifted = Math.round(fromKg(lastWeekVolume.get(userId) || 0, unit));
+      const vol = lifted >= 1000 ? `${(lifted / 1000).toFixed(1)}k ${unit}` : `${lifted} ${unit}`;
       const n = st.lastWeekIds.length;
       return {
         title: "Last week",

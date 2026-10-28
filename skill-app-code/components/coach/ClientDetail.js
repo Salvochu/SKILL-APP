@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { tierColorFor } from "@/lib/strength";
+import { fromKg, unitLabel } from "@/lib/units";
 
 function fmtDate(iso) {
   if (!iso) return "unknown";
@@ -47,7 +48,11 @@ const DIR = {
   none: { sym: "·", cls: "text-dim", word: "no data" },
 };
 
-export default function ClientDetail({ client: c }) {
+// Weights come in kg (how they are stored) and are shown in the coach's
+// own unit, `unit`; the client's preference is just shown as a tag.
+export default function ClientDetail({ client: c, unit = "kg" }) {
+  const U = unitLabel(unit);
+  const w1 = (kg) => Math.round(fromKg(kg, unit) * 10) / 10;
   const dir = DIR[c.strengthDir] ?? DIR.none;
   const tested = (c.strengthPatterns ?? []).filter((p) => p.e1rm > 0);
   const labelByKey = new Map((c.patternLabels ?? []).map((p) => [p.key, p.label]));
@@ -74,7 +79,7 @@ export default function ClientDetail({ client: c }) {
           {c.goal ? <Tag>{c.goal}</Tag> : null}
           {c.experience ? <Tag>{c.experience}</Tag> : null}
           <Tag>Joined {fmtDate(c.joinedAt)}</Tag>
-          <Tag>{c.unit}</Tag>
+          <Tag>Logs in {c.unit}</Tag>
         </div>
       </header>
 
@@ -129,9 +134,9 @@ export default function ClientDetail({ client: c }) {
           label="Weight (30d)"
           value={
             c.weightDelta != null
-              ? `${c.weightDelta > 0 ? "+" : ""}${c.weightDelta} ${c.unit}`
+              ? `${c.weightDelta > 0 ? "+" : ""}${w1(c.weightDelta)} ${U}`
               : c.weightNow != null
-                ? `${c.weightNow} ${c.unit}`
+                ? `${w1(c.weightNow)} ${U}`
                 : "no data"
           }
         />
@@ -171,7 +176,7 @@ export default function ClientDetail({ client: c }) {
                 </span>
                 <span className="min-w-0 flex-1 truncate text-[15px] text-fg">{p.lift}</span>
                 <span className="tabular shrink-0 text-[15px] font-semibold text-fg">
-                  {Math.round(p.e1rm)} {c.unit}
+                  {Math.round(fromKg(p.e1rm, unit))} {U}
                 </span>
                 <span className="shrink-0 text-[13px] font-semibold" style={{ color: tierColorFor(p.tierIndex) }}>
                   {p.tier}
@@ -189,7 +194,7 @@ export default function ClientDetail({ client: c }) {
             <div className="flex justify-between text-[13px] text-muted">
               <span>{c.weightSeries[0].date}</span>
               <span className="tabular font-semibold text-fg">
-                {c.weightSeries[c.weightSeries.length - 1].weight} {c.unit}
+                {w1(c.weightSeries[c.weightSeries.length - 1].weight)} {U}
               </span>
             </div>
           </div>

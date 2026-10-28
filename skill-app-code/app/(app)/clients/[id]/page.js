@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getClientDetail } from "@/lib/data/coach";
+import { getUnitPreference } from "@/lib/data/profile";
 import ClientDetail from "@/components/coach/ClientDetail";
 
 export const metadata = { title: "Client" };
@@ -18,7 +19,7 @@ export default function ClientPage({ params }) {
 
 async function Body({ params }) {
   const { id } = await params;
-  const client = await getClientDetail(id);
+  const [client, unit] = await Promise.all([getClientDetail(id), getUnitPreference()]);
   if (!client) notFound();
-  return <ClientDetail client={client} />;
+  return <ClientDetail client={client} unit={unit} />;
 }

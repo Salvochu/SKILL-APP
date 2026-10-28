@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import TapLink from "@/components/TapLink";
 import { compact } from "@/components/progress/chartkit";
+import { fromKg, unitLabel } from "@/lib/units";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -14,7 +15,7 @@ function ymd(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function Calendar({ sessions, bodyDates }) {
+export default function Calendar({ sessions, bodyDates, unit = "kg" }) {
   const today = new Date();
   const [view, setView] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const [selected, setSelected] = useState(ymd(today));
@@ -155,7 +156,7 @@ export default function Calendar({ sessions, bodyDates }) {
                 >
                   <span className="row-sep flex min-w-0 flex-1 items-center gap-3 border-t border-border/70 py-3.5 pr-4">
                     <span className="min-w-0 flex-1 truncate text-[16px] text-fg">{s.title}</span>
-                    <span className="tabular shrink-0 text-[14px] text-muted">{compact(s.volumeKg)} kg</span>
+                    <span className="tabular shrink-0 text-[14px] text-muted">{compact(Math.round(fromKg(s.volumeKg, unit)))} {unitLabel(unit)}</span>
                     <IconChevron className="h-4 w-4 shrink-0 text-dim" />
                   </span>
                 </TapLink>

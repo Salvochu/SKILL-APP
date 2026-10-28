@@ -6,10 +6,6 @@ export function compact(n) {
   return `${Math.round(n)}`;
 }
 
-export function formatKg(n) {
-  return `${compact(n)} kg`;
-}
-
 // "nice" axis ceiling + a handful of round ticks including 0.
 export function niceScale(maxValue, tickCount = 4) {
   if (!(maxValue > 0)) return { max: 1, ticks: [0, 1] };
