@@ -32,7 +32,7 @@ export default function Explain({ k, label }) {
 
   const dialog = (
     <div
-      className="fixed inset-0 z-[80] flex items-start justify-center p-4 pt-16"
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-label={entry.term}
@@ -41,15 +41,15 @@ export default function Explain({ k, label }) {
         type="button"
         aria-label="Close"
         onClick={() => setOpen(false)}
-        className="absolute inset-0 bg-black/60"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
-      <div className="relative w-full max-w-xs rounded-2xl border border-border bg-surface p-5">
-        <h2 className="text-base font-bold text-fg">{entry.term}</h2>
-        <p className="mt-2 text-sm text-muted">{entry.body}</p>
+      <div className="glass-strong pop-in relative flex w-full max-w-sm flex-col gap-2 rounded-3xl p-5">
+        <h2 className="font-display text-[1.25rem] font-bold leading-tight tracking-[-0.02em] text-fg">{entry.term}</h2>
+        <p className="text-[15px] leading-relaxed text-muted">{entry.body}</p>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="mt-4 w-full rounded-field bg-accent px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+          className="mt-2 w-full rounded-2xl bg-accent px-4 py-3.5 text-[16px] font-semibold text-black transition-transform active:scale-[0.98]"
         >
           Got it
         </button>
@@ -67,7 +67,7 @@ export default function Explain({ k, label }) {
           setOpen(true);
         }}
         aria-label={`What is ${label ?? entry.term}?`}
-        className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border text-[10px] font-bold text-dim transition-colors hover:border-accent hover:text-accent"
+        className="relative inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-fg/10 text-[10px] font-bold normal-case tracking-normal text-muted transition-colors after:absolute after:-inset-2 hover:bg-accent-soft hover:text-accent"
       >
         ?
       </button>

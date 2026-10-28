@@ -12,31 +12,34 @@ export const metadata = { title: "Dashboard" };
 export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-7 py-2">
-      <div className="flex flex-col gap-2">
-        <Suspense fallback={<div className="h-8 w-48 rounded skeleton bg-surface-2" />}>
+      <header className="flex flex-col gap-2.5">
+        <Suspense fallback={<div className="h-9 w-56 rounded-lg skeleton bg-surface-2" />}>
           <Greeting />
         </Suspense>
-        <Suspense fallback={<div className="h-5 w-56 rounded skeleton bg-surface-2" />}>
+        <Suspense fallback={<div className="h-6 w-60 rounded-full skeleton bg-surface-2" />}>
           <HeaderStats />
         </Suspense>
-      </div>
+      </header>
 
-      <Suspense fallback={<div className="h-48 rounded-card skeleton bg-surface-2" />}>
+      <Suspense fallback={<div className="h-72 rounded-2xl skeleton bg-surface-2" />}>
         <MesocycleSection />
       </Suspense>
 
+      {/* Same tinted tiles as these two rows in the Menu. */}
       <div className="grid grid-cols-2 gap-3">
         <QuickLink
           href="/body"
           title="Body measurements"
           body="Weight, body fat, photos"
-          icon={<IconBody className="h-5 w-5" />}
+          icon={<IconBody className="h-[18px] w-[18px]" />}
+          tint="#d55181"
         />
         <QuickLink
           href="/progress"
           title="Progress"
           body="Level, lifts, trends"
-          icon={<IconChart className="h-5 w-5" />}
+          icon={<IconChart className="h-[18px] w-[18px]" />}
+          tint="#1faa77"
         />
       </div>
     </div>
@@ -47,7 +50,7 @@ async function Greeting() {
   const profile = await getProfile();
   const firstName = profile?.fullName?.trim().split(/\s+/)[0] || "";
   return (
-    <h1 className="min-w-0 truncate text-2xl font-bold text-fg">
+    <h1 className="min-w-0 truncate font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">
       Welcome{firstName ? `, ${firstName}` : ""}
     </h1>
   );
@@ -64,7 +67,7 @@ async function HeaderStats() {
   const volK = (fromKg(s.volumeKg, unit) / 1000).toFixed(1);
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm text-muted">
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[15px] text-muted">
       {journey ? <LevelBadge journey={journey} /> : null}
       <TapLink
         href="/progress"
@@ -83,26 +86,40 @@ async function HeaderStats() {
   );
 }
 
-function QuickLink({ href, title, body, icon }) {
+function QuickLink({ href, title, body, icon, tint }) {
   return (
     <TapLink
       href={href}
-      className="flex flex-col gap-1.5 rounded-card border border-border bg-surface p-4 transition-colors hover:border-border-strong hover:bg-surface-2"
+      className="flex flex-col gap-3 rounded-2xl bg-surface p-4 transition-[background-color,transform] hover:bg-surface-2 active:scale-[0.98]"
     >
-      {icon ? (
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-accent">
+      <span className="flex items-center justify-between">
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-[9px] text-white"
+          style={{ backgroundColor: tint }}
+        >
           {icon}
         </span>
-      ) : null}
-      <span className="font-display text-base font-semibold text-fg">{title}</span>
-      <span className="text-sm text-muted">{body}</span>
+        <IconChevron className="h-4 w-4 text-dim" />
+      </span>
+      <span className="flex flex-col gap-0.5">
+        <span className="text-[16px] font-semibold leading-snug tracking-[-0.01em] text-fg">{title}</span>
+        <span className="text-[13px] leading-snug text-muted">{body}</span>
+      </span>
     </TapLink>
+  );
+}
+
+function IconChevron(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m9 6 6 6-6 6" />
+    </svg>
   );
 }
 
 function IconChart(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M4 19V5M4 19h16" />
       <path d="M8 16v-4M13 16V8M18 16v-6" />
     </svg>
@@ -110,7 +127,7 @@ function IconChart(props) {
 }
 function IconBody(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <circle cx="12" cy="5" r="2.5" />
       <path d="M12 9v7M12 12l-4 2M12 12l4 2M12 16l-2.5 5M12 16l2.5 5" />
     </svg>

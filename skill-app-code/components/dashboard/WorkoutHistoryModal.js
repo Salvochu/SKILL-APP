@@ -36,12 +36,17 @@ function HistoryDialog({ sessions, onClose }) {
       aria-modal="true"
       aria-label="Workout history"
     >
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/70" />
-      <div className="relative flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl border border-border bg-surface p-4">
-        <div className="flex shrink-0 items-center justify-between pb-3">
-          <h2 className="font-display text-lg font-semibold text-fg">Workout history</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="rounded-field p-1.5 text-dim hover:text-fg">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="glass-strong pop-in relative flex max-h-[80vh] w-full max-w-lg flex-col rounded-3xl p-4">
+        <div className="flex shrink-0 items-center justify-between gap-3 pb-3">
+          <h2 className="font-display text-[1.35rem] font-bold tracking-[-0.02em] text-fg">Workout history</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90"
+          >
+            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round">
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
