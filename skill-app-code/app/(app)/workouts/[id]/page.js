@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getWorkoutDetail } from "@/lib/data/workouts";
 import { getUnitPreference } from "@/lib/data/profile";
 import { EFFORT_LABELS } from "@/lib/training";
-import { formatWeight } from "@/lib/units";
+import { fromKg, unitLabel } from "@/lib/units";
 import LoggedAt from "@/components/LoggedAt";
 import WorkoutSets from "@/components/workouts/WorkoutSets";
 
@@ -19,47 +19,50 @@ export default async function WorkoutDetailPage({ params }) {
   const [workout, unit] = await Promise.all([getWorkoutDetail(id), getUnitPreference()]);
   if (!workout) notFound();
 
+  const volume = Math.round(fromKg(workout.volumeKg, unit) || 0).toLocaleString("en-GB");
+  const mins = workout.durationMin;
+  const effort = workout.perceivedEffort ? EFFORT_LABELS[workout.perceivedEffort] : null;
+
   return (
     <div className="flex flex-col gap-6 py-2">
       <Link
         href="/dashboard"
-        className="flex items-center gap-1.5 self-start text-sm font-medium text-muted transition-colors hover:text-fg"
+        className="-ml-1 flex items-center gap-0.5 self-start py-1 text-[15px] font-medium text-accent transition-opacity active:opacity-60"
       >
-        <IconChevron className="h-4 w-4 rotate-90" />
+        <IconBack className="h-5 w-5" />
         Dashboard
       </Link>
 
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-fg">{workout.title}</h1>
-        <p className="text-sm text-muted">
+        <h1 className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">
+          {workout.title}
+        </h1>
+        <p className="text-[15px] text-muted">
           <LoggedAt iso={workout.date} withYear />
         </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-dim">Volume</span>
-          <span className="tabular text-2xl font-bold text-fg">{formatWeight(workout.volumeKg, unit, { decimals: 0 })}</span>
-        </div>
-        <div className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-dim">Duration</span>
-          <span className="tabular text-2xl font-bold text-fg">
-            {workout.durationMin != null ? `${workout.durationMin}m` : "n/a"}
-          </span>
-        </div>
+      {/* One summary strip (Apple Fitness style) instead of a box per stat. */}
+      <div
+        className={`grid rounded-2xl bg-surface py-4 [&>*+*]:border-l [&>*+*]:border-border/70 ${
+          effort ? "grid-cols-3" : "grid-cols-2"
+        }`}
+      >
+        <Stat label="Volume" value={volume} unit={unitLabel(unit)} />
+        {mins == null ? (
+          <Stat label="Duration" value="n/a" />
+        ) : mins >= 60 ? (
+          <Stat label="Duration" value={`${Math.floor(mins / 60)}h ${mins % 60}m`} />
+        ) : (
+          <Stat label="Duration" value={mins} unit="min" />
+        )}
+        {effort ? <Stat label="Effort" value={effort} small /> : null}
       </div>
 
-      {workout.perceivedEffort ? (
-        <div className="flex items-center gap-3 rounded-card border border-border bg-surface p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-dim">Effort</span>
-          <span className="text-sm font-medium text-fg">{EFFORT_LABELS[workout.perceivedEffort]}</span>
-        </div>
-      ) : null}
-
       {workout.notes ? (
-        <section className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Session notes</h2>
-          <p className="text-sm text-muted">{workout.notes}</p>
+        <section className="flex flex-col gap-2">
+          <h2 className="px-4 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">Session notes</h2>
+          <p className="rounded-2xl bg-surface px-4 py-3.5 text-[15px] leading-relaxed text-fg">{workout.notes}</p>
         </section>
       ) : null}
 
@@ -74,10 +77,26 @@ export default async function WorkoutDetailPage({ params }) {
   );
 }
 
-function IconChevron(props) {
+function Stat({ label, value, unit = null, small = false }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m9 6 6 6-6 6" />
+    <div className="flex min-w-0 flex-col items-center gap-0.5 px-2 text-center">
+      <span className="text-[12px] font-medium text-muted">{label}</span>
+      <span
+        className={`max-w-full truncate font-bold tabular-nums text-fg ${
+          small ? "pt-1 text-[16px] leading-snug" : "text-[22px] leading-tight tracking-[-0.01em]"
+        }`}
+      >
+        {value}
+        {unit ? <span className="ml-1 text-[13px] font-semibold tracking-normal text-muted">{unit}</span> : null}
+      </span>
+    </div>
+  );
+}
+
+function IconBack(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m15 6-6 6 6 6" />
     </svg>
   );
 }

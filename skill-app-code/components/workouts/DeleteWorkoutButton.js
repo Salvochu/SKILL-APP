@@ -27,14 +27,16 @@ export default function DeleteWorkoutButton({ sessionId }) {
 
   return (
     <>
+      {/* A destructive row at the bottom of the page, iOS style: red text
+          on a plain surface, confirmed before anything is deleted. */}
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="self-start rounded-field border border-danger/40 bg-danger/10 px-3 py-1.5 text-xs font-semibold text-danger transition-colors hover:bg-danger hover:text-black"
+        className="mt-2 w-full rounded-2xl bg-surface py-3.5 text-[16px] font-semibold text-danger transition-colors active:bg-surface-2"
       >
         Delete workout
       </button>
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {error ? <p className="px-4 text-[14px] text-danger">{error}</p> : null}
       {confirming ? (
         <ConfirmModal
           title="Delete this workout?"
