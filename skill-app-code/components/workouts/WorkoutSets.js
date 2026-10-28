@@ -244,7 +244,7 @@ export default function WorkoutSets({ sessionId, title, dateOnly, exercises, uni
       {error ? <p className="rounded-2xl bg-danger/10 px-4 py-3 text-[14px] text-danger">{error}</p> : null}
 
       {/* Save and Cancel float above the tab bar while you edit. */}
-      <div className="sticky bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-30 flex gap-2 md:bottom-4">
+      <div className="sticky bottom-[max(7.5rem,calc(env(safe-area-inset-bottom)+5.5rem))] z-30 flex gap-2 md:bottom-4">
         <button
           type="button"
           onClick={() => setEditing(false)}

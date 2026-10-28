@@ -75,12 +75,15 @@ export default function NavBar({ streak = null, challenge = false, avatarUrl = n
       </header>
 
       {/* Bottom tab bar, mobile only: a floating glass capsule with the
-          content scrolling underneath (iOS style). It sits above the
-          safe-area inset with extra room on purpose: right at that
-          boundary, a tap can still land in iOS's own home-indicator
-          gesture strip instead of the link under it. The wrapper lets
-          taps beside the capsule through to the page. */}
-      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:hidden">
+          content scrolling underneath (iOS style). It always sits at
+          least 2.75rem (44px) off the bottom edge: the page doesn't use
+          viewport-fit=cover, so iOS reports a safe-area inset of 0 and
+          the bar would otherwise land in the home-indicator swipe zone,
+          where taps get eaten by the system gesture. Floating bars that
+          stack above it (rest timer, workout pill, sticky Save/Finish)
+          use matching offsets. The wrapper lets taps beside the capsule
+          through to the page. */}
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(2.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] md:hidden">
         <div className={`glass pointer-events-auto relative mx-auto grid max-w-md rounded-full p-1.5 ${gridCols}`}>
           {/* One shared pill that glides between tabs, instead of a
               separate highlight per tab that pops in/out on navigation. */}

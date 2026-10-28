@@ -38,7 +38,7 @@ export default function ActiveWorkoutBar() {
   const elapsedSeconds = Math.max(0, Math.round((clockAt - draft.startedAt - (draft.pausedTotalMs || 0)) / 1000));
 
   return (
-    <div className="fixed inset-x-4 z-40 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] md:inset-x-0 md:bottom-6">
+    <div className="fixed inset-x-4 z-40 bottom-[max(7.25rem,calc(env(safe-area-inset-bottom)+5.25rem))] md:inset-x-0 md:bottom-6">
       <button
         type="button"
         onClick={() => router.push(draft.href)}

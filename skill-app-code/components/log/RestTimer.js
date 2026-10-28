@@ -98,7 +98,7 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
     );
     if (docked) return pill;
     return (
-      <div className="fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 md:bottom-6">
+      <div className="fixed inset-x-0 bottom-[max(7.25rem,calc(env(safe-area-inset-bottom)+5.25rem))] z-40 flex justify-center px-4 md:bottom-6">
         {pill}
       </div>
     );
@@ -194,7 +194,7 @@ export default function RestTimer({ startSeconds, onDismiss, docked = false, com
   if (docked) return panel;
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-lg px-4 md:bottom-6">
+    <div className="fixed inset-x-0 bottom-[max(7.25rem,calc(env(safe-area-inset-bottom)+5.25rem))] z-40 mx-auto max-w-lg px-4 md:bottom-6">
       {panel}
     </div>
   );
