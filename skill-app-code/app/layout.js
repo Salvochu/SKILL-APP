@@ -54,7 +54,18 @@ export const metadata = {
     default: "SKILL",
     template: "%s | SKILL",
   },
-  description: "SK Fitness training tracker",
+  description:
+    "Your plan, your workouts and your progress from SK Fitness, all in one app.",
+  // Link previews (WhatsApp, Instagram DMs, iMessage) need absolute image
+  // URLs; the image itself is app/opengraph-image.png.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://app.salvadorskfitness.com"),
+  openGraph: {
+    type: "website",
+    siteName: "SKILL",
+    title: "SKILL by SK Fitness",
+    description: "Your plan, your workouts and your progress from SK Fitness, all in one app.",
+  },
+  twitter: { card: "summary_large_image" },
   appleWebApp: {
     capable: true,
     title: "SKILL",
