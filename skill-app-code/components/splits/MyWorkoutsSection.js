@@ -28,7 +28,7 @@ export default function MyWorkoutsSection({ myWorkouts }) {
         <h2 className="px-1 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">My workouts</h2>
         <TapLink
           href="/workouts/mine/new"
-          className="flex items-center gap-1 rounded-field px-1 text-xs font-semibold text-accent transition-colors hover:text-accent-2"
+          className="flex items-center gap-1 rounded-lg px-1 py-1 text-[14px] font-semibold text-accent transition-opacity active:opacity-60"
         >
           <IconPlus className="h-3.5 w-3.5" />
           Build a workout

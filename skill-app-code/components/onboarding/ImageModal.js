@@ -21,31 +21,31 @@ export default function ImageModal({ src, alt, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={alt}>
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/80" />
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
       <div className={`relative transition-[width] duration-200 ${expanded ? "w-full max-w-sm" : "w-44"}`}>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute -top-10 right-0 rounded-field p-1.5 text-white/80 transition-colors hover:text-white"
+          className="absolute -top-12 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white transition-transform active:scale-90"
         >
-          <IconClose className="h-5 w-5" />
+          <IconClose className="h-[18px] w-[18px]" />
         </button>
 
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="group relative block w-full overflow-hidden rounded-field border border-border shadow-2xl"
+          className="group relative block w-full overflow-hidden rounded-2xl shadow-2xl"
         >
           <img src={src} alt={alt} className="w-full" />
           {!expanded ? (
-            <span className="absolute bottom-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white">
+            <span className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm">
               <IconExpand className="h-3.5 w-3.5" />
             </span>
           ) : null}
         </button>
 
-        {!expanded ? <p className="mt-2 text-center text-xs text-white/70">Tap to expand</p> : null}
+        {!expanded ? <p className="mt-2.5 text-center text-[13px] text-white/70">Tap to expand</p> : null}
       </div>
     </div>
   );
@@ -53,7 +53,7 @@ export default function ImageModal({ src, alt, onClose }) {
 
 function IconClose(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" {...props}>
       <path d="M6 6l12 12M18 6L6 18" />
     </svg>
   );
