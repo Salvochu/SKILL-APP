@@ -107,7 +107,7 @@ export default function CompareExercises({ exercises, unit = "kg" }) {
           ) : null}
 
           {dates.map((d, i) =>
-            i % labelEvery === 0 || i === dates.length - 1 ? (
+            i === dates.length - 1 || (i % labelEvery === 0 && x(dates.length - 1) - x(i) >= 52) ? (
               <text key={d} x={x(i)} y={H - 6} textAnchor={i === dates.length - 1 ? "end" : i === 0 ? "start" : "middle"} className="fill-dim text-[11px]">
                 {shortDate(d)}
               </text>

@@ -89,82 +89,52 @@ export default function PhotoCompare({ dates, bodyByDate, unit, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg" role="dialog" aria-modal="true" aria-label="Compare photos">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="font-display text-lg font-semibold text-fg">Compare</h2>
-        <button type="button" onClick={onClose} aria-label="Close" className="rounded-field p-1.5 text-dim hover:text-fg">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-[max(0.875rem,env(safe-area-inset-top))]">
+        <h2 className="font-display text-[1.75rem] font-bold tracking-[-0.02em] text-fg">Compare</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90"
+        >
+          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round">
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-        <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1 text-xs text-dim">
-            Before
-            <select
-              value={beforeDate}
-              onChange={(e) => setBeforeDate(e.target.value)}
-              className="rounded-field border border-border bg-surface px-2 py-1.5 text-sm text-fg focus:border-accent"
-            >
-              {dateOptions.map((d) => (
-                <option key={d} value={d}>{shortDate(d)}</option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-dim">
-            After
-            <select
-              value={afterDate}
-              onChange={(e) => setAfterDate(e.target.value)}
-              className="rounded-field border border-border bg-surface px-2 py-1.5 text-sm text-fg focus:border-accent"
-            >
-              {dateOptions.map((d) => (
-                <option key={d} value={d}>{shortDate(d)}</option>
-              ))}
-            </select>
-          </label>
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 pt-1">
+        <div className="grid grid-cols-2 gap-2.5">
+          <DateSelect label="Before" value={beforeDate} onChange={setBeforeDate} options={dateOptions} />
+          <DateSelect label="After" value={afterDate} onChange={setAfterDate} options={dateOptions} />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {["front", "side", "back"].map((a) => (
-            <button
-              key={a}
-              type="button"
-              onClick={() => setAngle(a)}
-              disabled={!anglesPresent.has(a)}
-              className={`rounded-field border px-2.5 py-1 text-xs font-medium capitalize transition-colors disabled:opacity-30 ${
-                angle === a ? "border-accent bg-accent-soft text-accent" : "border-border text-muted hover:text-fg"
-              }`}
-            >
-              {a}
-            </button>
-          ))}
-          <span className="mx-1 h-4 w-px bg-border" />
-          {["side", "overlay"].map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              className={`rounded-field border px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
-                mode === m ? "border-accent bg-accent-soft text-accent" : "border-border text-muted hover:text-fg"
-              }`}
-            >
-              {m === "side" ? "Side by side" : "Overlay"}
-            </button>
-          ))}
+          <Segmented
+            label="Angle"
+            value={angle}
+            onChange={setAngle}
+            options={[["front", "Front"], ["side", "Side"], ["back", "Back"]]}
+            isDisabled={(a) => !anglesPresent.has(a)}
+          />
+          <Segmented
+            label="View"
+            value={mode}
+            onChange={setMode}
+            options={[["side", "Side by side"], ["overlay", "Overlay"]]}
+          />
         </div>
 
         {!before || !after ? (
-          <p className="py-10 text-center text-sm text-muted">No photo for that angle on one of those dates.</p>
+          <p className="py-10 text-center text-[15px] text-muted">No photo for that angle on one of those dates.</p>
         ) : mode === "side" ? (
-          <div className="grid grid-cols-2 gap-2">
-            <Figure url={before.url} label={`Before . ${shortDate(beforeDate)}`} />
-            <Figure url={after.url} label={`After . ${shortDate(afterDate)}`} />
+          <div className="grid grid-cols-2 gap-2.5">
+            <Figure url={before.url} label={`Before · ${shortDate(beforeDate)}`} />
+            <Figure url={after.url} label={`After · ${shortDate(afterDate)}`} />
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
-            <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-card border border-border bg-black">
+          <div className="flex flex-col gap-3">
+            <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-2xl bg-black">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={before.url} alt="before" className="absolute inset-0 h-full w-full object-contain" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -185,7 +155,7 @@ export default function PhotoCompare({ dates, bodyByDate, unit, onClose }) {
               className="w-full accent-accent"
               aria-label="Blend before and after"
             />
-            <div className="flex justify-between text-[11px] text-dim">
+            <div className="flex justify-between text-[13px] text-muted">
               <span>{shortDate(beforeDate)}</span>
               <span>{shortDate(afterDate)}</span>
             </div>
@@ -193,17 +163,18 @@ export default function PhotoCompare({ dates, bodyByDate, unit, onClose }) {
         )}
 
         {deltaLines.length ? (
-          <p className="text-center text-sm text-muted">{deltaLines.join("  .  ")}</p>
+          <p className="text-center text-[17px] font-semibold text-fg tabular-nums">{deltaLines.join(" · ")}</p>
         ) : null}
       </div>
 
-      <div className="border-t border-border p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
         <button
           type="button"
           onClick={onShare}
           disabled={!before || !after || shareStatus === "working"}
-          className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-[transform,opacity] active:scale-[0.98] disabled:opacity-50"
         >
+          <IconShare className="h-[18px] w-[18px]" />
           {shareStatus === "working"
             ? "Building..."
             : shareStatus === "shared"
@@ -217,14 +188,67 @@ export default function PhotoCompare({ dates, bodyByDate, unit, onClose }) {
   );
 }
 
+function DateSelect({ label, value, onChange, options }) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1.5">
+      <span className="px-1 text-[13px] font-medium text-muted">{label}</span>
+      <span className="relative flex items-center">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full min-w-0 cursor-pointer appearance-none rounded-xl bg-fg/[0.07] py-2.5 pl-3.5 pr-9 text-[16px] font-medium text-fg outline-none focus:ring-2 focus:ring-accent/60"
+        >
+          {options.map((d) => (
+            <option key={d} value={d}>{shortDate(d)}</option>
+          ))}
+        </select>
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute right-3 h-4 w-4 text-muted" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m8 9 4-4 4 4M16 15l-4 4-4-4" />
+        </svg>
+      </span>
+    </label>
+  );
+}
+
+// An iOS-style segmented control.
+function Segmented({ label, value, onChange, options, isDisabled = () => false }) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex rounded-full bg-fg/[0.07] p-1">
+      {options.map(([key, text]) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onChange(key)}
+          disabled={isDisabled(key)}
+          aria-pressed={value === key}
+          className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors disabled:opacity-30 ${
+            value === key ? "bg-fg text-bg" : "text-muted enabled:hover:text-fg"
+          }`}
+        >
+          {text}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Figure({ url, label }) {
   return (
-    <figure className="flex flex-col gap-1">
-      <div className="aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-black">
+    <figure className="flex flex-col gap-1.5">
+      <div className="aspect-[3/4] w-full overflow-hidden rounded-2xl bg-black">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={url} alt={label} className="h-full w-full object-cover" />
       </div>
-      <figcaption className="text-center text-[11px] text-dim">{label}</figcaption>
+      <figcaption className="text-center text-[13px] text-muted">{label}</figcaption>
     </figure>
+  );
+}
+
+function IconShare(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 15V3M7.5 7.5 12 3l4.5 4.5" />
+      <path d="M8 10.5H6.5A1.5 1.5 0 0 0 5 12v7.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V12a1.5 1.5 0 0 0-1.5-1.5H16" />
+    </svg>
   );
 }

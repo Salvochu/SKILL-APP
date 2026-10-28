@@ -108,7 +108,7 @@ export default function StrengthChart({ exercises, unit = "kg" }) {
           ))}
 
           {pts.map((p, i) =>
-            i % labelEvery === 0 || i === last ? (
+            i === last || (i % labelEvery === 0 && x(last) - x(i) >= 52) ? (
               <text key={i} x={x(i)} y={H - 6} textAnchor={i === last ? "end" : i === 0 ? "start" : "middle"} className="fill-dim text-[11px]">
                 {shortDate(p.date)}
               </text>

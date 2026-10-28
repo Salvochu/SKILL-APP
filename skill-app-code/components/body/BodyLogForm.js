@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { logBodyEntry } from "@/app/(app)/body/actions";
 import { toKg, fromKg, unitLabel } from "@/lib/units";
+import { Group, Row, rowInput } from "@/components/ui/Grouped";
 
 const MEASURES = [
   { name: "waist", label: "Waist" },
@@ -48,41 +49,48 @@ export default function BodyLogForm({ latest, unit = "kg" }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-field bg-accent px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]"
       >
+        <IconPlus className="h-[18px] w-[18px]" />
         Log a check-in
       </button>
     );
   }
 
+  const numberInput = `tabular-nums ${rowInput}`;
+
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-fg">New check-in</h2>
-        <button type="button" onClick={() => setOpen(false)} className="text-xs text-dim hover:text-fg">
+    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-3 px-1">
+        <h2 className="font-sans text-[20px] font-bold tracking-[-0.015em] text-fg">New check-in</h2>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            setShowMeasures(false);
+          }}
+          className="rounded-lg px-1 py-1 text-[16px] font-medium text-accent transition-opacity active:opacity-60"
+        >
           Cancel
         </button>
       </div>
 
-      <Field label="Date">
-        {/* iOS renders a native date control that ignores height/padding
-           and comes out taller than the number inputs. Wrapping it in a
-           bordered box and making the input itself borderless and
-           transparent keeps it the same size as its siblings. */}
-        <div className="flex w-full min-w-0 items-center overflow-hidden rounded-field border border-border bg-bg focus-within:border-accent">
+      <Group>
+        <Row label="Date" htmlFor="bl-date">
+          {/* Hugs its value at the right of the row like the other
+              fields (a stretched date control left-aligns its text). */}
           <input
+            id="bl-date"
             type="date"
             name="date"
             defaultValue={today}
             max={today}
-            className="w-full min-w-0 appearance-none bg-transparent px-3 py-2 text-sm text-fg outline-none"
+            className={`${rowInput} !w-auto appearance-none [&::-webkit-date-and-time-value]:text-right`}
           />
-        </div>
-      </Field>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Field label={`Weight (${unitLabel(unit)})`}>
+        </Row>
+        <Row label={`Weight (${unitLabel(unit)})`} htmlFor="bl-weight">
           <input
+            id="bl-weight"
             type="number"
             name="weight"
             inputMode="decimal"
@@ -92,56 +100,78 @@ export default function BodyLogForm({ latest, unit = "kg" }) {
                 ? String(Math.round(fromKg(latest.weight, unit) * 10) / 10)
                 : "0.0"
             }
-            className={inputClass}
+            className={numberInput}
           />
-        </Field>
-        <Field label="Body fat (%)">
+        </Row>
+        <Row label="Body fat (%)" htmlFor="bl-fat">
           <input
+            id="bl-fat"
             type="number"
             name="bodyFat"
             inputMode="decimal"
             step="0.1"
             placeholder={latest?.fat != null ? String(latest.fat) : "0.0"}
-            className={inputClass}
+            className={numberInput}
           />
-        </Field>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setShowMeasures((v) => !v)}
-        className="self-start text-xs font-medium text-accent hover:underline"
-      >
-        {showMeasures ? "Hide measurements" : "Add measurements"}
-      </button>
+        </Row>
+      </Group>
 
       {showMeasures ? (
-        <div className="grid grid-cols-2 gap-3">
+        <Group
+          title="Measurements (cm)"
+          footer={
+            <button
+              type="button"
+              onClick={() => setShowMeasures(false)}
+              className="font-medium text-accent transition-opacity active:opacity-60"
+            >
+              Hide measurements
+            </button>
+          }
+        >
           {MEASURES.map((m) => (
-            <Field key={m.name} label={`${m.label} (cm)`}>
+            <Row key={m.name} label={m.label} htmlFor={`bl-${m.name}`}>
               <input
+                id={`bl-${m.name}`}
                 type="number"
                 name={m.name}
                 inputMode="decimal"
                 step="0.1"
                 placeholder={latest?.[m.name] != null ? String(latest[m.name]) : "0.0"}
-                className={inputClass}
+                className={numberInput}
               />
-            </Field>
+            </Row>
           ))}
+        </Group>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowMeasures(true)}
+          className="flex items-center gap-1.5 self-start rounded-lg px-1 py-1 text-[16px] font-medium text-accent transition-opacity active:opacity-60"
+        >
+          <IconPlus className="h-4 w-4" />
+          Add measurements
+        </button>
+      )}
+
+      <Group>
+        <div className="px-4">
+          <input
+            type="text"
+            name="note"
+            aria-label="Note"
+            placeholder="Note (optional): how you are feeling, context"
+            className="w-full bg-transparent py-3.5 text-[16px] text-fg outline-none placeholder:text-dim"
+          />
         </div>
-      ) : null}
+      </Group>
 
-      <Field label="Note (optional)">
-        <input type="text" name="note" placeholder="How you are feeling, context" className={inputClass} />
-      </Field>
-
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {error ? <p className="px-1 text-[14px] text-danger">{error}</p> : null}
 
       <button
         type="submit"
         disabled={saving}
-        className="rounded-field bg-accent px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-2 disabled:opacity-60"
+        className="flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black transition-[transform,opacity] active:scale-[0.98] disabled:opacity-60"
       >
         {saving ? "Saving..." : "Save check-in"}
       </button>
@@ -149,14 +179,10 @@ export default function BodyLogForm({ latest, unit = "kg" }) {
   );
 }
 
-const inputClass =
-  "w-full min-w-0 rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-accent";
-
-function Field({ label, children }) {
+function IconPlus(props) {
   return (
-    <label className="flex min-w-0 flex-col gap-1">
-      <span className="text-xs font-medium text-dim">{label}</span>
-      {children}
-    </label>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
   );
 }
