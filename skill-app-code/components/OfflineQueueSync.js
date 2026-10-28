@@ -71,8 +71,8 @@ export default function OfflineQueueSync() {
 function Pill({ tone, children }) {
   return (
     <div
-      className={`fixed inset-x-0 top-[calc(3.75rem+env(safe-area-inset-top))] z-50 mx-auto w-fit max-w-[90vw] rounded-full border px-3 py-1.5 text-center text-xs font-medium shadow-lg md:top-[calc(4.25rem+env(safe-area-inset-top))] ${
-        tone === "accent" ? "border-accent/40 bg-accent-soft text-accent" : "border-border bg-surface text-muted"
+      className={`glass-strong pop-in fixed inset-x-0 top-[calc(4rem+env(safe-area-inset-top))] z-50 mx-auto w-fit max-w-[90vw] rounded-full px-4 py-2 text-center text-[13px] font-semibold md:top-[calc(4.5rem+env(safe-area-inset-top))] ${
+        tone === "accent" ? "text-accent" : "text-muted"
       }`}
     >
       {children}

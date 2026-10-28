@@ -10,8 +10,8 @@ export default function OfflinePage() {
   return (
     <div className="flex min-h-full flex-col items-center justify-center gap-4 px-6 text-center">
       <Wordmark height="28px" />
-      <h1 className="mt-2 text-xl font-bold text-fg">You are offline</h1>
-      <p className="max-w-xs text-sm text-muted">
+      <h1 className="mt-2 font-display text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-fg">You are offline</h1>
+      <p className="max-w-xs text-[15px] leading-relaxed text-muted">
         This page needs a connection to load. If you were logging a workout, do not worry, it
         saved on this device and will sync automatically once you are back online.
       </p>
