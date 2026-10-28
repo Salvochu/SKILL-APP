@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import TapLink from "@/components/TapLink";
 import LoggedAt from "@/components/LoggedAt";
 import { deleteAllWorkouts } from "@/app/(app)/workouts/actions";
+import { shortDate } from "@/components/progress/chartkit";
 
 // Every logged workout, grouped by training week, with a type-to-confirm
 // "delete all" at the bottom. Used raw on the /history page and inside
@@ -33,39 +34,40 @@ export default function HistoryList({ sessions, onNavigate }) {
   }
 
   if (groups.length === 0) {
-    return <p className="py-6 text-center text-sm text-muted">No workouts yet.</p>;
+    return <p className="rounded-2xl bg-surface py-10 text-center text-[15px] text-muted">No workouts yet.</p>;
   }
 
   return (
-    <>
-      <div className="flex flex-col gap-5 overflow-y-auto pb-1">
-        {groups.map((group) => (
-          <div key={group.label} className="flex flex-col gap-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-dim">{group.label}</h3>
-            <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-card border border-border">
-              {group.sessions.map((w) => (
-                <li key={w.id}>
-                  <TapLink
-                    href={`/workouts/${w.id}`}
-                    onClick={onNavigate}
-                    className="flex items-center justify-between gap-3 bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
-                  >
-                    <span className="text-sm font-medium text-fg">{w.title}</span>
-                    <span className="shrink-0 text-xs text-dim">
+    <div className="flex flex-col gap-6">
+      {groups.map((group) => (
+        <section key={group.label} className="flex flex-col gap-2">
+          <h3 className="px-4 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">{group.label}</h3>
+          <ul className="overflow-hidden rounded-2xl bg-surface [&>li:first-child_.row-sep]:border-transparent">
+            {group.sessions.map((w) => (
+              <li key={w.id}>
+                <TapLink
+                  href={`/workouts/${w.id}`}
+                  onClick={onNavigate}
+                  className="flex pl-4 transition-colors hover:bg-surface-2 active:bg-surface-2"
+                >
+                  <span className="row-sep flex min-w-0 flex-1 items-center gap-3 border-t border-border/70 py-3.5 pr-4">
+                    <span className="min-w-0 flex-1 truncate text-[16px] text-fg">{w.title}</span>
+                    <span className="shrink-0 text-[14px] text-muted">
                       <LoggedAt iso={w.started_at} />
                     </span>
-                  </TapLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+                    <IconChevron className="h-4 w-4 shrink-0 text-dim" />
+                  </span>
+                </TapLink>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
 
-      <div className="mt-4 shrink-0 border-t border-border pt-4">
+      <section className="flex flex-col gap-2">
         {asking ? (
-          <div className="flex flex-col gap-2 rounded-card border border-danger/30 bg-danger/5 p-3">
-            <p className="text-sm text-muted">
+          <div className="flex flex-col gap-3 rounded-2xl bg-surface p-4">
+            <p className="text-[15px] leading-relaxed text-muted">
               Delete all {sessions.length} workouts? This cannot be undone. Type{" "}
               <span className="font-semibold text-fg">DELETE</span> to confirm.
             </p>
@@ -73,10 +75,11 @@ export default function HistoryList({ sessions, onNavigate }) {
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="DELETE"
+              aria-label="Type DELETE to confirm"
               autoFocus
-              className="w-full rounded-field border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-dim focus:border-danger"
+              className="w-full rounded-xl bg-fg/[0.07] px-3.5 py-2.5 text-[16px] text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-danger/60"
             />
-            {error ? <p className="text-sm text-danger">{error}</p> : null}
+            {error ? <p className="text-[14px] text-danger">{error}</p> : null}
             <div className="flex gap-2">
               <button
                 type="button"
@@ -86,7 +89,7 @@ export default function HistoryList({ sessions, onNavigate }) {
                   setError(null);
                 }}
                 disabled={clearing}
-                className="flex-1 rounded-field border border-border px-3 py-2 text-sm font-medium text-fg hover:bg-surface-2 disabled:opacity-60"
+                className="flex-1 rounded-xl bg-fg/10 px-3 py-3 text-[15px] font-semibold text-fg transition-transform active:scale-[0.98] disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -94,7 +97,7 @@ export default function HistoryList({ sessions, onNavigate }) {
                 type="button"
                 onClick={onClearAll}
                 disabled={confirmText !== "DELETE" || clearing}
-                className="flex-1 rounded-field bg-danger px-3 py-2 text-sm font-semibold text-black transition-colors disabled:opacity-40"
+                className="flex-1 rounded-xl bg-danger px-3 py-3 text-[15px] font-semibold text-black transition-[transform,opacity] active:scale-[0.98] disabled:opacity-40"
               >
                 {clearing ? "Deleting..." : "Delete all"}
               </button>
@@ -104,13 +107,21 @@ export default function HistoryList({ sessions, onNavigate }) {
           <button
             type="button"
             onClick={() => setAsking(true)}
-            className="rounded-field px-1 text-sm font-medium text-danger hover:underline"
+            className="w-full rounded-2xl bg-surface px-4 py-3.5 text-left text-[16px] text-danger transition-colors hover:bg-surface-2 active:bg-surface-2"
           >
             Delete all history
           </button>
         )}
-      </div>
-    </>
+      </section>
+    </div>
+  );
+}
+
+function IconChevron(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m9 6 6 6-6 6" />
+    </svg>
   );
 }
 
@@ -120,6 +131,10 @@ function weekStart(d) {
   x.setHours(0, 0, 0, 0);
   x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
   return x;
+}
+
+function localYmd(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function groupByWeek(sessions) {
@@ -136,11 +151,12 @@ function groupByWeek(sessions) {
           ? "This week"
           : diff === 1
             ? "Last week"
-            : `Week of ${mon.toLocaleDateString(undefined, {
-                day: "numeric",
-                month: "short",
-                ...(mon.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
-              })}`;
+            : // The app's own date format, not the device locale's, so the
+              // server render and the phone agree (and it reads like
+              // every other date in the app).
+              `Week of ${shortDate(localYmd(mon))}${
+                mon.getFullYear() !== new Date().getFullYear() ? ` ${mon.getFullYear()}` : ""
+              }`;
       groups.set(key, { label, sessions: [] });
     }
     groups.get(key).sessions.push(s);
