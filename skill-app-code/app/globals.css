@@ -337,6 +337,27 @@ h4 {
   .cc-node, .cc-halo, .cc-bloom, .cc-trail-draw { animation: none; }
 }
 
+/* The unlit parts of the climb (track, future and missed days, the
+   finish flag): dark ink on the dark theme, soft warm greys on light. */
+:root {
+  --cc-track: #2b2016;
+  --cc-node-fill: #100c08;
+  --cc-node-stroke: #3a2c1e;
+  --cc-missed-fill: #140f0a;
+  --cc-missed-stroke: #4a382a;
+  --cc-flag: #4a382a;
+  --cc-pole: #6b5540;
+}
+:root.light {
+  --cc-track: #ece2d7;
+  --cc-node-fill: #ffffff;
+  --cc-node-stroke: #d9c9b9;
+  --cc-missed-fill: #f7f1eb;
+  --cc-missed-stroke: #c8b3a0;
+  --cc-flag: #c8b3a0;
+  --cc-pole: #ae9781;
+}
+
 /* Streak flame (components/challenge/ChallengeClimb.js). Two layers
    flicker on independent, slightly-off timings so it doesn't read as a
    mechanical loop; each anchors near the base of the flame so the tip

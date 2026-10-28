@@ -30,15 +30,15 @@ export default function StartChallengeButton() {
         type="button"
         onClick={go}
         disabled={pending}
-        className="btn-shine w-full rounded-field bg-accent px-5 py-3.5 text-center font-display text-base font-bold text-black shadow-[0_8px_24px_-8px_rgba(252,118,5,0.6)] transition-transform active:scale-[0.99] disabled:opacity-70"
+        className="btn-shine w-full rounded-2xl bg-accent px-5 py-4 text-center text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98] disabled:opacity-70"
       >
         {pending ? "Starting..." : "Start my 14 days"}
       </button>
-      <p className="text-center text-[11px] text-dim">
+      <p className="text-center text-[13px] text-dim">
         This begins your day 1. The counter and checklist start now.
       </p>
       {error ? (
-        <p className="text-center text-xs text-danger" role="alert">
+        <p className="text-center text-[14px] text-danger" role="alert">
           {error}
         </p>
       ) : null}

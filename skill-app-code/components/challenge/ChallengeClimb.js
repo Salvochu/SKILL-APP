@@ -57,25 +57,24 @@ export default function ChallengeClimb({ day = 1, totalDays = 14, completeDays =
   }, [curDay, totalDays]);
 
   return (
-    <div className="relative overflow-hidden rounded-card border border-border bg-gradient-to-b from-surface/60 to-bg">
-      <div className="flex items-end justify-between gap-3 px-5 pt-5">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dim">
+    <div className="relative rounded-2xl bg-gradient-to-b from-[var(--panel-warm)] to-surface">
+      <div className="flex items-start justify-between gap-3 px-5 pt-5">
+        <div className="flex flex-col gap-1.5">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
             Main Character Challenge
           </div>
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="font-display text-[42px] font-bold leading-none text-fg">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-muted">Day</span>
+            <span className="font-display text-[52px] font-bold leading-[0.9] tracking-[-0.03em] text-fg tabular-nums">
               <CountUp to={curDay} />
             </span>
-            <span className="font-display text-sm font-semibold uppercase tracking-widest text-dim">
-              of {totalDays}
-            </span>
+            <span className="text-[17px] font-semibold text-muted">of {totalDays}</span>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1.5 pb-1">
+        <div className="flex flex-col items-end gap-2">
           <StreakFlame streak={streak} />
-          <span className="text-[11px] font-medium text-dim">
-            {doneCount} of {totalDays} complete
+          <span className="text-[13px] text-muted">
+            <span className="font-semibold text-fg tabular-nums">{doneCount}</span> of {totalDays} complete
           </span>
         </div>
       </div>
@@ -133,7 +132,7 @@ export default function ChallengeClimb({ day = 1, totalDays = 14, completeDays =
             ref={trackRef}
             d={PATH_D}
             fill="none"
-            stroke="#2b2016"
+            style={{ stroke: "var(--cc-track)" }}
             strokeWidth="5"
             strokeLinecap="round"
           />
@@ -203,15 +202,15 @@ export default function ChallengeClimb({ day = 1, totalDays = 14, completeDays =
                         />
                       </>
                     ) : missed ? (
-                      <circle cx={p.x} cy={p.y} r="5.5" fill="#140f0a" stroke="#4a382a" strokeWidth="2" strokeDasharray="1.5 3" />
+                      <circle cx={p.x} cy={p.y} r="5.5" style={{ fill: "var(--cc-missed-fill)", stroke: "var(--cc-missed-stroke)" }} strokeWidth="2" strokeDasharray="1.5 3" />
                     ) : finish ? (
                       <g>
-                        <line x1={p.x} y1={p.y + 5} x2={p.x} y2={p.y - 17} stroke="#6b5540" strokeWidth="1.6" strokeLinecap="round" />
-                        <path d={`M ${p.x} ${p.y - 17} l 13 4 l -13 5 z`} fill="#4a382a" />
-                        <circle cx={p.x} cy={p.y} r="4" fill="#140f0a" stroke="#4a382a" strokeWidth="1.5" />
+                        <line x1={p.x} y1={p.y + 5} x2={p.x} y2={p.y - 17} style={{ stroke: "var(--cc-pole)" }} strokeWidth="1.6" strokeLinecap="round" />
+                        <path d={`M ${p.x} ${p.y - 17} l 13 4 l -13 5 z`} style={{ fill: "var(--cc-flag)" }} />
+                        <circle cx={p.x} cy={p.y} r="4" style={{ fill: "var(--cc-missed-fill)", stroke: "var(--cc-flag)" }} strokeWidth="1.5" />
                       </g>
                     ) : (
-                      <circle cx={p.x} cy={p.y} r="4" fill="#100c08" stroke="#3a2c1e" strokeWidth="1.5" />
+                      <circle cx={p.x} cy={p.y} r="4" style={{ fill: "var(--cc-node-fill)", stroke: "var(--cc-node-stroke)" }} strokeWidth="1.5" />
                     )}
                   </g>
                 );
@@ -240,10 +239,11 @@ function Spark({ samples }) {
     let raf;
     const start = performance.now();
     const dur = 1100;
-    const place = (el, pt) => {
+    const place = (el, pt, opacity) => {
       if (!el || !pt) return;
       el.setAttribute("cx", pt.x);
       el.setAttribute("cy", pt.y);
+      el.setAttribute("opacity", opacity);
     };
     const tick = (now) => {
       const t = Math.min(1, (now - start - 200) / dur);
@@ -252,9 +252,9 @@ function Spark({ samples }) {
         return;
       }
       const e = 1 - Math.pow(1 - t, 3);
-      place(ref.current, at(e));
-      place(tail1.current, at(e - 0.03));
-      place(tail2.current, at(e - 0.06));
+      place(ref.current, at(e), 1);
+      place(tail1.current, at(e - 0.03), 0.6);
+      place(tail2.current, at(e - 0.06), 0.35);
       if (t < 1) raf = requestAnimationFrame(tick);
       else [ref.current, tail1.current, tail2.current].forEach((el) => el && el.setAttribute("opacity", "0"));
     };
@@ -264,9 +264,11 @@ function Spark({ samples }) {
 
   return (
     <g>
-      <circle ref={tail2} r="2.5" fill="#ffcaa0" opacity="0.35" cx="-10" cy="-10" />
-      <circle ref={tail1} r="3" fill="#ffd9b3" opacity="0.6" cx="-10" cy="-10" />
-      <circle ref={ref} r="3.5" fill="#ffffff" filter="url(#cc-hard)" cx="-10" cy="-10" />
+      {/* Invisible until the run starts, so reduced motion (or a page
+          with no animation frames) never leaves a stray dot behind. */}
+      <circle ref={tail2} r="2.5" fill="#ffcaa0" opacity="0" cx="-10" cy="-10" />
+      <circle ref={tail1} r="3" fill="#ffd9b3" opacity="0" cx="-10" cy="-10" />
+      <circle ref={ref} r="3.5" fill="#ffffff" filter="url(#cc-hard)" opacity="0" cx="-10" cy="-10" />
     </g>
   );
 }

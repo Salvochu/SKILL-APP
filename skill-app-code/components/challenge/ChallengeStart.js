@@ -11,30 +11,32 @@ export default function ChallengeStart() {
   const welcome = getLesson("start-here");
 
   return (
-    <details className="group relative overflow-hidden rounded-card border border-accent/30 [&_summary::-webkit-details-marker]:hidden">
-      <div
-        aria-hidden="true"
-        className="cc-bloom pointer-events-none absolute -left-20 -top-16 h-52 w-52 rounded-full blur-3xl"
-        style={{ backgroundColor: "var(--panel-glow)" }}
-      />
-      <summary className="relative flex cursor-pointer list-none items-center justify-between gap-3 p-5">
-        <span className="flex flex-col gap-0.5">
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-            Before you start
-          </span>
-          <span className="font-display text-lg font-bold text-fg">
-            Set yourself up for the 14 days
-          </span>
+    <details className="group rounded-2xl bg-surface [&_summary::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center gap-3.5 rounded-2xl p-4 transition-colors active:bg-surface-2">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+          <IconList className="h-5 w-5" />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">Before you start</span>
+          <span className="text-[17px] font-semibold tracking-[-0.01em] text-fg">Set yourself up for the 14 days</span>
         </span>
         <IconChevron className="h-4 w-4 shrink-0 text-dim transition-transform group-open:rotate-90" />
       </summary>
 
-      <div className="relative flex flex-col gap-4 border-t border-accent/20 p-5">
+      <div className="flex flex-col gap-6 px-4 pb-5 pt-1">
         <WelcomeVideo loomId={welcome?.loomId} title="Start here: how the 14 days work" />
-        <div className="border-t border-accent/20" />
         <SetupSteps />
       </div>
     </details>
+  );
+}
+
+function IconList(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2" />
+    </svg>
   );
 }
 

@@ -31,25 +31,25 @@ export default function ProgramLockModal({ onClose, mode = "challenge" }) {
       aria-label="Programs are part of a membership"
     >
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative flex w-full max-w-sm flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-        <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+      <div className="glass-strong pop-in relative flex w-full max-w-sm flex-col gap-2 rounded-3xl p-5">
+        <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
           {c.eyebrow}
         </span>
-        <h3 className="font-display text-lg font-semibold text-fg">{c.title}</h3>
-        <p className="text-sm text-muted">{c.body}</p>
-        <div className="mt-1 flex flex-col gap-2">
+        <h3 className="font-display text-[1.35rem] font-bold leading-tight tracking-[-0.02em] text-fg">{c.title}</h3>
+        <p className="text-[15px] leading-relaxed text-muted">{c.body}</p>
+        <div className="mt-3 flex flex-col gap-2.5">
           <a
             href={KEEP_TRAINING_URL}
             target="_blank"
             rel="noreferrer"
-            className="btn-shine flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+            className="btn-shine flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-3.5 text-[16px] font-semibold text-black transition-transform active:scale-[0.98]"
           >
             Continue for &pound;7.99/mo
           </a>
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-field border border-border px-4 py-2.5 text-sm font-medium text-fg hover:bg-surface-2"
+            className="w-full rounded-2xl bg-fg/10 px-4 py-3.5 text-[16px] font-semibold text-fg transition-transform active:scale-[0.98]"
           >
             {c.dismiss}
           </button>

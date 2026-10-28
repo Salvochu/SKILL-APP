@@ -45,8 +45,8 @@ export default async function ChallengePage() {
   return (
     <div id="top" className="flex flex-col gap-6 py-2">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-fg">Your challenge</h1>
-        <p className="text-sm text-muted">14 days. Show up every one of them.</p>
+        <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Your challenge</h1>
+        <p className="text-[15px] text-muted">14 days. Show up every one of them.</p>
       </header>
 
       <ChallengeClimb

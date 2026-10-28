@@ -30,10 +30,12 @@ export default function LoomEmbed({
   if (locked) {
     return (
       <div
-        className={`flex ${aspect} w-full flex-col items-center justify-center gap-1.5 rounded-field border border-dashed border-border bg-surface text-center ${className}`}
+        className={`flex ${aspect} w-full flex-col items-center justify-center gap-2 rounded-xl bg-fg/[0.05] text-center ${className}`}
       >
-        <IconLock className="h-6 w-6 text-dim" />
-        <span className="text-xs font-medium text-muted">{lockedLabel}</span>
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-fg/10 text-muted">
+          <IconLock className="h-5 w-5" />
+        </span>
+        <span className="text-[14px] font-medium text-muted">{lockedLabel}</span>
       </div>
     );
   }
@@ -41,11 +43,15 @@ export default function LoomEmbed({
   if (!id) {
     return (
       <div
-        className={`flex ${aspect} w-full flex-col items-center justify-center gap-1.5 rounded-field border border-dashed border-border bg-surface text-center ${className}`}
+        className={`flex ${aspect} w-full flex-col items-center justify-center gap-2 rounded-xl bg-fg/[0.05] text-center ${className}`}
       >
-        <IconFilm className="h-6 w-6 text-dim" />
-        <span className="text-xs font-medium text-muted">Video coming soon</span>
-        <span className="px-6 text-[11px] text-dim">Salvador is filming this one</span>
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-fg/10 text-muted">
+          <IconFilm className="h-5 w-5" />
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <span className="text-[14px] font-medium text-muted">Video coming soon</span>
+          <span className="px-6 text-[13px] text-dim">Salvador is filming this one</span>
+        </span>
       </div>
     );
   }
@@ -53,7 +59,7 @@ export default function LoomEmbed({
   return (
     <div className="flex flex-col gap-2">
       {playing ? (
-        <div className={`relative ${aspect} w-full overflow-hidden rounded-field border border-border bg-black ${className}`}>
+        <div className={`relative ${aspect} w-full overflow-hidden rounded-xl bg-black ${className}`}>
           <iframe
             src={`https://www.loom.com/embed/${id}?autoplay=1&hide_owner=true&hide_share=true&hideEmbedTopBar=true`}
             title={title}
@@ -69,13 +75,13 @@ export default function LoomEmbed({
             setPlaying(true);
             onPlay?.();
           }}
-          className={`group relative flex ${aspect} w-full items-center justify-center overflow-hidden rounded-field border border-border bg-gradient-to-b from-surface-2 to-surface transition-colors hover:border-border-strong ${className}`}
+          className={`group relative flex ${aspect} w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#2a2622] to-[#141210] transition-transform active:scale-[0.99] ${className}`}
           aria-label={`Play video: ${title}`}
         >
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-black shadow-lg transition-transform group-hover:scale-105">
-            <IconPlay className="ml-0.5 h-6 w-6" />
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-black shadow-[0_10px_28px_-8px_rgba(252,118,5,0.7)] transition-transform group-hover:scale-105 group-active:scale-95">
+            <IconPlay className="ml-1 h-7 w-7" />
           </span>
-          <span className="absolute bottom-0 left-0 right-0 truncate bg-gradient-to-t from-black/80 to-transparent p-3 text-left text-xs font-medium text-white">
+          <span className="absolute bottom-0 left-0 right-0 truncate bg-gradient-to-t from-black/80 to-transparent px-4 pb-3.5 pt-8 text-left text-[14px] font-semibold text-white">
             {title}
           </span>
         </button>
@@ -85,9 +91,9 @@ export default function LoomEmbed({
           href={`https://www.loom.com/share/${id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex w-fit items-center gap-1.5 self-start rounded-full border border-accent/40 bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-black"
+          className="inline-flex w-fit items-center gap-1.5 self-start rounded-full bg-accent-soft px-3.5 py-2 text-[13px] font-semibold text-accent transition-[background-color,color,transform] hover:bg-accent hover:text-black active:scale-95"
         >
-          <IconExternal className="h-3 w-3" />
+          <IconExternal className="h-3.5 w-3.5" />
           Watch on Loom
         </a>
       ) : null}

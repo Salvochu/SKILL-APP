@@ -29,7 +29,7 @@ export default function StreakChip({ weeks = 0, best = 0 }) {
 
   const dialog = (
     <div
-      className="fixed inset-0 z-[80] flex items-start justify-center p-4 pt-20"
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-label="About streaks"
@@ -38,22 +38,22 @@ export default function StreakChip({ weeks = 0, best = 0 }) {
         type="button"
         aria-label="Close"
         onClick={() => setOpen(false)}
-        className="absolute inset-0 bg-black/60"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
-      <div className="relative w-full max-w-xs rounded-2xl border border-border bg-surface p-5">
-        <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-accent">
-            <IconFlame className="h-4 w-4" />
+      <div className="glass-strong pop-in relative flex w-full max-w-sm flex-col gap-3 rounded-3xl p-5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+            <IconFlame className="h-5 w-5" />
           </span>
-          <h2 className="text-base font-bold text-fg">Weekly streak</h2>
+          <h2 className="font-display text-[1.35rem] font-bold leading-tight tracking-[-0.02em] text-fg">Weekly streak</h2>
         </div>
-        <p className="mt-3 text-sm text-muted">
+        <p className="text-[15px] leading-relaxed text-muted">
           {active
             ? `You have trained ${weeks} week${weeks === 1 ? "" : "s"} in a row. Log at least one workout each week to keep it going.`
             : "Log a workout this week to start a streak. Then train at least once a week to keep it."}
         </p>
         {best > 0 ? (
-          <p className="mt-2 text-xs text-dim">
+          <p className="text-[13px] text-muted">
             Longest streak so far: <span className="tabular font-semibold text-fg">{best}</span>{" "}
             week{best === 1 ? "" : "s"}.
           </p>
@@ -61,7 +61,7 @@ export default function StreakChip({ weeks = 0, best = 0 }) {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="mt-4 w-full rounded-field bg-accent px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+          className="mt-1 w-full rounded-2xl bg-accent px-4 py-3.5 text-[16px] font-semibold text-black transition-transform active:scale-[0.98]"
         >
           Got it
         </button>

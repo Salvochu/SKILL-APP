@@ -15,12 +15,14 @@ export default async function ChallengeEnded() {
 
   return (
     <div className="flex flex-col gap-6 py-2">
-      <header className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+      <header className="flex flex-col gap-1.5">
+        <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
           14-Day Main Character
         </span>
-        <h1 className="text-2xl font-bold text-fg">Your challenge has ended</h1>
-        <p className="text-sm text-muted">
+        <h1 className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">
+          Your challenge has ended
+        </h1>
+        <p className="text-[15px] leading-relaxed text-muted">
           {workouts > 0 && journey ? (
             <>
               You logged{" "}
@@ -39,8 +41,8 @@ export default async function ChallengeEnded() {
         </p>
       </header>
 
-      <section className="flex flex-col gap-3 rounded-card border border-accent/40 bg-accent-soft p-4">
-        <p className="text-sm text-fg">
+      <section className="flex flex-col gap-4 rounded-2xl bg-gradient-to-b from-[var(--panel-warm)] to-surface p-5">
+        <p className="text-[15px] leading-relaxed text-fg">
           Keep training and everything stays with you. Your streak, your level, your history, and your
           plan rolls into the next block.
         </p>
@@ -48,13 +50,13 @@ export default async function ChallengeEnded() {
           href={KEEP_TRAINING_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-2"
+          className="btn-shine flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]"
         >
           Keep training for &pound;7.99/mo
         </a>
         <Link
           href="/work-with-me"
-          className="flex w-full items-center justify-center rounded-field border border-accent/40 px-4 py-3 text-sm font-semibold text-accent transition-colors hover:bg-accent/10"
+          className="flex w-full items-center justify-center rounded-2xl bg-accent-soft px-4 py-4 text-[17px] font-semibold text-accent transition-transform active:scale-[0.98]"
         >
           Or work with Salvador 1:1
         </Link>
@@ -63,7 +65,7 @@ export default async function ChallengeEnded() {
       <form action={signOut} className="self-center">
         <button
           type="submit"
-          className="text-xs font-medium text-dim transition-colors hover:text-fg"
+          className="rounded-lg px-2 py-1 text-[14px] font-medium text-muted transition-colors hover:text-fg"
         >
           Sign out
         </button>

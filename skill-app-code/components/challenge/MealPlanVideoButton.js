@@ -17,9 +17,9 @@ export default function MealPlanVideoButton() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Watch: how to read your meal plan"
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent-soft text-accent transition-colors hover:bg-accent hover:text-black"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent transition-[background-color,color,transform] hover:bg-accent hover:text-black active:scale-90"
       >
-        <IconPlay className="ml-0.5 h-3.5 w-3.5" />
+        <IconPlay className="ml-0.5 h-4 w-4" />
       </button>
       {open ? (
         <LessonVideoModal

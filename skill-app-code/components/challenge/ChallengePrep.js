@@ -12,48 +12,48 @@ export default function ChallengePrep() {
 
   return (
     <div className="flex flex-col gap-6 py-2">
-      <header className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+      <header className="flex flex-col gap-1.5">
+        <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
           14-Day Main Character
         </span>
-        <h1 className="text-2xl font-bold text-fg">Get set up, then start</h1>
-        <p className="text-sm text-muted">
+        <h1 className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">
+          Get set up, then start
+        </h1>
+        <p className="text-[15px] leading-relaxed text-muted">
           Your 14 days begin the moment you tap start, so start on a day you can
           actually train. Aim to begin within 48 hours of signing up.
         </p>
       </header>
 
-      <section className="challenge-start relative flex flex-col gap-5 overflow-hidden rounded-card border border-accent/30 p-5">
+      <section className="challenge-start relative flex flex-col gap-6 overflow-hidden rounded-2xl p-5">
         <div
           aria-hidden="true"
           className="cc-bloom pointer-events-none absolute -left-20 -top-16 h-52 w-52 rounded-full blur-3xl"
           style={{ backgroundColor: "var(--panel-glow)" }}
         />
         <div className="relative flex flex-col gap-1">
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+          <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
             Before you start
           </span>
-          <span className="font-display text-lg font-bold text-fg">
+          <h2 className="font-sans text-[20px] font-bold tracking-[-0.015em] text-fg">
             Set yourself up for the 14 days
-          </span>
+          </h2>
         </div>
 
         <div className="relative">
           <WelcomeVideo loomId={welcome?.loomId} title="Start here: how the 14 days work" />
         </div>
 
-        <div className="relative border-t border-accent/20" />
-
         <div className="relative">
           <SetupSteps />
         </div>
 
-        <div className="relative border-t border-accent/20 pt-5">
+        <div className="relative z-[2] pt-1">
           <StartChallengeButton />
         </div>
       </section>
 
-      <p className="text-center text-xs text-dim">
+      <p className="text-center text-[13px] text-dim">
         Nothing else in the app unlocks until your 14 days are running.
       </p>
     </div>

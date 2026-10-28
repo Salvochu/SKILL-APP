@@ -39,13 +39,15 @@ export default function WelcomeVideo({ loomId, title }) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="-mx-1 flex flex-col gap-0.5 rounded-field px-1 py-1 text-left transition-colors hover:bg-surface-2"
+        className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-fg/5 active:bg-fg/10"
       >
-        <span className="flex min-w-0 items-center gap-1.5">
-          <IconPlay className="h-3.5 w-3.5 shrink-0 text-accent" />
-          <span className="truncate text-sm font-medium text-fg">{title}</span>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-black">
+          <IconPlay className="ml-0.5 h-4 w-4" />
         </span>
-        <span className="text-xs text-dim">Watched. Tap to watch again.</span>
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate text-[15px] font-semibold text-fg">{title}</span>
+          <span className="text-[13px] text-muted">Watched. Tap to watch again.</span>
+        </span>
       </button>
     );
   }
@@ -57,7 +59,7 @@ export default function WelcomeVideo({ loomId, title }) {
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          className="self-start text-xs font-medium text-dim hover:text-fg"
+          className="self-start rounded-lg py-1 text-[14px] font-medium text-muted transition-colors hover:text-fg"
         >
           Minimise
         </button>

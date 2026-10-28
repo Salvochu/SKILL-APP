@@ -13,9 +13,9 @@ export default function BackToTop() {
     <button
       type="button"
       onClick={() => document.getElementById("top")?.scrollIntoView({ behavior: "smooth" })}
-      className="inline-flex items-center gap-1.5 self-center rounded-full border border-accent/40 bg-accent-soft px-4 py-2 text-xs font-semibold uppercase tracking-wider text-accent transition-colors hover:bg-accent hover:text-black"
+      className="inline-flex items-center gap-1.5 self-center rounded-full bg-fg/10 px-4 py-2.5 text-[14px] font-semibold text-fg transition-transform active:scale-95"
     >
-      <IconUp className="h-3.5 w-3.5" />
+      <IconUp className="h-4 w-4" />
       Back to top
     </button>
   );

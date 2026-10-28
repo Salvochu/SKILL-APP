@@ -68,10 +68,10 @@ export default function StreakFlame({ streak }) {
 
   return (
     <div className="relative">
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent-soft px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-accent">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 text-[13px] font-semibold text-accent">
         <svg
           viewBox="0 0 24 24"
-          className="h-3.5 w-3.5 shrink-0"
+          className="h-4 w-4 shrink-0"
           style={{ transform: `scale(${scale})`, filter: `drop-shadow(0 0 ${glowBlur}px ${glow})` }}
           aria-hidden="true"
         >
@@ -96,20 +96,20 @@ export default function StreakFlame({ streak }) {
             d="M12 9c.6 1.6-.4 2.6-.9 3.4-.4.7-.6 1.3-.6 2a1.9 1.9 0 0 0 3.8 0c0-.7-.3-1.3-.7-1.9.2.6 0 1.1-.4 1.3.2-.9-.3-1.7-.7-2.4C13.1 10.7 12.4 9.8 12 9z"
           />
         </svg>
-        {streak} day{streak === 1 ? "" : "s"}
+        <span className="tabular-nums">{streak}</span> day{streak === 1 ? "" : "s"}
       </span>
 
       {showTip ? (
-        <div className="absolute right-0 top-full z-10 mt-2 w-44 rounded-field border border-accent/40 bg-surface p-2.5 text-[11px] leading-snug text-fg shadow-xl">
+        <div className="glass-strong pop-in absolute right-0 top-full z-20 mt-2 flex w-52 origin-top-right items-start gap-2 rounded-2xl py-2.5 pl-3.5 pr-2 text-[13px] leading-snug text-fg">
+          <span className="min-w-0 flex-1 pt-0.5">Gets more intense the longer your streak runs.</span>
           <button
             type="button"
             onClick={dismissTip}
             aria-label="Dismiss"
-            className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-border bg-surface text-dim transition-colors hover:text-fg"
+            className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-fg/10 text-muted transition-colors after:absolute after:-inset-2 hover:text-fg"
           >
-            <IconClose className="h-2.5 w-2.5" />
+            <IconClose className="h-3 w-3" />
           </button>
-          Gets more intense the longer your streak runs.
         </div>
       ) : null}
     </div>

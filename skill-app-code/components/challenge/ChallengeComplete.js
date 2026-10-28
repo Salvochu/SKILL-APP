@@ -15,34 +15,39 @@ export default function ChallengeComplete({
   topMuscles = [],
 }) {
   return (
-    <section className="overflow-hidden rounded-card border border-accent/40 bg-gradient-to-b from-accent-soft to-transparent">
-      <div className="flex flex-col items-center gap-1 px-5 pt-6 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-black shadow-[0_0_30px_-4px_rgba(252,118,5,0.7)]">
-          <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <section className="relative flex flex-col gap-5 overflow-hidden rounded-2xl bg-gradient-to-b from-[var(--panel-warm)] to-surface p-5">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-24 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-3xl"
+        style={{ backgroundColor: "var(--panel-glow)" }}
+      />
+      <div className="relative flex flex-col items-center gap-1.5 pt-1 text-center">
+        <span className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-accent text-black shadow-[0_0_36px_-6px_rgba(252,118,5,0.8)]">
+          <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 13l4 4L19 7" />
           </svg>
         </span>
-        <h2 className="mt-2 font-display text-xl font-bold uppercase tracking-wide text-fg">
+        <h2 className="font-display text-[1.75rem] font-bold leading-[1.08] tracking-[-0.02em] text-fg">
           Challenge complete
         </h2>
-        <p className="text-sm text-muted">
+        <p className="text-[15px] leading-relaxed text-muted">
           14 days done. That is more than most people manage. Here is what you put in.
         </p>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2 px-5">
+      <div className="relative grid grid-cols-3 [&>*+*]:border-l [&>*+*]:border-border/70">
         <Stat value={`${sessions}/${targetSessions}`} label="Sessions" />
         <Stat value={`${perfectDays}/14`} label="Perfect days" />
         <Stat value={volumeLabel} label="Volume" />
       </div>
 
       {topMuscles.length ? (
-        <p className="mt-4 px-5 text-center text-xs font-semibold uppercase tracking-wider text-dim">
-          Most trained: {topMuscles.slice(0, 3).map((m) => m.group ?? m).join(" · ")}
+        <p className="relative text-center text-[13px] text-muted">
+          Most trained: <span className="font-semibold text-fg">{topMuscles.slice(0, 3).map((m) => m.group ?? m).join(" · ")}</span>
         </p>
       ) : null}
 
-      <div className="p-5 pt-4">
+      <div className="relative">
         <ClimbShareButton
           day={day}
           totalDays={totalDays}
@@ -58,9 +63,9 @@ export default function ChallengeComplete({
 
 function Stat({ value, label }) {
   return (
-    <div className="flex flex-col items-center rounded-field border border-border bg-surface/60 px-2 py-3 text-center">
-      <span className="font-display text-lg font-bold text-fg tabular-nums">{value}</span>
-      <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-dim">{label}</span>
+    <div className="flex min-w-0 flex-col items-center gap-0.5 px-2 text-center">
+      <span className="max-w-full truncate text-[20px] font-bold leading-tight tracking-[-0.01em] text-fg tabular-nums">{value}</span>
+      <span className="text-[12px] font-medium text-muted">{label}</span>
     </div>
   );
 }

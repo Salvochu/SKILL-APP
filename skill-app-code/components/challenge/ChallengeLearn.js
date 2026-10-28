@@ -17,14 +17,12 @@ export default function ChallengeLearn({ variant = "Full Gym", challengeDay = 1,
   const lessons = CHALLENGE_LESSONS.filter((l) => l.slug !== "start-here");
 
   return (
-    <details id="learn" className="group flex flex-col gap-3 [&_summary::-webkit-details-marker]:hidden">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
-          Learn
-        </h2>
-        <IconChevron className="h-4 w-4 shrink-0 text-dim transition-transform group-open:rotate-90" />
+    <details id="learn" className="group/learn flex flex-col [&_summary::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-4 py-1">
+        <h2 className="font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">Learn</h2>
+        <IconChevron className="h-4 w-4 shrink-0 text-dim transition-transform group-open/learn:rotate-180" />
       </summary>
-      <div className="flex flex-col gap-3">
+      <div className="mt-2 flex flex-col gap-3">
         {lessons.map((lesson) => {
           const loomId = lesson.loomIdByVariant
             ? (lesson.loomIdByVariant[variant] ?? lesson.loomIdByVariant["Full Gym"])
@@ -46,12 +44,12 @@ export default function ChallengeLearn({ variant = "Full Gym", challengeDay = 1,
           const isFormWalkthrough = lesson.slug === "day-a-form" || lesson.slug === "day-b-form";
 
           return (
-            <article key={lesson.slug} className="overflow-hidden rounded-card border border-border bg-surface">
-              <div className="flex flex-col gap-1 p-4">
-                <h3 className="font-display text-base font-semibold text-fg">{lesson.title}</h3>
-                <p className="text-sm text-muted">{lesson.blurb}</p>
+            <article key={lesson.slug} className="flex flex-col gap-3.5 rounded-2xl bg-surface p-4">
+              <div className="flex flex-col gap-1">
+                <h3 className="font-sans text-[17px] font-semibold tracking-[-0.01em] text-fg">{lesson.title}</h3>
+                <p className="text-[15px] leading-relaxed text-muted">{lesson.blurb}</p>
               </div>
-              <div className="px-4 pb-4">
+              <div>
                 <LoomEmbed
                   id={loomId}
                   title={lesson.title}
@@ -61,7 +59,7 @@ export default function ChallengeLearn({ variant = "Full Gym", challengeDay = 1,
                   loomLink
                 />
                 {isFormWalkthrough ? (
-                  <p className="pt-2 text-xs text-dim">
+                  <p className="pt-2.5 text-[13px] leading-snug text-dim">
                     Doing an alternative instead? Stick to the same one throughout the 14 days.
                   </p>
                 ) : null}

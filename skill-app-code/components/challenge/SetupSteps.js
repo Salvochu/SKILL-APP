@@ -8,27 +8,27 @@ import MealPlanVideoButton from "@/components/challenge/MealPlanVideoButton";
 // Shared by the prep screen and the collapsible reference card.
 export default function SetupSteps() {
   return (
-    <ol className="flex flex-col gap-3.5">
+    <ol className="flex flex-col gap-4">
       {SETUP_STEPS.map((s, i) => (
         <li key={s.title} className="flex gap-3">
-          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-black tabular-nums">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[13px] font-bold text-black tabular-nums">
             {i + 1}
           </span>
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="flex items-center justify-between gap-2">
-              <span className="min-w-0 flex-1 text-sm font-semibold text-fg">{s.title}</span>
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="flex min-h-7 items-center justify-between gap-2">
+              <span className="min-w-0 flex-1 text-[16px] font-semibold leading-snug tracking-[-0.01em] text-fg">{s.title}</span>
               {s.action === "photos" ? (
                 <Link
                   href="/body"
                   aria-label="Upload your photos"
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent-soft text-accent transition-colors hover:bg-accent hover:text-black"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent transition-[background-color,color,transform] hover:bg-accent hover:text-black active:scale-90"
                 >
-                  <IconCamera className="h-3.5 w-3.5" />
+                  <IconCamera className="h-4 w-4" />
                 </Link>
               ) : null}
               {s.action === "meal-video" ? <MealPlanVideoButton /> : null}
             </span>
-            <span className="text-xs leading-relaxed text-muted">{s.detail}</span>
+            <span className="text-[14px] leading-relaxed text-muted">{s.detail}</span>
           </span>
         </li>
       ))}
