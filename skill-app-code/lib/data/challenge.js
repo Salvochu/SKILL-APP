@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { getServerSupabase, getSessionUser } from "@/lib/data/session";
+import { getServerSupabase, getSessionUser, getAuthUserRecord } from "@/lib/data/session";
 import { getMembership } from "@/lib/data/profile";
 import { CHECKLIST_KEYS } from "@/lib/challenge/curriculum";
 import { getMuscleMapForSessions } from "@/lib/data/volume";
@@ -82,10 +82,11 @@ export const getChallengeAccess = cache(async () => {
   // before this column existed); fall back to the account age if the
   // run is missing entirely (a webhook miss onboarding never fixed).
   const basis = isChallengeRun ? run.started_at || run.start_date : null;
+  const createdAt = basis ? null : (await getAuthUserRecord())?.created_at;
   const startMs = basis
     ? Date.parse(`${basis}T00:00:00Z`)
-    : user?.created_at
-      ? Date.parse(user.created_at)
+    : createdAt
+      ? Date.parse(createdAt)
       : Date.now();
   const todayMs = Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
   const daysSince = Math.max(0, Math.floor((todayMs - startMs) / DAY_MS));

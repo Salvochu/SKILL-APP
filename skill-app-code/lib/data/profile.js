@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { getSessionUser, getProfileRow } from "@/lib/data/session";
+import { getSessionUser, getProfileRow, getAuthUserRecord } from "@/lib/data/session";
 
 // The user's kg / lb display choice. Weights are always stored in kg;
 // this only changes display and input.
@@ -53,8 +53,11 @@ export const getBeginnerContext = cache(async () => {
   const data = await getProfileRow();
   const isCoach = data?.role === "coach";
   const isBeginner = !isCoach && (data?.experience_level ?? "") === "Beginner";
-  const daysSinceJoin = user.created_at
-    ? Math.floor((Date.now() - new Date(user.created_at)) / 86400000)
+  // Account age only matters for a beginner, and isn't in the session
+  // token, so only they pay the extra lookup.
+  const createdAt = isBeginner ? (await getAuthUserRecord())?.created_at : null;
+  const daysSinceJoin = createdAt
+    ? Math.floor((Date.now() - new Date(createdAt)) / 86400000)
     : null;
 
   // A coach, an experienced lifter, or a beginner past their first month

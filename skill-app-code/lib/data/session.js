@@ -5,16 +5,27 @@ import { createClient } from "@/lib/supabase/server";
 // One Supabase server client and one auth check per request, shared by
 // every DAL function.
 //
-// supabase.auth.getUser() is a network round-trip to the Supabase auth
-// server (it verifies the JWT server-side). Before this, every DAL
-// function called it itself, so a page that reads the profile, the unit
-// preference, the journey and the active mesocycle paid four separate
-// auth round-trips on top of the one proxy.js already does. React's
-// cache() collapses them to a single call for the whole render.
+// The project signs sessions with an asymmetric (ECC P-256) key, so
+// getClaims() verifies the session JWT right here against Supabase's
+// public key, with no network round-trip to the auth server (getUser()
+// made one on every render). React's cache() keeps it to one check per
+// render. The trade-off: a session revoked elsewhere stays valid until
+// its access token expires (an hour at most), which is fine for this app.
 
 export const getServerSupabase = cache(async () => createClient());
 
 export const getSessionUser = cache(async () => {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = error ? null : data?.claims;
+  if (!claims?.sub) return null;
+  return { id: claims.sub, email: claims.email ?? null };
+});
+
+// The full auth user record, from the auth server. Only for the rare
+// reads the token doesn't carry (account creation date), so it costs a
+// round-trip only where it's actually needed.
+export const getAuthUserRecord = cache(async () => {
   const supabase = await getServerSupabase();
   const {
     data: { user },

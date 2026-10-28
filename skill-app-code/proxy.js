@@ -47,10 +47,11 @@ export async function proxy(request) {
   );
 
   // Refreshes the token if needed — do not remove, and do not add any
-  // code between createServerClient and this call.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // code between createServerClient and this call. getClaims() verifies
+  // the JWT locally against the project's ECC public key (cached), so a
+  // signed-in navigation no longer waits on the auth server.
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const user = !claimsError && claimsData?.claims?.sub ? { id: claimsData.claims.sub } : null;
 
   const { pathname } = request.nextUrl;
 

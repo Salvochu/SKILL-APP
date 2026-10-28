@@ -17,13 +17,14 @@ export async function getCurrentUser() {
   "use cache: private";
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  // Verified locally against the project's public signing key (see
+  // lib/data/session.js), no auth-server round-trip.
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = error ? null : data?.claims;
+  if (!claims?.sub) {
     redirect("/login");
   }
+  const user = { id: claims.sub, email: claims.email ?? null };
 
   // Return only what the rest of the app needs, never the raw Supabase
   // user/session object, so nothing sensitive leaks into a Client
