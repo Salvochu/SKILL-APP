@@ -25,7 +25,7 @@ export default function MyWorkoutsSection({ myWorkouts }) {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">My workouts</h2>
+        <h2 className="px-1 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">My workouts</h2>
         <TapLink
           href="/workouts/mine/new"
           className="flex items-center gap-1 rounded-field px-1 text-xs font-semibold text-accent transition-colors hover:text-accent-2"
@@ -38,7 +38,7 @@ export default function MyWorkoutsSection({ myWorkouts }) {
       {myWorkouts.length === 0 ? (
         <TapLink
           href="/workouts/mine/new"
-          className="flex flex-col items-center gap-1 rounded-card border border-dashed border-border p-6 text-center transition-colors hover:border-border-strong hover:bg-surface-2"
+          className="flex flex-col items-center gap-1 rounded-2xl bg-surface p-6 text-center transition-colors hover:bg-surface-2 active:bg-surface-2"
         >
           <span className="text-sm font-medium text-fg">Build your own workout</span>
           <span className="text-xs text-dim">Save a set of exercises you can start any day</span>
@@ -93,7 +93,7 @@ function GroupFolder({ name, items, groupNames }) {
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="flex w-full items-center gap-3 rounded-card border border-border bg-surface p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+        className="flex w-full items-center gap-3 rounded-2xl bg-surface p-3 text-left transition-colors hover:bg-surface-2 active:bg-surface-2"
       >
         <StackIcon open={expanded} />
         <span className="min-w-0 flex-1">
@@ -108,7 +108,7 @@ function GroupFolder({ name, items, groupNames }) {
       </button>
 
       {expanded ? (
-        <ul className="flex flex-col gap-2.5 border-l-2 border-border pl-3">
+        <ul className="flex flex-col gap-2.5 border-l-2 border-border/70 pl-3">
           {items.map((w) => (
             <WorkoutCard key={w.id} workout={w} groupNames={groupNames} />
           ))}
@@ -176,7 +176,7 @@ function WorkoutCard({ workout: w, groupNames }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <li className="flex flex-col overflow-hidden rounded-card border border-border bg-surface transition-colors hover:border-border-strong">
+    <li className="flex flex-col overflow-hidden rounded-2xl bg-surface">
       <div className="flex items-stretch">
         <GuardedStartLink
           href={`/log?mine=${w.id}`}
@@ -212,7 +212,7 @@ function WorkoutCard({ workout: w, groupNames }) {
       </div>
 
       {expanded ? (
-        <div className="flex flex-col gap-3 border-t border-border bg-bg/30 p-4">
+        <div className="flex flex-col gap-3 border-t border-border/70 p-4">
           <p className="text-xs text-dim">
             {w.muscleSummary || `${w.exercises.length} exercise${w.exercises.length === 1 ? "" : "s"}`}
           </p>
@@ -267,11 +267,11 @@ function GroupPicker({ workoutId, current, groupNames }) {
           onBlur={() => !draft.trim() && setAdding(false)}
           placeholder="New group name"
           maxLength={40}
-          className="min-w-0 flex-1 rounded-field border border-border bg-bg/40 px-2.5 py-1.5 text-sm text-fg placeholder:text-dim"
+          className="min-w-0 flex-1 rounded-lg bg-surface-2 px-3 py-2 text-[16px] text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-accent/60"
         />
         <button
           type="submit"
-          className="shrink-0 rounded-field bg-accent px-3 py-1.5 text-xs font-semibold text-black transition-colors hover:bg-accent-2"
+          className="shrink-0 rounded-full bg-accent px-4 py-2 text-[14px] font-semibold text-black transition-transform active:scale-95"
         >
           Add
         </button>
@@ -286,7 +286,7 @@ function GroupPicker({ workoutId, current, groupNames }) {
         value={current ?? ""}
         onChange={onSelect}
         disabled={saving}
-        className="min-w-0 flex-1 rounded-field border border-border bg-bg/40 px-2.5 py-1.5 text-sm text-fg disabled:opacity-60"
+        className="min-w-0 flex-1 rounded-lg bg-surface-2 px-3 py-2 text-[16px] text-fg outline-none focus:ring-2 focus:ring-accent/60 disabled:opacity-60"
       >
         <option value="">Ungrouped</option>
         {groupNames.map((name) => (

@@ -29,6 +29,9 @@
   --color-good: #4caf72;
   --color-sky: #5bc0eb;
   --color-alert: #ef4444;
+  /* Specialization programs on the Train tab (red, alongside the orange
+     splits and the yellow My workouts). */
+  --color-coached: #ff5a5f;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", sans-serif;
@@ -66,6 +69,8 @@
   --muscle-arms: #cf8a1f;
   --muscle-core: #d55181;
 
+  --color-coached: #ff5a5f;
+
   /* Dashboard active-program panel: a warm near-black top fading into the
      surface, plus a soft accent glow bleeding from the corner. */
   --panel-warm: #1c1409;
@@ -92,6 +97,8 @@
   --muscle-shoulders: #6a5ae0;
   --muscle-arms: #9a6600;
   --muscle-core: #c93b74;
+
+  --color-coached: #d63a3f;
 }
 
 html {

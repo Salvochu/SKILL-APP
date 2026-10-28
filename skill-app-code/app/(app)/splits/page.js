@@ -12,8 +12,8 @@ export default function SplitsPage() {
   return (
     <div className="flex flex-col gap-5 py-2">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-fg">Train</h1>
-        <p className="text-sm text-muted">Start a session, run a program, or check your strength.</p>
+        <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Train</h1>
+        <p className="text-[15px] text-muted">Start a session, run a program, or check your strength.</p>
       </header>
 
       <Suspense fallback={<SplitsSkeleton />}>
@@ -60,7 +60,7 @@ function SplitsSkeleton() {
   return (
     <div className="flex flex-col gap-2.5">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-[76px] w-full rounded-card skeleton bg-surface-2" />
+        <div key={i} className="h-[76px] w-full rounded-2xl skeleton bg-surface-2" />
       ))}
     </div>
   );

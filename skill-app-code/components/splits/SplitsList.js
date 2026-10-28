@@ -24,13 +24,13 @@ export default function SplitsList({
       {foundations ? <FoundationsCard split={foundations} isChallengeGraduate={hasChallengeHistory} /> : null}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">Quick start</h2>
+        <h2 className="px-1 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">Quick start</h2>
         <div className="flex flex-col gap-2.5">
           <GuardedStartLink
             href="/log"
-            className="flex w-full items-center gap-4 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+            className="flex w-full items-center gap-4 rounded-2xl bg-surface p-4 text-left transition-colors hover:bg-surface-2 active:bg-surface-2"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-field bg-accent-soft text-accent">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
               <IconPlus className="h-5 w-5" />
             </span>
             <span className="flex-1">
@@ -42,9 +42,9 @@ export default function SplitsList({
           {strengthCheck ? (
             <TapLink
               href="/splits/strength-check"
-              className="flex w-full items-center gap-4 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+              className="flex w-full items-center gap-4 rounded-2xl bg-surface p-4 text-left transition-colors hover:bg-surface-2 active:bg-surface-2"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-field bg-accent-soft text-accent">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
                 <IconGauge className="h-5 w-5" />
               </span>
               <span className="flex-1">
@@ -60,7 +60,7 @@ export default function SplitsList({
       <MyWorkoutsSection myWorkouts={myWorkouts} />
 
       {isBeginner ? (
-        <details className="group flex flex-col rounded-card border border-border bg-surface [&_summary::-webkit-details-marker]:hidden">
+        <details className="group flex flex-col rounded-2xl bg-surface [&_summary::-webkit-details-marker]:hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
             <span className="flex flex-col">
               <span className="font-display text-base font-semibold text-fg">Other workouts</span>
@@ -68,10 +68,11 @@ export default function SplitsList({
             </span>
             <IconChevron className="h-4 w-4 shrink-0 text-dim transition-transform group-open:rotate-90" />
           </summary>
-          <ul className="flex flex-col gap-2.5 border-t border-border p-4">
+          {/* Plain rows inside the open card, not cards inside a card. */}
+          <ul className="flex flex-col border-t border-border/70 px-2 py-1 [&>li+li]:border-t [&>li+li]:border-border/70">
             {others.map((split) => (
               <li key={split.id}>
-                <SplitRow split={split} />
+                <SplitRow split={split} bare />
               </li>
             ))}
           </ul>
@@ -79,7 +80,7 @@ export default function SplitsList({
       ) : (
         sections.map(({ section, items }) => (
           <section key={section} className="flex flex-col gap-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-dim">
+            <h2 className="px-1 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">
               {SECTION_LABEL[section] ?? section}
             </h2>
             <ul className="flex flex-col gap-2.5">
@@ -106,13 +107,27 @@ function splitCount(split) {
   return String(split.days?.length || "");
 }
 
-function SplitRow({ split }) {
+// Each section has its own colour: splits are the app's orange,
+// specialization programs are red (My workouts keeps its yellow stack).
+const SECTION_TONE = {
+  coached: "bg-coached/15 text-coached",
+};
+
+function SplitRow({ split, bare = false }) {
   return (
     <TapLink
       href={`/splits/${split.id}`}
-      className="flex w-full items-center gap-4 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+      className={
+        bare
+          ? "flex w-full items-center gap-4 rounded-xl px-2 py-3 text-left transition-colors hover:bg-surface-2 active:bg-surface-2"
+          : "flex w-full items-center gap-4 rounded-2xl bg-surface p-4 text-left transition-colors hover:bg-surface-2 active:bg-surface-2"
+      }
     >
-      <span className="tabular flex h-11 w-11 shrink-0 items-center justify-center rounded-field bg-accent-soft text-base font-bold text-accent">
+      <span
+        className={`tabular flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-base font-bold ${
+          SECTION_TONE[split.section] ?? "bg-accent-soft text-accent"
+        }`}
+      >
         {splitCount(split)}
       </span>
       <span className="min-w-0 flex-1">

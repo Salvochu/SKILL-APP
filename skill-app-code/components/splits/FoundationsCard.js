@@ -39,7 +39,7 @@ export default function FoundationsCard({ split, isChallengeGraduate = false }) 
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-card border border-accent/40 bg-accent-soft p-4">
+    <section className="flex flex-col gap-4 rounded-2xl bg-accent-soft p-4">
       <div className="flex flex-col gap-1">
         <span className="text-xs font-semibold uppercase tracking-wider text-accent">
           {isChallengeGraduate ? "Welcome back" : "New to lifting? Start here"}
@@ -85,7 +85,7 @@ export default function FoundationsCard({ split, isChallengeGraduate = false }) 
           {days.map((day) => {
             const list = day.variants[variant] ?? day.variants[variants[0]] ?? [];
             return (
-              <div key={day.id} className="flex flex-col gap-2 rounded-field border border-border bg-surface p-3">
+              <div key={day.id} className="flex flex-col gap-2 rounded-xl bg-surface p-3">
                 <div className="flex flex-col">
                   <span className="text-xs font-semibold uppercase tracking-wider text-accent">
                     {day.template.name}
