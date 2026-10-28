@@ -37,7 +37,16 @@ function rubberband(overshoot, dimension = 140, constant = 0.55) {
   return (overshoot * dimension * constant) / (dimension + constant * Math.abs(overshoot));
 }
 
-export default function SwipeRow({ children, onDelete, deleteLabel = "Delete", className = "" }) {
+// `rounded` sets the corner radius of the row (and the action under it);
+// pass "rounded-none" for rows inside a grouped list.
+export default function SwipeRow({
+  children,
+  onDelete,
+  deleteLabel = "Delete",
+  actionLabel = "Delete",
+  rounded = "rounded-xl",
+  className = "",
+}) {
   const rootRef = useRef(null);
   const fgRef = useRef(null);
   const actionRef = useRef(null);
@@ -213,7 +222,7 @@ export default function SwipeRow({ children, onDelete, deleteLabel = "Delete", c
   }
 
   return (
-    <div ref={rootRef} className="relative isolate overflow-hidden rounded-xl" onClickCapture={onClickCapture}>
+    <div ref={rootRef} className={`relative isolate overflow-hidden ${rounded}`} onClickCapture={onClickCapture}>
       <div
         ref={fgRef}
         className={`relative z-10 touch-pan-y ${className}`}
@@ -228,7 +237,7 @@ export default function SwipeRow({ children, onDelete, deleteLabel = "Delete", c
           painted underneath it (z-0) until the row slides away. */}
       <div
         ref={actionRef}
-        className="absolute inset-y-0 right-0 z-0 flex items-stretch justify-end rounded-xl bg-danger opacity-0"
+        className="absolute inset-y-0 right-0 z-0 flex items-stretch justify-end rounded-[inherit] bg-danger opacity-0"
         style={{ width: REVEAL + 24 }}
       >
         <button
@@ -242,7 +251,7 @@ export default function SwipeRow({ children, onDelete, deleteLabel = "Delete", c
           className="flex items-center justify-center text-[14px] font-semibold text-black"
           style={{ width: REVEAL }}
         >
-          Delete
+          {actionLabel}
         </button>
       </div>
     </div>

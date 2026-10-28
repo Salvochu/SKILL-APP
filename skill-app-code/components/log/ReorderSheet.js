@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import MusclePill from "@/components/MusclePill";
+import { muscleKey } from "@/lib/exercises";
 import Sheet from "@/components/Sheet";
 
 // A slide-up sheet for dragging the workout's exercises into a new order.
@@ -72,10 +72,15 @@ export default function ReorderSheet({ rows, onSave, onClose }) {
     <Sheet onClose={onClose} ariaLabel="Reorder exercises">
       {(close) => (
         <>
-          <div className="flex shrink-0 items-center justify-between border-b border-border p-4">
-            <h2 className="text-lg font-bold text-fg">Reorder exercises</h2>
-            <button type="button" onClick={close} aria-label="Close" className="rounded-field p-1.5 text-dim hover:text-fg">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <div className="flex shrink-0 items-center justify-between gap-3 px-4 pb-2 pt-3">
+            <h2 className="font-display text-[1.35rem] font-bold tracking-[-0.02em] text-fg">Reorder exercises</h2>
+            <button
+              type="button"
+              onClick={close}
+              aria-label="Close"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90"
+            >
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round">
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
             </button>
@@ -85,7 +90,7 @@ export default function ReorderSheet({ rows, onSave, onClose }) {
             onPointerMove={pointerMove}
             onPointerUp={pointerUp}
             onPointerCancel={pointerUp}
-            className="flex min-h-0 flex-1 touch-none flex-col gap-2 overflow-y-auto p-4"
+            className="flex min-h-0 flex-1 touch-none flex-col overflow-y-auto px-4 py-2"
           >
             {order.map((r, index) => {
               const primary = r.exercise.muscles?.find((m) => m.role === "primary")?.name ?? r.exercise.muscle;
@@ -98,44 +103,62 @@ export default function ReorderSheet({ rows, onSave, onClose }) {
                     transition: "transform 220ms cubic-bezier(0.22, 0.8, 0.2, 1)",
                     position: "relative",
                   };
+              // Rows sit edge to edge as one grouped list (hairlines, rounded
+              // ends), so a row's measured height is exactly one step of the
+              // drag. The lifted row floats as its own rounded card.
+              const first = index === 0;
+              const last = index === order.length - 1;
               return (
                 <li
                   key={r.key}
                   data-row={r.key}
                   style={style}
-                  className={`flex items-center gap-3 rounded-card border px-2 py-2.5 ${
-                    dragging ? "border-accent bg-surface-2 shadow-lg" : "border-border bg-bg/40"
+                  className={`flex items-center gap-3 py-3 pl-4 pr-2 ${
+                    dragging
+                      ? "rounded-xl bg-surface-2 shadow-[0_16px_36px_-12px_rgba(0,0,0,0.6)]"
+                      : `bg-surface ${first ? "rounded-t-2xl" : "border-t border-border/70"} ${last ? "rounded-b-2xl" : ""}`
                   }`}
                 >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-2 text-[13px] font-semibold tabular-nums text-muted">
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[16px] font-semibold text-fg">{r.exercise.name}</span>
+                    <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-dim">
+                      {primary ? (
+                        <span
+                          aria-hidden="true"
+                          className="h-2 w-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: `var(--muscle-${muscleKey(primary)})` }}
+                        />
+                      ) : null}
+                      {primary}
+                    </span>
+                  </span>
+                  {/* The grip sits on the right, where iOS puts it. */}
                   <button
                     type="button"
                     aria-label={`Drag ${r.exercise.name}`}
                     onPointerDown={(e) => pointerDown(e, r.key)}
-                    className="shrink-0 cursor-grab touch-none rounded p-1.5 text-dim active:cursor-grabbing"
+                    className="flex h-10 w-10 shrink-0 cursor-grab touch-none items-center justify-center rounded-full text-dim active:cursor-grabbing active:bg-fg/10"
                   >
                     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M4 8h16M4 12h16M4 16h16" />
+                      <path d="M5 9h14M5 15h14" />
                     </svg>
                   </button>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-fg">{r.exercise.name}</span>
-                    <span className="mt-0.5 flex items-center gap-2">
-                      <MusclePill muscle={primary} />
-                    </span>
-                  </span>
                 </li>
               );
             })}
           </ul>
 
-          <div className="shrink-0 border-t border-border p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4">
+          <div className="shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 sm:pb-4">
             <button
               type="button"
               onClick={() => {
                 onSave(order);
                 close();
               }}
-              className="flex w-full items-center justify-center rounded-field bg-accent px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-2"
+              className="flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[16px] font-semibold text-black transition-[transform,background-color] hover:bg-accent-2 active:scale-[0.98]"
             >
               Done
             </button>
