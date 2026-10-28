@@ -664,16 +664,13 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </p>
       ) : null}
 
+      {/* The rest timer takes over the header bar while it runs (fixed),
+          so it never stacks on the workout pill down here. */}
+      {showRest ? (
+        <RestTimer key={restKey} startSeconds={restSeconds} onDismiss={() => setShowRest(false)} />
+      ) : null}
+
       <div className="sticky bottom-[max(7.5rem,calc(env(safe-area-inset-bottom)+5.5rem))] z-40 flex flex-col gap-2 md:bottom-4">
-        {showRest ? (
-          <RestTimer
-            key={restKey}
-            startSeconds={restSeconds}
-            onDismiss={() => setShowRest(false)}
-            docked
-            compact={barMinimised}
-          />
-        ) : null}
 
         {barMinimised ? (
         <>
