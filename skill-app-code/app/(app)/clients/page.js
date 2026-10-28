@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getClients } from "@/lib/data/coach";
 import ClientList from "@/components/coach/ClientList";
+import InviteButton from "@/components/coach/InviteButton";
 
 export const metadata = { title: "Clients" };
 export const instant = false;
@@ -22,8 +23,11 @@ async function Body() {
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-fg">Clients</h1>
-        <p className="text-sm text-muted">Who is training, who is progressing, who to talk to.</p>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Clients</h1>
+          <InviteButton />
+        </div>
+        <p className="text-[15px] text-muted">Who is training, who is progressing, who to talk to.</p>
       </header>
       <ClientList data={data} />
     </div>
