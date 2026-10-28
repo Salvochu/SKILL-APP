@@ -8,7 +8,7 @@ import { COUNTRIES } from "@/lib/countries";
 // open. Unlike a native <select>, this also accepts whatever the user
 // types as the dial code directly, in case their country is not in the
 // list or they just want to type fast.
-export default function DialCodeField({ value, onChange, bare = false }) {
+export default function DialCodeField({ value, onChange, bare = false, filled = false }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const wrapRef = useRef(null);
@@ -66,7 +66,9 @@ export default function DialCodeField({ value, onChange, bare = false }) {
         className={
           bare
             ? "tabular-nums w-full min-w-0 bg-transparent py-3 text-right text-[16px] text-muted outline-none placeholder:text-dim focus:text-fg"
-            : "tabular w-full min-w-0 rounded-field border border-border bg-bg px-2 py-2 text-sm text-fg focus:border-accent"
+            : filled
+              ? "tabular-nums w-full min-w-0 rounded-xl bg-fg/10 px-3 py-3 text-[16px] text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-accent/60"
+              : "tabular w-full min-w-0 rounded-field border border-border bg-bg px-2 py-2 text-sm text-fg focus:border-accent"
         }
       />
       {open ? (
