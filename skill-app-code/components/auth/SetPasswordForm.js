@@ -75,7 +75,7 @@ export default function SetPasswordForm() {
       </label>
 
       {error ? (
-        <p className="rounded-field border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+        <p className="rounded-xl bg-danger/10 px-3.5 py-2.5 text-[14px] text-danger">
           {error}
         </p>
       ) : null}
@@ -83,7 +83,7 @@ export default function SetPasswordForm() {
       <button
         type="submit"
         disabled={status === "saving"}
-        className="btn-shine rounded-field bg-accent px-4 py-3 font-bold text-black shadow-[0_10px_30px_-10px_rgba(252,118,5,0.7)] transition-transform active:scale-[0.99] disabled:opacity-60"
+        className="btn-shine rounded-2xl bg-accent px-4 py-3.5 text-[16px] font-semibold text-black shadow-[0_10px_30px_-10px_rgba(252,118,5,0.7)] transition-transform active:scale-[0.98] disabled:opacity-60"
       >
         {status === "saving" ? "Saving..." : "Set password and sign in"}
       </button>

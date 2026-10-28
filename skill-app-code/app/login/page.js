@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }) {
       subtitle="Sign in and pick up where you left off."
     >
       {error ? (
-        <p className="mb-4 rounded-field border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+        <p className="mb-4 rounded-xl bg-danger/10 px-3.5 py-2.5 text-[14px] text-danger">
           {error}
         </p>
       ) : null}
@@ -49,7 +49,7 @@ export default async function LoginPage({ searchParams }) {
         </label>
         <button
           type="submit"
-          className="btn-shine mt-1 rounded-field bg-accent px-4 py-3 font-bold text-black shadow-[0_10px_30px_-10px_rgba(252,118,5,0.7)] transition-transform active:scale-[0.99]"
+          className="btn-shine mt-1 rounded-2xl bg-accent px-4 py-3.5 text-[16px] font-semibold text-black shadow-[0_10px_30px_-10px_rgba(252,118,5,0.7)] transition-transform active:scale-[0.98]"
         >
           Sign in
         </button>

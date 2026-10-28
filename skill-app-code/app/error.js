@@ -21,7 +21,7 @@ export default function Error({ error, reset }) {
         <button
           type="button"
           onClick={() => reset()}
-          className="btn-shine rounded-field bg-accent px-4 py-3 font-bold text-black shadow-[0_10px_30px_-10px_rgba(252,118,5,0.7)] transition-transform active:scale-[0.99]"
+          className="btn-shine rounded-2xl bg-accent px-4 py-3.5 text-[16px] font-semibold text-black shadow-[0_10px_30px_-10px_rgba(252,118,5,0.7)] transition-transform active:scale-[0.98]"
         >
           Try again
         </button>
