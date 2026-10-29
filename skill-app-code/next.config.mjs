@@ -11,18 +11,17 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), browsing-topics=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-  { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'" },
-  { key: "Content-Security-Policy-Report-Only", value: strictCsp() },
+  { key: "Content-Security-Policy", value: contentSecurityPolicy() },
 ];
 
-// The full policy: the app may only load and send data to itself,
-// Supabase (data, sign-in, photos) and Loom (form videos). If a script
-// ever got injected it could not call home to another server. Sent as
-// Report-Only for now, so the browser only logs what it would block:
-// once the live app shows no reports, it replaces the short policy
-// above. Inline scripts stay allowed because Next.js writes its page
-// data as inline scripts.
-function strictCsp() {
+// The app may only load and send data to itself, Supabase (data,
+// sign-in, photos) and Loom (form videos). If a script ever got injected
+// it could not call home to another server or pull in more code. Ran as
+// Report-Only on the live app first, with nothing reported. Inline
+// scripts stay allowed because Next.js writes its page data as inline
+// scripts. A new outside service (an embed, analytics, a CDN) has to be
+// added here or the browser will block it.
+function contentSecurityPolicy() {
   let supabase = "https://*.supabase.co";
   try {
     supabase = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin;
