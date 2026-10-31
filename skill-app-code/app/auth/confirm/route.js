@@ -20,7 +20,12 @@ export async function GET(request) {
 
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-    if (!error) return NextResponse.redirect(new URL(next, origin));
+    // A recovery link (sign-up welcome emails, coach invites, Forgot
+    // password) is only ever for choosing a password, so it always lands
+    // on that screen, whatever its ?next= says: email tools can mangle
+    // the end of a link (GHL dropped it), which skipped the step.
+    const dest = type === "recovery" ? "/auth/set-password" : next;
+    if (!error) return NextResponse.redirect(new URL(dest, origin));
   } else if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return NextResponse.redirect(new URL(next, origin));
