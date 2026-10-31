@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-export default function SetPasswordForm() {
+// `email` is the account the link signed into, shown so people know
+// which account they are setting a password for (and so the phone's
+// password manager saves the new password under the right email).
+export default function SetPasswordForm({ email = null }) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -51,6 +54,24 @@ export default function SetPasswordForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      {email ? (
+        <div className="flex flex-col gap-1 rounded-xl bg-fg/[0.04] px-3.5 py-2.5">
+          <span className="text-xs font-medium text-dim">Account</span>
+          <span className="break-all text-[15px] font-medium text-fg">{email}</span>
+          {/* Not shown: lets the password manager file the new password
+              under this email. */}
+          <input
+            type="email"
+            name="username"
+            value={email}
+            readOnly
+            autoComplete="username"
+            tabIndex={-1}
+            aria-hidden="true"
+            className="sr-only"
+          />
+        </div>
+      ) : null}
       <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
         New password
         <input
