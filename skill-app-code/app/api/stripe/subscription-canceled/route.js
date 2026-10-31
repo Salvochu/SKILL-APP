@@ -66,7 +66,10 @@ export async function POST(request) {
   }
 
   try {
-    const result = await lapseMembershipByEmail(email);
+    // Subscriptions started in the app carry the user id; those also get
+    // the GHL tag, since GHL's own cancellation trigger never sees them.
+    const fromApp = Boolean(event.data?.object?.metadata?.skill_user_id);
+    const result = await lapseMembershipByEmail(email, { tagGhl: fromApp });
     return jsonResponse({ ...result, email });
   } catch (err) {
     console.error("stripe/subscription-canceled failed:", err?.message);

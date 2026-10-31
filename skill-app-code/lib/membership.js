@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { findUserByEmail } from "@/lib/supabase/selectAll";
-import { tagGhlContact } from "@/lib/ghl";
+import { updateGhlTags } from "@/lib/ghl";
 
 // The free challenge's mesocycle template (migration 0033).
 const CHALLENGE_TEMPLATE_ID = "main-character-14";
@@ -13,7 +13,11 @@ const CHALLENGE_TEMPLATE_ID = "main-character-14";
 // Never touches 'coach', 'challenge', a NULL (grandfathered) profile, or
 // an account that is already 'lapsed' - only an active paid member can
 // lapse.
-export async function lapseMembershipByEmail(email) {
+//
+// tagGhl: also tag the GHL contact "skill-app-lapsed", for a subscription
+// that was bought inside the app (GHL never saw that purchase, so its
+// own cancellation trigger can't fire for it).
+export async function lapseMembershipByEmail(email, { tagGhl = false } = {}) {
   const supabase = createAdminClient();
 
   // Look up the auth user by email across every page of accounts (a
@@ -37,6 +41,7 @@ export async function lapseMembershipByEmail(email) {
     .eq("user_id", user.id);
   if (updateError) throw new Error(`could not update membership: ${updateError.message}`);
 
+  if (tagGhl) await updateGhlTags(email, { add: ["skill-app-lapsed"], remove: ["skill-app-checkout"] });
   return { ok: true, membership: "lapsed" };
 }
 
@@ -62,8 +67,8 @@ export async function activateFromCheckoutSession(session) {
 // Turns an account into a paying member: the profile flag, the challenge
 // run closed out (so the dashboard stops showing the Day 14 fork), the
 // billing flag that shows them "Manage membership", and the
-// "skill-member" tag in GHL that starts its welcome workflow. Leaves the
-// coach and existing members alone.
+// "skill-app-checkout" tag in GHL that starts its welcome workflow.
+// Leaves the coach and existing members alone.
 export async function activatePaidMembership(userId, { customerId } = {}) {
   const supabase = createAdminClient();
 
@@ -90,7 +95,7 @@ export async function activatePaidMembership(userId, { customerId } = {}) {
   const { data: updated } = await supabase.auth.admin.updateUserById(userId, {
     app_metadata: { billing: "stripe", ...(customerId ? { stripe_customer_id: customerId } : {}) },
   });
-  await tagGhlContact(updated?.user?.email, "skill-member");
+  await updateGhlTags(updated?.user?.email, { add: ["skill-app-checkout"], remove: ["skill-app-lapsed"] });
 
   return { ok: true, membership: "member" };
 }

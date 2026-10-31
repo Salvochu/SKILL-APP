@@ -57,14 +57,18 @@ export async function syncProfileToGHL({ email, fullName, phone, age, country, f
   }
 }
 
-// Adds a tag to the GHL contact with this email (creating the contact if
-// GHL doesn't have it yet). A GHL workflow triggered on "Tag added" can
-// then send its emails, e.g. "skill-member" after someone pays in the
-// app. Best effort and inert without the same two env vars as above.
-export async function tagGhlContact(email, tag) {
+// Adds and removes tags on the GHL contact with this email (creating
+// the contact if GHL doesn't have it yet), so a GHL workflow triggered
+// on "Contact tag added" can take it from there. The app uses two:
+//   skill-app-checkout  paid for the membership inside the app
+//   skill-app-lapsed    that in-app subscription has ended
+// Each removes the other, so a member who leaves and comes back fires
+// the workflows again. Best effort and inert without the same two env
+// vars as above.
+export async function updateGhlTags(email, { add = [], remove = [] } = {}) {
   const apiKey = process.env.GHL_CONTACTS_API_KEY;
   const locationId = process.env.GHL_LOCATION_ID;
-  if (!apiKey || !locationId || !email || !tag) return;
+  if (!apiKey || !locationId || !email || (!add.length && !remove.length)) return;
 
   const headers = {
     Authorization: `Bearer ${apiKey}`,
@@ -80,17 +84,19 @@ export async function tagGhlContact(email, tag) {
     const data = await res.json().catch(() => ({}));
     const contactId = data?.contact?.id;
     if (!res.ok || !contactId) {
-      console.error("GHL tag: contact lookup failed:", res.status);
+      console.error("GHL tags: contact lookup failed:", res.status);
       return;
     }
-    const tagRes = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/tags`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ tags: [tag] }),
-    });
-    if (!tagRes.ok) console.error("GHL tag failed:", tagRes.status, await tagRes.text().catch(() => ""));
+    const url = `https://services.leadconnectorhq.com/contacts/${contactId}/tags`;
+    if (remove.length) {
+      const r = await fetch(url, { method: "DELETE", headers, body: JSON.stringify({ tags: remove }) });
+      if (!r.ok) console.error("GHL tag removal failed:", r.status);
+    }
+    if (add.length) {
+      const r = await fetch(url, { method: "POST", headers, body: JSON.stringify({ tags: add }) });
+      if (!r.ok) console.error("GHL tagging failed:", r.status, await r.text().catch(() => ""));
+    }
   } catch (err) {
-    console.error("GHL tag failed:", err.message);
+    console.error("GHL tags failed:", err.message);
   }
 }
-
