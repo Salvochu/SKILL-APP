@@ -56,8 +56,6 @@ export default async function ChallengePage() {
         streak={checklist.streak}
       />
 
-      <ChallengeStart />
-
       {completion.completed ? (
         <ChallengeComplete
           day={challengeDay}
@@ -82,13 +80,16 @@ export default async function ChallengePage() {
         itemsAt={checklist.byDayAt[challengeDay] ?? {}}
       />
 
-      <ChallengeTimeline
-        challengeDay={challengeDay}
-        byDay={checklist.byDay}
-        byDayAt={checklist.byDayAt}
-      />
-
-      <ChallengeLearn variant={variant} challengeDay={challengeDay} totalDays={total} />
+      {/* Reference cards, all collapsed: setup, the fortnight, lessons. */}
+      <div className="flex flex-col gap-3">
+        <ChallengeStart />
+        <ChallengeTimeline
+          challengeDay={challengeDay}
+          byDay={checklist.byDay}
+          byDayAt={checklist.byDayAt}
+        />
+        <ChallengeLearn variant={variant} challengeDay={challengeDay} totalDays={total} />
+      </div>
 
       <BackToTop />
     </div>

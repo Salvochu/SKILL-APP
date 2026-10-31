@@ -38,6 +38,7 @@ export default function ClientChallengeView({ clientId, data, unit = "kg" }) {
       ) : (
         <>
           <ChallengeClimb
+            showTip={false}
             day={data.challengeDay}
             totalDays={data.challengeDays}
             completeDays={data.completeDays}

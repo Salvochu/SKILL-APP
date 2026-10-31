@@ -29,6 +29,7 @@ function lerpHex(hexA, hexB, t) {
 }
 
 // The streak pill on the Main Character Challenge card (ChallengeClimb.js).
+// At 0 it invites rather than reports ("Start your streak").
 // A small flame, unlit at streak 0 - using the same dark palette as the
 // trail's own "missed day" nodes - that warms up in color, size and glow
 // as the streak grows, capping out at MAX_HEAT_STREAK. Two layered flame
@@ -37,6 +38,60 @@ function lerpHex(hexA, hexB, t) {
 // since the flicker motion itself doesn't depend on the streak value.
 export default function StreakFlame({ streak }) {
   const uid = useId();
+  const heat = clamp01(streak / MAX_HEAT_STREAK);
+  // Unlit is a muted ember, not near-black: it still has to read as a
+  // flame on the pill at streak 0, in both themes.
+  const outerBase = lerpHex("#6b4a2c", "#c85a02", heat);
+  const outerTip = lerpHex("#9a7350", "#ffb454", heat);
+  const innerBase = lerpHex("#7d5a3a", "#fc7605", heat);
+  const innerTip = lerpHex("#b08b66", "#ffd9a8", heat);
+  const glow = lerpHex("#3a2a1c", "#fc7605", heat);
+  const scale = 0.92 + heat * 0.22;
+  const glowBlur = 1 + heat * 5;
+
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 text-[13px] font-semibold text-accent">
+      <svg
+        viewBox="0 0 24 24"
+        className="h-4 w-4 shrink-0"
+        style={{ transform: `scale(${scale})`, filter: `drop-shadow(0 0 ${glowBlur}px ${glow})` }}
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id={`${uid}-outer`} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stopColor={outerBase} />
+            <stop offset="1" stopColor={outerTip} />
+          </linearGradient>
+          <linearGradient id={`${uid}-inner`} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stopColor={innerBase} />
+            <stop offset="1" stopColor={innerTip} />
+          </linearGradient>
+        </defs>
+        <path
+          className="flame-outer"
+          fill={`url(#${uid}-outer)`}
+          d="M12 2c1 3-1 5-2.5 6.5C8 10 7 11.5 7 14a5 5 0 0 0 10 0c0-2-1-3.5-2-5 .5 1.5 0 3-1 3.5.5-2-1-4-2-5.5C10 9 11 6 12 2z"
+        />
+        <path
+          className="flame-inner"
+          fill={`url(#${uid}-inner)`}
+          d="M12 9c.6 1.6-.4 2.6-.9 3.4-.4.7-.6 1.3-.6 2a1.9 1.9 0 0 0 3.8 0c0-.7-.3-1.3-.7-1.9.2.6 0 1.1-.4 1.3.2-.9-.3-1.7-.7-2.4C13.1 10.7 12.4 9.8 12 9z"
+        />
+      </svg>
+      {streak > 0 ? (
+        <>
+          <span className="tabular-nums">{streak}</span> day{streak === 1 ? "" : "s"}
+        </>
+      ) : (
+        "Start your streak"
+      )}
+    </span>
+  );
+}
+
+// The one-time explainer for the flame, as its own row under the card's
+// header (it used to float over the day counter). Dismissed for good.
+export function FlameTip() {
   const [showTip, setShowTip] = useState(false);
 
   useEffect(() => {
@@ -57,61 +112,20 @@ export default function StreakFlame({ streak }) {
     } catch {}
   }
 
-  const heat = clamp01(streak / MAX_HEAT_STREAK);
-  const outerBase = lerpHex("#2b2016", "#c85a02", heat);
-  const outerTip = lerpHex("#4a382a", "#ffb454", heat);
-  const innerBase = lerpHex("#3a2c1e", "#fc7605", heat);
-  const innerTip = lerpHex("#4a382a", "#ffd9a8", heat);
-  const glow = lerpHex("#2b2016", "#fc7605", heat);
-  const scale = 0.92 + heat * 0.22;
-  const glowBlur = 1 + heat * 5;
-
+  if (!showTip) return null;
   return (
-    <div className="relative">
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 text-[13px] font-semibold text-accent">
-        <svg
-          viewBox="0 0 24 24"
-          className="h-4 w-4 shrink-0"
-          style={{ transform: `scale(${scale})`, filter: `drop-shadow(0 0 ${glowBlur}px ${glow})` }}
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id={`${uid}-outer`} x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0" stopColor={outerBase} />
-              <stop offset="1" stopColor={outerTip} />
-            </linearGradient>
-            <linearGradient id={`${uid}-inner`} x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0" stopColor={innerBase} />
-              <stop offset="1" stopColor={innerTip} />
-            </linearGradient>
-          </defs>
-          <path
-            className="flame-outer"
-            fill={`url(#${uid}-outer)`}
-            d="M12 2c1 3-1 5-2.5 6.5C8 10 7 11.5 7 14a5 5 0 0 0 10 0c0-2-1-3.5-2-5 .5 1.5 0 3-1 3.5.5-2-1-4-2-5.5C10 9 11 6 12 2z"
-          />
-          <path
-            className="flame-inner"
-            fill={`url(#${uid}-inner)`}
-            d="M12 9c.6 1.6-.4 2.6-.9 3.4-.4.7-.6 1.3-.6 2a1.9 1.9 0 0 0 3.8 0c0-.7-.3-1.3-.7-1.9.2.6 0 1.1-.4 1.3.2-.9-.3-1.7-.7-2.4C13.1 10.7 12.4 9.8 12 9z"
-          />
-        </svg>
-        <span className="tabular-nums">{streak}</span> day{streak === 1 ? "" : "s"}
+    <div className="pop-in flex items-start gap-2 rounded-xl bg-fg/[0.06] py-2.5 pl-3.5 pr-2 text-[13px] leading-snug text-muted">
+      <span className="min-w-0 flex-1 pt-0.5">
+        Tick off the whole checklist each day to build your streak. The flame heats up the longer it runs.
       </span>
-
-      {showTip ? (
-        <div className="glass-strong pop-in absolute right-0 top-full z-20 mt-2 flex w-52 origin-top-right items-start gap-2 rounded-2xl py-2.5 pl-3.5 pr-2 text-[13px] leading-snug text-fg">
-          <span className="min-w-0 flex-1 pt-0.5">Gets more intense the longer your streak runs.</span>
-          <button
-            type="button"
-            onClick={dismissTip}
-            aria-label="Dismiss"
-            className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-fg/10 text-muted transition-colors after:absolute after:-inset-2 hover:text-fg"
-          >
-            <IconClose className="h-3 w-3" />
-          </button>
-        </div>
-      ) : null}
+      <button
+        type="button"
+        onClick={dismissTip}
+        aria-label="Dismiss"
+        className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-fg/10 text-muted transition-colors after:absolute after:-inset-2 hover:text-fg"
+      >
+        <IconClose className="h-3 w-3" />
+      </button>
     </div>
   );
 }

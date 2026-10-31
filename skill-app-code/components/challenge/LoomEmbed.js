@@ -13,7 +13,8 @@ import { useState } from "react";
 // Day 14 (see ChallengeLearn.js). `loomLink` adds a "Watch on Loom" pill
 // under the player, straight to the share page - used only for the Learn
 // lessons, where the Loom page itself may have links/resources attached
-// that the embedded player doesn't surface.
+// that the embedded player doesn't surface. `autoPlay` skips the poster
+// (for a video someone has just tapped to open, e.g. in LessonList.js).
 export default function LoomEmbed({
   id,
   title = "Watch",
@@ -23,8 +24,12 @@ export default function LoomEmbed({
   lockedLabel = "Unlocks soon",
   loomLink = false,
   onPlay,
+  autoPlay = false,
 }) {
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(autoPlay);
+  // The Loom page paints white before its own dark player appears, so the
+  // frame stays hidden over a dark, spinning placeholder until it loads.
+  const [loaded, setLoaded] = useState(false);
   const aspect = orientation === "horizontal" ? "aspect-video" : "aspect-[9/16]";
 
   if (locked) {
@@ -59,13 +64,21 @@ export default function LoomEmbed({
   return (
     <div className="flex flex-col gap-2">
       {playing ? (
-        <div className={`relative ${aspect} w-full overflow-hidden rounded-xl bg-black ${className}`}>
+        <div
+          className={`relative ${aspect} w-full overflow-hidden rounded-xl bg-gradient-to-b from-[#2a2622] to-[#141210] ${className}`}
+        >
+          {loaded ? null : (
+            <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+              <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-white/15 border-t-accent" />
+            </span>
+          )}
           <iframe
             src={`https://www.loom.com/embed/${id}?autoplay=1&hide_owner=true&hide_share=true&hideEmbedTopBar=true`}
             title={title}
             allow="autoplay; fullscreen; picture-in-picture"
             allowFullScreen
-            className="absolute inset-0 h-full w-full"
+            onLoad={() => setLoaded(true)}
+            className={`absolute inset-0 h-full w-full transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
           />
         </div>
       ) : (

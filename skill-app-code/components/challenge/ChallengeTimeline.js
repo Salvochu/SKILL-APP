@@ -1,50 +1,75 @@
 import ChallengeChecklist from "@/components/challenge/ChallengeChecklist";
+import SectionSummary from "@/components/challenge/SectionSummary";
 import { CHALLENGE_DAYS } from "@/lib/challenge/curriculum";
 import { isChallengeDayComplete } from "@/lib/data/challenge";
 
-// The whole 14 days as a list. Past and current days open to their
-// checklist so a day can be backfilled; future days show a preview only.
+// The whole 14 days as a list, in a card that opens on tap. Past and
+// current days open to their checklist so a day can be backfilled;
+// future days are a single locked row (title and kind only, so the
+// fortnight's shape is readable without giving away later sessions).
 // Collapsed by default - today's own card above already has what matters
 // most, this is reference material someone opens on purpose.
 export default function ChallengeTimeline({ challengeDay, byDay = {}, byDayAt = {}, readOnly = false }) {
+  const total = CHALLENGE_DAYS.length;
+  const completeCount = CHALLENGE_DAYS.filter((d) => isChallengeDayComplete(byDay[d.day])).length;
+  const shownDay = Math.min(Math.max(challengeDay ?? 1, 1), total);
+
   return (
-    <details className="group/tl flex flex-col [&_summary::-webkit-details-marker]:hidden">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-4 py-1">
-        <h2 className="font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">
-          The 14 days
-        </h2>
-        <IconSectionChevron className="h-4 w-4 shrink-0 text-dim transition-transform group-open/tl:rotate-180" />
-      </summary>
-      <ul className="mt-2 flex flex-col overflow-hidden rounded-2xl bg-surface [&>li:first-child_.day-sep]:border-transparent">
+    <details className="group rounded-2xl bg-surface [&_summary::-webkit-details-marker]:hidden">
+      <SectionSummary
+        icon={<IconCalendar className="h-5 w-5" />}
+        title="The 14 days"
+        detail={`Day ${shownDay} of ${total} · ${completeCount} complete`}
+      />
+      <ul className="flex flex-col border-t border-border/70 [&>li:first-child_.day-sep]:border-transparent">
         {CHALLENGE_DAYS.map((d) => {
           const started = d.day <= challengeDay;
           const isToday = d.day === challengeDay;
           const complete = isChallengeDayComplete(byDay[d.day]);
           const missed = started && !isToday && !complete;
 
+          const badge = (
+            <span
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] font-bold tabular-nums ${
+                complete
+                  ? "bg-accent text-black"
+                  : isToday
+                    ? "bg-accent-soft text-accent ring-[1.5px] ring-inset ring-accent"
+                    : missed
+                      ? "bg-fg/10 text-dim"
+                      : "bg-fg/[0.06] text-dim"
+              }`}
+            >
+              {complete ? (
+                <svg viewBox="0 0 12 12" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2.5 6.5 5 9l4.5-5.5" />
+                </svg>
+              ) : (
+                d.day
+              )}
+            </span>
+          );
+
+          if (!started) {
+            return (
+              <li key={d.day} className="flex items-center gap-3 pl-4" aria-label={`Day ${d.day}, ${d.title}, opens on day ${d.day}`}>
+                {badge}
+                <span className="day-sep flex min-w-0 flex-1 items-center gap-3 border-t border-border/70 py-2.5 pr-4">
+                  <span className="flex min-w-0 flex-1 items-baseline gap-2">
+                    <span className="truncate text-[15px] font-medium text-muted">{d.title}</span>
+                    <span className="truncate text-[13px] text-dim">{kindHint(d.kind)}</span>
+                  </span>
+                  <IconLock className="h-3.5 w-3.5 shrink-0 text-dim" />
+                </span>
+              </li>
+            );
+          }
+
           return (
             <li key={d.day}>
               <details open={isToday} className="group/day [&_summary::-webkit-details-marker]:hidden">
                 <summary className="flex cursor-pointer list-none items-center gap-3 pl-4 transition-colors hover:bg-surface-2 active:bg-surface-2">
-                  <span
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] font-bold tabular-nums ${
-                      complete
-                        ? "bg-accent text-black"
-                        : isToday
-                          ? "bg-accent-soft text-accent ring-[1.5px] ring-inset ring-accent"
-                          : missed
-                            ? "bg-fg/10 text-dim"
-                            : "bg-fg/[0.06] text-muted"
-                    }`}
-                  >
-                    {complete ? (
-                      <svg viewBox="0 0 12 12" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M2.5 6.5 5 9l4.5-5.5" />
-                      </svg>
-                    ) : (
-                      d.day
-                    )}
-                  </span>
+                  {badge}
                   <span className="day-sep flex min-w-0 flex-1 items-center gap-3 border-t border-border/70 py-3 pr-4">
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="flex items-center gap-2">
@@ -63,35 +88,20 @@ export default function ChallengeTimeline({ challengeDay, byDay = {}, byDayAt = 
                   </span>
                 </summary>
                 <div className="pb-2">
-                  {started ? (
-                    <>
-                      <p className="pb-1 pl-[60px] pr-4 text-[15px] leading-relaxed text-muted">{d.what}</p>
-                      {isToday ? (
-                        <p className="pb-2 pl-[60px] pr-4 pt-1 text-[13px] text-dim">
-                          Today&apos;s checklist is in the card above.
-                        </p>
-                      ) : (
-                        <ChallengeChecklist
-                          day={d.day}
-                          kind={d.kind}
-                          items={byDay[d.day] ?? {}}
-                          itemsAt={byDayAt[d.day] ?? {}}
-                          locked={readOnly}
-                          indent
-                        />
-                      )}
-                    </>
-                  ) : (
-                    // Future days stay a locked preview: the kind ("Full-body
-                    // session" etc.) is visible in the summary row above so
-                    // the week's shape is still readable, but the specific
-                    // lifts and the callback to an earlier day's numbers
-                    // ("beat a number from Day X") stay hidden until it's
-                    // actually that day.
-                    <p className="flex items-center gap-1.5 pb-1 pl-[60px] pr-4 text-[14px] text-dim">
-                      <IconLock className="h-3.5 w-3.5" />
-                      Opens on day {d.day}
+                  <p className="pb-1 pl-[60px] pr-4 text-[15px] leading-relaxed text-muted">{d.what}</p>
+                  {isToday ? (
+                    <p className="pb-2 pl-[60px] pr-4 pt-1 text-[13px] text-dim">
+                      Today&apos;s checklist is in the card above.
                     </p>
+                  ) : (
+                    <ChallengeChecklist
+                      day={d.day}
+                      kind={d.kind}
+                      items={byDay[d.day] ?? {}}
+                      itemsAt={byDayAt[d.day] ?? {}}
+                      locked={readOnly}
+                      indent
+                    />
                   )}
                 </div>
               </details>
@@ -109,10 +119,11 @@ function kindHint(kind) {
   return "Rest and recover";
 }
 
-function IconSectionChevron(props) {
+function IconCalendar(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m6 9 6 6 6-6" />
+      <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
+      <path d="M8 3v4M16 3v4M3.5 10h17" />
     </svg>
   );
 }

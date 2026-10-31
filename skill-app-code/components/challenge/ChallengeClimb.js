@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import StreakFlame from "@/components/challenge/StreakFlame";
+import StreakFlame, { FlameTip } from "@/components/challenge/StreakFlame";
 
 // The 14-Day Challenge progress hero: a route that climbs from Day 1 to
 // a finish flag. Completed days are solid nodes on a glowing trail; a
@@ -21,15 +21,20 @@ import StreakFlame from "@/components/challenge/StreakFlame";
 // fade out before it would otherwise be clipped by the SVG's own edge -
 // on early days the trail's start sits close to the bottom-left corner,
 // which used to cut the glow off hard instead of letting it fade.
+//
+// The route is wide and low (three gentle rows rather than five tall
+// switchbacks), so the card stays short and today's session shows on
+// the first screen.
 const PATH_W = 300;
-const PATH_H = 360;
-const PAD = 40;
-const BLOOM_R = 38;
+const PATH_H = 168;
+const PAD = 34;
+const BLOOM_R = 32;
 const VB_W = PATH_W + PAD * 2;
 const VB_H = PATH_H + PAD * 2;
-const PATH_D = "M 40 330 Q 46 278 110 264 T 214 218 T 92 166 T 44 116 T 172 82 T 150 34";
+const PATH_D =
+  "M 12 150 C 80 158, 190 156, 252 140 C 302 126, 292 92, 236 88 C 170 84, 96 92, 46 80 C 4 70, 10 36, 64 30 C 130 22, 210 30, 286 12";
 
-export default function ChallengeClimb({ day = 1, totalDays = 14, completeDays = [], streak = 0 }) {
+export default function ChallengeClimb({ day = 1, totalDays = 14, completeDays = [], streak = 0, showTip = true }) {
   const trackRef = useRef(null);
   const [geom, setGeom] = useState(null); // { points, length, upto, samples }
 
@@ -58,25 +63,26 @@ export default function ChallengeClimb({ day = 1, totalDays = 14, completeDays =
 
   return (
     <div className="relative rounded-2xl bg-gradient-to-b from-[var(--panel-warm)] to-surface">
-      <div className="flex items-start justify-between gap-3 px-5 pt-5">
-        <div className="flex flex-col gap-1.5">
-          <div className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
-            Main Character Challenge
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-muted">Day</span>
-            <span className="font-display text-[52px] font-bold leading-[0.9] tracking-[-0.03em] text-fg tabular-nums">
-              <CountUp to={curDay} />
+      <div className="flex flex-col gap-3 px-5 pt-5">
+        <div className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
+          Main Character Challenge
+        </div>
+        <div className="flex items-end justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-muted">Day</span>
+              <span className="font-display text-[52px] font-bold leading-[0.9] tracking-[-0.03em] text-fg tabular-nums">
+                <CountUp to={curDay} />
+              </span>
+              <span className="text-[17px] font-semibold text-muted">of {totalDays}</span>
+            </div>
+            <span className="text-[13px] text-muted">
+              <span className="font-semibold text-fg tabular-nums">{doneCount}</span> of {totalDays} days complete
             </span>
-            <span className="text-[17px] font-semibold text-muted">of {totalDays}</span>
           </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
           <StreakFlame streak={streak} />
-          <span className="text-[13px] text-muted">
-            <span className="font-semibold text-fg tabular-nums">{doneCount}</span> of {totalDays} complete
-          </span>
         </div>
+        {showTip ? <FlameTip /> : null}
       </div>
 
       <svg
@@ -273,15 +279,18 @@ function Spark({ samples }) {
   );
 }
 
+// The "DAY n" tag sits just above today's node, centred on it (kept
+// inside the route's width), so it never covers the trail beside it.
 function Pill({ x, y, w, label }) {
-  const left = x > w / 2;
-  const px = left ? x - 58 : x + 13;
+  const width = 50;
+  const px = Math.min(Math.max(x - width / 2, -6), w - width + 6);
+  const py = y - 36;
   return (
     <g>
-      <rect x={px} y={y - 10} width="46" height="20" rx="10" fill="#ffb454" />
+      <rect x={px} y={py} width={width} height="20" rx="10" fill="#ffb454" />
       <text
-        x={px + 23}
-        y={y + 4}
+        x={px + width / 2}
+        y={py + 14}
         textAnchor="middle"
         fontSize="10"
         fontWeight="700"

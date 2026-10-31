@@ -26,6 +26,7 @@ export default function ChallengeHistory({ data, unit = "kg" }) {
       </header>
 
       <ChallengeClimb
+        showTip={false}
         day={data.challengeDay}
         totalDays={data.totalDays}
         completeDays={data.completeDays}
