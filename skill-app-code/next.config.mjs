@@ -39,7 +39,8 @@ function contentSecurityPolicy() {
     "frame-src https://www.loom.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
-    "form-action 'self'",
+    // The Keep training button's form ends up on Stripe's checkout.
+    "form-action 'self' https://checkout.stripe.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "object-src 'none'",

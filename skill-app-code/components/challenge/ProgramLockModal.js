@@ -1,6 +1,6 @@
 "use client";
 
-import { KEEP_TRAINING_URL } from "@/lib/links";
+import CheckoutButton from "@/components/membership/CheckoutButton";
 
 // Shown when someone reaches for a paid feature (starting or logging
 // another program): a challenge user mid-14-days, or a member whose
@@ -38,14 +38,9 @@ export default function ProgramLockModal({ onClose, mode = "challenge" }) {
         <h3 className="font-display text-[1.35rem] font-bold leading-tight tracking-[-0.02em] text-fg">{c.title}</h3>
         <p className="text-[15px] leading-relaxed text-muted">{c.body}</p>
         <div className="mt-3 flex flex-col gap-2.5">
-          <a
-            href={KEEP_TRAINING_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="btn-shine flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-3.5 text-[16px] font-semibold text-black transition-transform active:scale-[0.98]"
-          >
+          <CheckoutButton className="btn-shine flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-3.5 text-[16px] font-semibold text-black transition-transform active:scale-[0.98]">
             Continue for &pound;7.99/mo
-          </a>
+          </CheckoutButton>
           <button
             type="button"
             onClick={onClose}

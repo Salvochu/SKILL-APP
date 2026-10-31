@@ -9,7 +9,7 @@ import Explain from "@/components/Explain";
 import ConfirmModal from "@/components/ConfirmModal";
 import MesocycleComplete from "@/components/dashboard/MesocycleComplete";
 import { rirForWeek, isDeloadWeek } from "@/lib/mesocycle";
-import { KEEP_TRAINING_URL } from "@/lib/links";
+import CheckoutButton from "@/components/membership/CheckoutButton";
 
 const primaryBtn =
   "flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]";
@@ -290,14 +290,9 @@ export default function MesocyclePanel({
             </p>
           </div>
           <div className="flex flex-col gap-2.5">
-            <a
-              href={KEEP_TRAINING_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`btn-shine ${primaryBtn}`}
-            >
+            <CheckoutButton className={`btn-shine ${primaryBtn}`}>
               Keep training for &pound;7.99/mo
-            </a>
+            </CheckoutButton>
             <TapLink
               href="/work-with-me"
               className="flex w-full items-center justify-center rounded-2xl bg-accent-soft px-4 py-4 text-[17px] font-semibold text-accent transition-transform active:scale-[0.98]"

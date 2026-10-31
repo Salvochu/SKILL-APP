@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { KEEP_TRAINING_URL } from "@/lib/links";
+import CheckoutButton from "@/components/membership/CheckoutButton";
 
 // Shown in place of the logger when an active challenge user opens a
 // link to log a session from a program that is not the challenge. The
@@ -25,14 +25,9 @@ export default function ChallengeProgramLocked() {
           Your challenge stays free and everything you log is saved. This only
           gates what comes after the 14 days.
         </p>
-        <a
-          href={KEEP_TRAINING_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]"
-        >
+        <CheckoutButton className="flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]">
           Continue for &pound;7.99/mo
-        </a>
+        </CheckoutButton>
         <Link
           href="/challenge"
           className="flex w-full items-center justify-center rounded-2xl bg-fg/10 px-4 py-4 text-[17px] font-semibold text-fg transition-transform active:scale-[0.98]"

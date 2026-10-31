@@ -1,5 +1,5 @@
 import { verifyStripeSignature, jsonResponse } from "@/lib/stripe/webhook";
-import { lapseMembershipByEmail } from "@/lib/membership";
+import { lapseMembershipByEmail, activateFromCheckoutSession } from "@/lib/membership";
 
 // Stripe fires this the moment a subscription is actually, definitively
 // cancelled - whether that's someone using the Customer Portal, or Smart
@@ -28,6 +28,19 @@ export async function POST(request) {
     event = JSON.parse(rawBody);
   } catch {
     return jsonResponse({ error: "invalid JSON body" }, 400);
+  }
+
+  // Also the start of a membership: a paid checkout from the app's own
+  // "Keep training" button unlocks the account it was made for. (The
+  // destination's name predates this; one endpoint and one signing
+  // secret keep the Stripe setup simple.)
+  if (event.type === "checkout.session.completed") {
+    try {
+      return jsonResponse(await activateFromCheckoutSession(event.data?.object));
+    } catch (err) {
+      console.error("stripe checkout activation failed:", err?.message);
+      return jsonResponse({ error: "could not activate membership" }, 502);
+    }
   }
 
   if (event.type !== "customer.subscription.deleted") {

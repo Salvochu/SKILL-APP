@@ -1,5 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { findUserByEmail } from "@/lib/supabase/selectAll";
+import { tagGhlContact } from "@/lib/ghl";
+
+// The free challenge's mesocycle template (migration 0033).
+const CHALLENGE_TEMPLATE_ID = "main-character-14";
 
 // Flips a paid member to "lapsed" by email. Shared by both cancellation
 // paths - GHL's own workflow webhook (/api/ghl/cancel) and Stripe's
@@ -35,3 +39,59 @@ export async function lapseMembershipByEmail(email) {
 
   return { ok: true, membership: "lapsed" };
 }
+
+// A finished Stripe checkout from the app's own "Keep training" button
+// (app/(app)/membership/actions.js). Called by both the Stripe webhook
+// and the page Stripe returns people to, so it must be safe to run
+// twice. Anything else that completes a checkout on the same Stripe
+// account (the 1:1 coaching payment link) has no skill_user_id and is
+// left alone.
+export async function activateFromCheckoutSession(session) {
+  const userId = session?.metadata?.skill_user_id;
+  if (!userId || session.client_reference_id !== userId) {
+    return { ok: true, skipped: "not a SKILL app checkout" };
+  }
+  const paid = session.payment_status === "paid" || session.payment_status === "no_payment_required";
+  if (session.mode !== "subscription" || session.status !== "complete" || !paid) {
+    return { ok: true, skipped: "checkout not paid" };
+  }
+  const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+  return activatePaidMembership(userId, { customerId });
+}
+
+// Turns an account into a paying member: the profile flag, the challenge
+// run closed out (so the dashboard stops showing the Day 14 fork), the
+// billing flag that shows them "Manage membership", and the
+// "skill-member" tag in GHL that starts its welcome workflow. Leaves the
+// coach and existing members alone.
+export async function activatePaidMembership(userId, { customerId } = {}) {
+  const supabase = createAdminClient();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("membership, role")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (profile?.role === "coach") return { ok: true, skipped: "coach" };
+  if (profile?.membership === "member") return { ok: true, skipped: "already a member" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .upsert({ user_id: userId, membership: "member" }, { onConflict: "user_id" });
+  if (error) throw new Error(`could not update membership: ${error.message}`);
+
+  await supabase
+    .from("user_mesocycles")
+    .update({ status: "completed" })
+    .eq("user_id", userId)
+    .eq("template_id", CHALLENGE_TEMPLATE_ID)
+    .eq("status", "active");
+
+  const { data: updated } = await supabase.auth.admin.updateUserById(userId, {
+    app_metadata: { billing: "stripe", ...(customerId ? { stripe_customer_id: customerId } : {}) },
+  });
+  await tagGhlContact(updated?.user?.email, "skill-member");
+
+  return { ok: true, membership: "member" };
+}
+

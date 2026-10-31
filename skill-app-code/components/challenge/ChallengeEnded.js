@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getJourney } from "@/lib/data/journey";
-import { KEEP_TRAINING_URL } from "@/lib/links";
+import CheckoutButton from "@/components/membership/CheckoutButton";
 import { signOut } from "@/app/actions";
 
 // The whole app once a challenge account is past its 14 days + grace
@@ -46,14 +46,9 @@ export default async function ChallengeEnded() {
           Keep training and everything stays with you. Your streak, your level, your history, and your
           plan rolls into the next block.
         </p>
-        <a
-          href={KEEP_TRAINING_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-shine flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]"
-        >
+        <CheckoutButton className="btn-shine flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]">
           Keep training for &pound;7.99/mo
-        </a>
+        </CheckoutButton>
         <Link
           href="/work-with-me"
           className="flex w-full items-center justify-center rounded-2xl bg-accent-soft px-4 py-4 text-[17px] font-semibold text-accent transition-transform active:scale-[0.98]"

@@ -56,3 +56,41 @@ export async function syncProfileToGHL({ email, fullName, phone, age, country, f
     console.error("GHL profile sync failed:", err.message);
   }
 }
+
+// Adds a tag to the GHL contact with this email (creating the contact if
+// GHL doesn't have it yet). A GHL workflow triggered on "Tag added" can
+// then send its emails, e.g. "skill-member" after someone pays in the
+// app. Best effort and inert without the same two env vars as above.
+export async function tagGhlContact(email, tag) {
+  const apiKey = process.env.GHL_CONTACTS_API_KEY;
+  const locationId = process.env.GHL_LOCATION_ID;
+  if (!apiKey || !locationId || !email || !tag) return;
+
+  const headers = {
+    Authorization: `Bearer ${apiKey}`,
+    Version: "2021-07-28",
+    "Content-Type": "application/json",
+  };
+  try {
+    const res = await fetch("https://services.leadconnectorhq.com/contacts/upsert", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ locationId, email }),
+    });
+    const data = await res.json().catch(() => ({}));
+    const contactId = data?.contact?.id;
+    if (!res.ok || !contactId) {
+      console.error("GHL tag: contact lookup failed:", res.status);
+      return;
+    }
+    const tagRes = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/tags`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ tags: [tag] }),
+    });
+    if (!tagRes.ok) console.error("GHL tag failed:", tagRes.status, await tagRes.text().catch(() => ""));
+  } catch (err) {
+    console.error("GHL tag failed:", err.message);
+  }
+}
+

@@ -3,7 +3,8 @@ import { getJourney } from "@/lib/data/journey";
 import { getMuscleTrainingTotals } from "@/lib/data/volume";
 import { getUnitPreference } from "@/lib/data/profile";
 import { fromKg } from "@/lib/units";
-import { KEEP_TRAINING_URL, BOOKING_URL } from "@/lib/links";
+import { BOOKING_URL } from "@/lib/links";
+import CheckoutButton from "@/components/membership/CheckoutButton";
 import { signOut } from "@/app/actions";
 
 // The whole app for a lapsed paid membership (subscription ended, or
@@ -88,14 +89,9 @@ export default async function MembershipPaused() {
         ) : null}
 
         <div className="relative mt-6 flex flex-col gap-2.5">
-          <a
-            href={KEEP_TRAINING_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-shine flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]"
-          >
+          <CheckoutButton className="btn-shine flex w-full items-center justify-center rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]">
             Keep training for &pound;7.99/mo
-          </a>
+          </CheckoutButton>
           <a
             href={BOOKING_URL}
             target="_blank"
