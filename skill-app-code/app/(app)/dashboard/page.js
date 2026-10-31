@@ -35,7 +35,7 @@ export default function DashboardPage() {
         <MesocycleSection />
       </Suspense>
 
-      {/* Same tinted tiles as these two rows in the Menu. */}
+      {/* Same tinted tiles and icons as these two rows in the Menu. */}
       <div className="grid grid-cols-2 gap-3">
         <Suspense fallback={<BodyLink />}>
           <BodyTile />
@@ -158,16 +158,17 @@ function IconChevron(props) {
 function IconChart(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M4 19V5M4 19h16" />
-      <path d="M8 16v-4M13 16V8M18 16v-6" />
+      <path d="M4 4v16h16" />
+      <path d="m7 14 3.5-4 3 2.5L20 6" />
     </svg>
   );
 }
 function IconBody(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <circle cx="12" cy="5" r="2.5" />
-      <path d="M12 9v7M12 12l-4 2M12 12l4 2M12 16l-2.5 5M12 16l2.5 5" />
+      <rect x="4" y="4" width="16" height="16" rx="4" />
+      <path d="M8.5 10a3.5 3.5 0 0 1 7 0" />
+      <path d="m12 10 1.5-2" />
     </svg>
   );
 }

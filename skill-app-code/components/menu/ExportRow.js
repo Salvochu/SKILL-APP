@@ -37,7 +37,7 @@ export default function ExportRow() {
         ? "Downloaded. Check your files."
         : state === "error"
           ? "Could not export. Try again."
-          : "Download every set you have logged as a CSV";
+          : "Every set you have logged, as a CSV";
 
   return (
     <button

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { MUSCLE_ORDER, sortEquipment, muscleKey, musclesInGroup } from "@/lib/exercises";
 import ExerciseSheet from "@/components/library/ExerciseSheet";
+import MusclePill from "@/components/MusclePill";
 
 // Every muscle an exercise touches, primary tags first. Falls back to the
 // parent group when a row has no tags yet.
@@ -89,8 +90,8 @@ export default function LibraryBrowser({ exercises, noun = "exercise", canLog = 
         <ul className="-mt-1 overflow-hidden rounded-2xl bg-surface [&>li:first-child_.row-sep]:border-transparent">
           {filtered.map((e) => {
             const primary = tagsFor(e).filter((m) => m.role === "primary").slice(0, 3);
-            const lead = primary[0]?.name ?? e.muscle;
-            const meta = [primary.map((m) => m.name).join(", "), e.equipment].filter(Boolean).join(" · ");
+            const pills = primary.length ? primary.slice(0, 2).map((m) => m.name) : e.muscle ? [e.muscle] : [];
+            const meta = pills.length || e.equipment;
             return (
               <li key={e.id}>
                 <button
@@ -100,17 +101,13 @@ export default function LibraryBrowser({ exercises, noun = "exercise", canLog = 
                 >
                   <span className="row-sep flex min-w-0 flex-1 items-center gap-3 border-t border-border/70 py-3 pr-4">
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-[16px] font-semibold text-fg">{e.name}</span>
+                      <span className="line-clamp-2 text-[16px] font-semibold leading-snug text-fg">{e.name}</span>
                       {meta ? (
-                        <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[13px] text-dim">
-                          {lead ? (
-                            <span
-                              aria-hidden="true"
-                              className="h-2 w-2 shrink-0 rounded-full"
-                              style={{ backgroundColor: `var(--muscle-${muscleKey(lead)})` }}
-                            />
-                          ) : null}
-                          <span className="truncate">{meta}</span>
+                        <span className="mt-1 flex min-w-0 items-center gap-1.5">
+                          {pills.map((m) => (
+                            <MusclePill key={m} muscle={m} />
+                          ))}
+                          {e.equipment ? <span className="ml-0.5 truncate text-[13px] text-dim">{e.equipment}</span> : null}
                         </span>
                       ) : null}
                       {e.instructions ? (

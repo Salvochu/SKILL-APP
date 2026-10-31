@@ -146,9 +146,9 @@ export default function Calendar({ sessions, bodyDates, unit = "kg" }) {
 
       <section className="flex flex-col gap-2">
         <h2 className="px-4 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">
-          {new Date(`${selected}T00:00:00`).toLocaleDateString("en-US", {
-            weekday: "long", day: "numeric", month: "long",
-          })}
+          {new Date(`${selected}T00:00:00`)
+            .toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })
+            .replace(",", "")}
         </h2>
         {selectedSessions.length === 0 ? (
           <p className="rounded-2xl bg-surface px-4 py-3.5 text-[15px] text-muted">

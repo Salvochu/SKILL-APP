@@ -7,6 +7,7 @@ import LoggedAt from "@/components/LoggedAt";
 import { deleteAllWorkouts } from "@/app/(app)/workouts/actions";
 import { shortDate } from "@/components/progress/chartkit";
 import { useHydrated } from "@/components/useHydrated";
+import EmptyState from "@/components/ui/EmptyState";
 
 // Every logged workout, grouped by training week, with a type-to-confirm
 // "delete all" at the bottom. Used raw on the /history page and inside
@@ -40,7 +41,14 @@ export default function HistoryList({ sessions, onNavigate }) {
   }
 
   if (groups.length === 0) {
-    return <p className="rounded-2xl bg-surface py-10 text-center text-[15px] text-muted">No workouts yet.</p>;
+    return (
+      <EmptyState
+        icon={<IconClock className="h-6 w-6" />}
+        title="No workouts yet"
+        body="Every workout you finish lands here, newest first."
+        action={{ href: "/splits", label: "Start a workout" }}
+      />
+    );
   }
 
   return (
@@ -181,4 +189,14 @@ function groupByWeek(sessions, local) {
     groups.get(key).sessions.push(s);
   }
   return [...groups.entries()].sort((a, b) => b[0] - a[0]).map(([, v]) => v);
+}
+
+function IconClock(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M3.5 12a8.5 8.5 0 1 0 2.5-6" />
+      <path d="M3.5 4.5V8H7" />
+      <path d="M12 7.5V12l3 2" />
+    </svg>
+  );
 }

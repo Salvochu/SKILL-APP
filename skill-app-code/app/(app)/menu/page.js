@@ -13,10 +13,10 @@ const TRAINING = [
   { href: "/progress", label: "Progress", body: "Strength and volume over time", icon: IconProgress, tint: "#1faa77" },
   { href: "/history", label: "Workout history", body: "Every session you have logged", icon: IconHistory, tint: "#cf8a1f" },
   { href: "/calendar", label: "Calendar", body: "Every training day, at a glance", icon: IconCalendar, tint: "#3987e5" },
-  { href: "/body", label: "Body measurements", body: "Weight, body fat and photos", icon: IconBody, tint: "#d55181" },
+  { href: "/body", label: "Body", body: "Weight, measurements and photos", icon: IconBody, tint: "#d55181" },
 ];
 const LEARN = [
-  { href: "/library", label: "Library", body: "Exercises, stretching and lessons", icon: IconLibrary, tint: "#9085e9" },
+  { href: "/library", label: "Library", body: "Exercises and stretches, with videos", icon: IconLibrary, tint: "#9085e9" },
 ];
 
 const SUPPORT_EMAIL = "info@skfitness.uk";
@@ -228,7 +228,9 @@ function IconCalendar(props) {
 function IconBody(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M4 7h16M4 7v3M20 7v3M4 17h16M4 17v-3M20 17v-3M9 12h6" />
+      <rect x="4" y="4" width="16" height="16" rx="4" />
+      <path d="M8.5 10a3.5 3.5 0 0 1 7 0" />
+      <path d="m12 10 1.5-2" />
     </svg>
   );
 }

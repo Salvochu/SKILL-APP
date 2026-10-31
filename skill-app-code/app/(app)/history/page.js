@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getAllWorkoutSessions } from "@/lib/data/workouts";
 import HistoryList from "@/components/history/HistoryList";
+import BackLink from "@/components/ui/BackLink";
 
 export const metadata = { title: "Workout History" };
 
@@ -8,6 +9,7 @@ export default function HistoryPage() {
   return (
     <div className="flex flex-col gap-6 py-2">
       <header className="flex flex-col gap-1">
+        <BackLink />
         <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Workout History</h1>
         <p className="text-[15px] text-muted">Every session you have logged.</p>
       </header>

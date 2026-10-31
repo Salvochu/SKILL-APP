@@ -7,16 +7,20 @@ import { muscleKey } from "@/lib/exercises";
 // (assisting) muscle tags.
 export default function MusclePill({ muscle, subtle = false, className = "" }) {
   const key = muscleKey(muscle);
+  // "Lower back (spinal erectors)" reads as "Lower back" in a chip; the
+  // full name stays available on hover and to screen readers.
+  const label = String(muscle ?? "").replace(/\s*\(.*\)\s*$/, "");
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${className}`}
+      title={label !== muscle ? muscle : undefined}
+      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[12px] font-semibold leading-none ${className}`}
       style={{
         color: `var(--muscle-${key})`,
         backgroundColor: `color-mix(in srgb, var(--muscle-${key}) 15%, transparent)`,
         opacity: subtle ? 0.6 : 1,
       }}
     >
-      {muscle}
+      {label}
     </span>
   );
 }

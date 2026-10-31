@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SwipeRow from "@/components/log/SwipeRow";
 import { Group } from "@/components/ui/Grouped";
-import { muscleKey } from "@/lib/exercises";
 import ConfirmModal from "@/components/ConfirmModal";
 import ExercisePicker from "@/components/log/ExercisePicker";
 import ReorderSheet from "@/components/log/ReorderSheet";
+import MusclePill from "@/components/MusclePill";
 import {
   createMyWorkout,
   updateMyWorkout,
@@ -325,16 +325,9 @@ function ExerciseRow({ row, index, onPatch }) {
         </span>
         <div className="min-w-0 flex-1">
           <span className="block truncate text-[16px] font-semibold text-fg">{e.name}</span>
-          <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-dim">
-            <span
-              aria-hidden="true"
-              className="h-2 w-2 shrink-0 rounded-full"
-              style={{ backgroundColor: `var(--muscle-${muscleKey(e.muscle)})` }}
-            />
-            <span className="truncate">
-              {e.muscle}
-              {e.equipment ? ` · ${e.equipment}` : ""}
-            </span>
+          <span className="mt-1 flex min-w-0 items-center gap-2">
+            {e.muscle ? <MusclePill muscle={e.muscle} /> : null}
+            {e.equipment ? <span className="truncate text-[13px] text-dim">{e.equipment}</span> : null}
           </span>
         </div>
       </div>

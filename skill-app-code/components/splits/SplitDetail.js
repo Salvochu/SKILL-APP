@@ -7,7 +7,8 @@ import VideoModal from "@/components/log/VideoModal";
 import StatPill from "@/components/ui/StatPill";
 import WeekGrid from "@/components/splits/WeekGrid";
 import { weekLayout, cleanFocus } from "@/lib/splitWeek";
-import { sortVariants, muscleKey } from "@/lib/exercises";
+import { sortVariants } from "@/lib/exercises";
+import MusclePill from "@/components/MusclePill";
 
 // The body of a split's own page. For a multi-day split: the example
 // week, and below it the session for whichever day is tapped. For a
@@ -55,6 +56,7 @@ export default function SplitDetail({ split, template, activeProgram, advanced =
         <div className="flex flex-col gap-4">
           {days.map((day) => (
             <DaySession
+              bare={days.length === 1 && day.template.name === split.name}
               key={day.id}
               day={day}
               split={split}
@@ -82,7 +84,7 @@ export default function SplitDetail({ split, template, activeProgram, advanced =
   );
 }
 
-function DaySession({ day, split, eyebrow, programWeeks, onStartProgram }) {
+function DaySession({ day, split, eyebrow, programWeeks, onStartProgram, bare = false }) {
   const variants = sortVariants(Object.keys(day.variants));
   const [variant, setVariant] = useState(variants[0]);
   const [videoFor, setVideoFor] = useState(null);
@@ -94,6 +96,7 @@ function DaySession({ day, split, eyebrow, programWeeks, onStartProgram }) {
   // (like an iOS inset list), everything else sits on the page itself.
   return (
     <section className="flex flex-col gap-4">
+      {bare ? null : (
       <div className="flex flex-col gap-1">
         {eyebrow ? (
           <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">{eyebrow}</span>
@@ -105,6 +108,7 @@ function DaySession({ day, split, eyebrow, programWeeks, onStartProgram }) {
           <p className="mt-1 text-[15px] leading-relaxed text-muted">{day.template.description}</p>
         ) : null}
       </div>
+      )}
 
       {variants.length > 1 ? (
         <div role="tablist" aria-label="Equipment" className="flex rounded-[10px] bg-surface-2 p-0.5">
@@ -145,18 +149,11 @@ function DaySession({ day, split, eyebrow, programWeeks, onStartProgram }) {
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[16px] font-semibold text-fg">{item.exercise.name}</span>
-                    <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-dim">
-                      <span
-                        aria-hidden="true"
-                        className="h-2 w-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: `var(--muscle-${muscleKey(item.exercise.muscle)})` }}
-                      />
-                      <span className="truncate">
-                        {item.exercise.muscle}
-                        {item.exercise.equipment ? ` · ${item.exercise.equipment}` : ""}
-                      </span>
-                    </span>
+                    {item.exercise.equipment ? (
+                      <span className="mt-0.5 block truncate text-[13px] text-dim">{item.exercise.equipment}</span>
+                    ) : null}
                     <span className="mt-2 flex flex-wrap gap-1.5">
+                      <MusclePill muscle={item.exercise.muscle} />
                       <StatPill label="Sets" value={item.sets} />
                       <StatPill label="Reps" value={item.reps} />
                     </span>

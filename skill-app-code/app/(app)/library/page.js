@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getExercises, getStretches } from "@/lib/data/exercises";
 import { getEducationVideos } from "@/lib/data/education";
+import BackLink from "@/components/ui/BackLink";
 
 export const metadata = { title: "Library" };
 
@@ -9,8 +10,9 @@ export default function LibraryPage() {
   return (
     <div className="flex flex-col gap-6 py-2">
       <header className="flex flex-col gap-1">
+        <BackLink />
         <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Library</h1>
-        <p className="text-[15px] leading-relaxed text-muted">Movements, mobility work and short lessons, each with a video.</p>
+        <p className="text-[15px] leading-relaxed text-muted">Every exercise and stretch, each with a video.</p>
       </header>
 
       <div className="overflow-hidden rounded-2xl bg-surface [&>:first-child_.lib-sep]:border-transparent">
@@ -38,17 +40,11 @@ export default function LibraryPage() {
           </Suspense>
         </SectionRow>
 
-        <SectionRow
-          href="/library/education"
-          title="Education Library"
-          body="Short videos on how to train, progress and get the most from each session."
-          icon={IconPlay}
-          tint="#9085e9"
-        >
-          <Suspense fallback={<CountSkeleton />}>
-            <EducationCount />
-          </Suspense>
-        </SectionRow>
+        {/* Only once there is something in it: an empty library row reads
+            as unfinished. */}
+        <Suspense fallback={null}>
+          <EducationRow />
+        </Suspense>
       </div>
     </div>
   );
@@ -62,9 +58,20 @@ async function StretchCount() {
   const rows = await getStretches();
   return <Count n={rows.length} one="stretch" many="stretches" />;
 }
-async function EducationCount() {
+async function EducationRow() {
   const rows = await getEducationVideos();
-  return <Count n={rows.length} one="video" many="videos" />;
+  if (rows.length === 0) return null;
+  return (
+    <SectionRow
+      href="/library/education"
+      title="Education Library"
+      body="Short videos on how to train, progress and get the most from each session."
+      icon={IconPlay}
+      tint="#9085e9"
+    >
+      <Count n={rows.length} one="video" many="videos" />
+    </SectionRow>
+  );
 }
 
 function Count({ n, one, many }) {

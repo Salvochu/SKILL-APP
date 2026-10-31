@@ -8,7 +8,7 @@ import { getJourney } from "@/lib/data/journey";
 import { getWorkoutSummary } from "@/lib/data/workouts";
 import { getActiveMesocycle } from "@/lib/data/mesocycles";
 import { getUnitPreference, getBeginnerContext } from "@/lib/data/profile";
-import { fromKg, unitLabel } from "@/lib/units";
+import { formatVolumeShort, fromKg, unitLabel } from "@/lib/units";
 import { parseRange, resolveMesoRange, MESO_TOKEN } from "@/lib/dateRange";
 import { compact, shortDate } from "@/components/progress/chartkit";
 import BarChart from "@/components/progress/BarChart";
@@ -20,6 +20,8 @@ import LevelCard from "@/components/progress/LevelCard";
 import CollapsibleCard from "@/components/progress/CollapsibleCard";
 import RangeFilter from "@/components/progress/RangeFilter";
 import ShareProgress from "@/components/progress/ShareProgress";
+import BackLink from "@/components/ui/BackLink";
+import EmptyState from "@/components/ui/EmptyState";
 
 export const metadata = { title: "Progress" };
 
@@ -27,6 +29,7 @@ export default function ProgressPage({ searchParams }) {
   return (
     <div className="flex flex-col gap-6 py-2">
       <header className="flex flex-col gap-2">
+        <BackLink />
         <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Progress</h1>
         <Suspense fallback={<div className="h-5 w-60 rounded-full skeleton bg-surface-2" />}>
           <LifetimeStrip />
@@ -43,7 +46,7 @@ export default function ProgressPage({ searchParams }) {
 // page title (they used to sit inside the Level card).
 async function LifetimeStrip() {
   const [summary, unit] = await Promise.all([getWorkoutSummary(), getUnitPreference()]);
-  const volK = (fromKg(summary.volumeKg, unit) / 1000).toFixed(1);
+  const volume = formatVolumeShort(fromKg(summary.volumeKg, unit));
   const h = Math.floor(summary.minutes / 60);
   const m = summary.minutes % 60;
   return (
@@ -54,7 +57,7 @@ async function LifetimeStrip() {
       </span>
       <span className="text-dim" aria-hidden="true">·</span>
       <span>
-        <span className="tabular font-semibold text-fg">{volK}k</span> {unitLabel(unit)} lifted
+        <span className="tabular font-semibold text-fg">{volume}</span> {unitLabel(unit)} lifted
       </span>
       <span className="text-dim" aria-hidden="true">·</span>
       <span>
@@ -90,17 +93,17 @@ async function ProgressBody({ searchParams }) {
     ]);
   const showStrengthCheck = beginner.showStrengthCheck;
 
-  if (rawData.workouts === 0) {
+  // Only a brand-new account gets the empty screen. Someone with history
+  // whose chosen range happens to be empty still sees their level and
+  // lifts, and the range filter to pick a different window.
+  if (lifetime.workouts === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl bg-surface px-6 py-10 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
-          <IconChart className="h-6 w-6" />
-        </span>
-        <div className="flex flex-col gap-1">
-          <p className="text-[17px] font-semibold text-fg">No data yet</p>
-          <p className="text-[15px] text-muted">Log a workout to start tracking progress.</p>
-        </div>
-      </div>
+      <EmptyState
+        icon={<IconChart className="h-6 w-6" />}
+        title="Nothing to chart yet"
+        body="Your level, strength and volume show up here after your first workout."
+        action={{ href: "/splits", label: "Start a workout" }}
+      />
     );
   }
 
@@ -126,12 +129,12 @@ async function ProgressBody({ searchParams }) {
 
   // The share card is a lifetime identity card (level, rank, totals,
   // strongest lifts), not a snapshot of the current filter range.
-  const lifetimeVolK = (fromKg(lifetime.volumeKg, unit) / 1000).toFixed(1);
+  const lifetimeVolume = formatVolumeShort(fromKg(lifetime.volumeKg, unit));
   const lh = Math.floor(lifetime.minutes / 60);
   const lm = lifetime.minutes % 60;
   const shareStats = [
     ["Workouts", String(lifetime.workouts)],
-    [`${U} lifted`, `${lifetimeVolK}k`],
+    [`${U} lifted`, lifetimeVolume],
     ["Trained", lh > 0 ? `${lh}h` : `${lm}m`],
   ];
   const shareMuscles = muscleTotals
@@ -144,8 +147,8 @@ async function ProgressBody({ searchParams }) {
   // The trend charts (per-session volume, estimated 1RM over time,
   // compare-two-lifts) need a few weeks of data to be worth reading and
   // lean on concepts a new beginner has not met yet.
-  const hasTrends =
-    !beginner.simplified && (strongExercises.length > 0 || data.sessionVolumes.length > 0);
+  const hasTrends = !beginner.simplified;
+  const rangeEmpty = data.sessionVolumes.length === 0 && strongExercises.length === 0;
 
   // The share card is all about the level, so it lives in that card.
   const share = (
@@ -221,6 +224,11 @@ async function ProgressBody({ searchParams }) {
             </p>
           </div>
 
+          {rangeEmpty ? (
+            <p className="text-[15px] text-muted">No workouts in this range. Pick a longer one above.</p>
+          ) : null}
+
+          {data.sessionVolumes.length > 0 ? (
           <div className="flex flex-col gap-3">
             <ChartTitle title="Training volume" caption={`Total ${U} lifted per session`} />
             <BarChart data={data.sessionVolumes} unit={U} />
@@ -232,6 +240,7 @@ async function ProgressBody({ searchParams }) {
               }))}
             />
           </div>
+          ) : null}
 
           {strongExercises.length > 0 ? (
             <div className="flex flex-col gap-3 border-t border-border/70 pt-5">

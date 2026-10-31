@@ -47,6 +47,12 @@ async function Body({ params }) {
   const template = beginner.isBeginner
     ? null
     : templates.find((t) => t.split?.id === split.id) ?? null;
+  // A one-session split (Full Body) is its own only day: say it once,
+  // with the day's own description, rather than a split header and then
+  // a day header with the same name underneath it.
+  const soleDay =
+    split.days?.length === 1 && split.days[0].template?.name === split.name ? split.days[0] : null;
+  const intro = soleDay?.template?.description || split.description;
   const activeProgram =
     active && !active.isComplete
       ? { splitName: active.splitName, week: active.week, weeks: active.weeks }
@@ -68,9 +74,7 @@ async function Body({ params }) {
         {split.cadence ? (
           <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">{split.cadence}</span>
         ) : null}
-        {split.description ? (
-          <p className="mt-1 text-[15px] leading-relaxed text-muted">{split.description}</p>
-        ) : null}
+        {intro ? <p className="mt-1 text-[15px] leading-relaxed text-muted">{intro}</p> : null}
       </div>
 
       <SplitDetail

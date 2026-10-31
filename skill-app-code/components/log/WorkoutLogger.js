@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveWorkout, getPostSaveSummary, rateWorkout } from "@/app/(app)/log/actions";
 import { saveNotificationPrefs } from "@/app/(app)/settings/actions";
@@ -26,7 +26,18 @@ import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
 import { buildShareImageBlob } from "@/lib/shareCard";
 import { toKg, fromKg, formatWeight } from "@/lib/units";
 import { tierColorFor } from "@/lib/strength";
-import { loomEmbedUrl, isTimeBasedExercise, muscleKey } from "@/lib/exercises";
+import { loomEmbedUrl, isTimeBasedExercise } from "@/lib/exercises";
+import MusclePill from "@/components/MusclePill";
+
+// A free session (no plan behind it) is named for the time of day, the
+// way Strong and Hevy do it, so history isn't a column of "Workout".
+// Read from the phone's clock, so only ever called in the browser.
+function namedForNow(title) {
+  if (title !== "Workout") return title;
+  const h = new Date().getHours();
+  const part = h < 5 ? "Night" : h < 12 ? "Morning" : h < 17 ? "Afternoon" : h < 21 ? "Evening" : "Night";
+  return `${part} workout`;
+}
 
 // Rest-timer start lengths offered in the logger's settings row. The
 // full list also lives in the Settings screen.
@@ -138,6 +149,9 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [showRest, setShowRest] = useState(false);
   const [restTimerOn, setRestTimerOn] = useState(restTimer);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // The bottom workout bar, full or shrunk to a clock pill. Remembered on
+  // this device, since it is a matter of taste rather than per workout.
+  const [barMinimised, setBarMinimised] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
@@ -148,6 +162,19 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [effort, setEffort] = useState(null);
   const [savingEffort, setSavingEffort] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
+  // Name a free session before it first paints (resuming a draft below
+  // puts the draft's own title back).
+  useLayoutEffect(() => {
+    function nameFreeSession() {
+      const named = namedForNow(initial.title);
+      if (named === initial.title) return;
+      openingTitle.current = named;
+      setTitle(named);
+    }
+    nameFreeSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // The large title scrolling under the top bar swaps in the bar's small
   // title, the way an iOS navigation bar collapses.
   const [titleTucked, setTitleTucked] = useState(false);
@@ -156,12 +183,33 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   // What this screen opened with, to tell "tapped in and straight back
   // out" (nothing to keep) from a workout that is actually under way.
   const openingRows = useRef(rows);
+  const openingTitle = useRef(initial.title);
   const resumed = useRef(false);
   const shownBefore = useRef(false);
 
   // Keep the screen awake while a workout is being logged, so the phone
   // does not auto-lock between sets. Released once it is finished.
   useWakeLock(!completedSummary && !savedOffline);
+
+  useEffect(() => {
+    function readBarPreference() {
+      try {
+        if (localStorage.getItem("skill.log.barMinimised") === "1") setBarMinimised(true);
+      } catch {
+        /* private mode: start full */
+      }
+    }
+    readBarPreference();
+  }, []);
+
+  function setBarMinimisedSaved(next) {
+    setBarMinimised(next);
+    try {
+      localStorage.setItem("skill.log.barMinimised", next ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }
 
   useEffect(() => {
     const el = titleRef.current;
@@ -189,7 +237,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       openingRows.current = fresh;
       resumed.current = false;
       setRows(fresh);
-      setTitle(initial.title);
+      openingTitle.current = namedForNow(initial.title);
+      setTitle(openingTitle.current);
       setDate(initial.date);
       setStartedAt(Date.now());
       setNow(Date.now());
@@ -463,7 +512,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     const untouched =
       !resumed.current &&
       rows === openingRows.current &&
-      title === initial.title &&
+      title === openingTitle.current &&
       Date.now() - startedAt < 5 * 60 * 1000;
     if (untouched) {
       setFinished(true);
@@ -521,7 +570,12 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     {/* Focus mode slides the app's own bars away while a workout is on
         screen: this screen is the whole phone. */}
     <FocusMode />
-    <div ref={rootRef} className={`flex flex-col gap-6 pb-2 ${FOCUS_LAYOUT}`}>
+    {/* At least a screen tall, so with only a few exercises the workout
+        bar still sits at the bottom instead of right under the list. */}
+    <div
+      ref={rootRef}
+      className={`flex min-h-[calc(100dvh_-_max(2.75rem,env(safe-area-inset-bottom)_+_0.75rem))] flex-col gap-6 pb-2 md:min-h-[calc(100dvh_-_1.5rem)] ${FOCUS_LAYOUT}`}
+    >
       {/* iOS navigation bar: back and settings stay in reach however far
           down the workout you are. The large title below scrolls under
           it, and the bar turns to glass and takes a small copy of the
@@ -770,40 +824,67 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
 
       {/* The workout bar sits exactly where the tab bar was (same
           capsule, same height off the bottom), so it reads as the tab bar
-          turning into the workout's controls. */}
-      <div className="sticky bottom-[max(2.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] z-40 md:bottom-6">
-        <div className="glass mx-auto flex max-w-md items-center gap-2.5 rounded-full p-1.5">
+          turning into the workout's controls. The chevron shrinks it to
+          a small clock pill so it covers less of the sets; tapping the
+          pill brings it back. */}
+      <div className="sticky bottom-[max(2.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] z-40 mt-auto flex justify-center md:bottom-6">
+        {barMinimised ? (
           <button
+            key="pill"
             type="button"
-            onClick={togglePause}
-            disabled={finished}
-            aria-label={pausedAt ? "Resume timer" : "Pause timer"}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90 disabled:opacity-50"
+            onClick={() => setBarMinimisedSaved(false)}
+            aria-label="Show the workout bar"
+            className="glass pop-in flex items-center gap-2 rounded-full py-2.5 pl-4 pr-3.5 transition-transform active:scale-[0.96]"
           >
-            {pausedAt ? <IconPlay className="ml-0.5 h-4 w-4" /> : <IconPause className="h-4 w-4" />}
+            <span
+              aria-hidden="true"
+              className={`h-2 w-2 shrink-0 rounded-full ${pausedAt || finished ? "bg-dim" : "animate-pulse bg-accent"}`}
+            />
+            <span className="text-[15px] font-semibold tabular-nums text-fg">{formatElapsed(elapsedSeconds)}</span>
+            <IconChevron className="h-4 w-4 shrink-0 -rotate-90 text-dim" />
           </button>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="flex items-baseline gap-1.5">
-              <span className="text-[17px] font-semibold leading-tight tabular-nums tracking-[-0.01em] text-fg">
-                {formatElapsed(elapsedSeconds)}
+        ) : (
+          <div key="bar" className="glass pop-in flex w-full max-w-md items-center gap-2 rounded-full p-1.5">
+            <button
+              type="button"
+              onClick={togglePause}
+              disabled={finished}
+              aria-label={pausedAt ? "Resume timer" : "Pause timer"}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90 disabled:opacity-50"
+            >
+              {pausedAt ? <IconPlay className="ml-0.5 h-4 w-4" /> : <IconPause className="h-4 w-4" />}
+            </button>
+            <div className="flex min-w-0 flex-1 flex-col pl-0.5">
+              <span className="flex items-baseline gap-1.5">
+                <span className="text-[17px] font-semibold leading-tight tabular-nums tracking-[-0.01em] text-fg">
+                  {formatElapsed(elapsedSeconds)}
+                </span>
+                {pausedAt && !finished ? (
+                  <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-dim">Paused</span>
+                ) : null}
               </span>
-              {pausedAt && !finished ? (
-                <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-dim">Paused</span>
-              ) : null}
-            </span>
-            <span className="truncate text-[13px] leading-tight tabular-nums text-muted">
-              {Math.round(totalVolume).toLocaleString("en-GB")} {U} · {totalSets} {totalSets === 1 ? "set" : "sets"}
-            </span>
+              <span className="truncate text-[13px] leading-tight tabular-nums text-muted">
+                {Math.round(totalVolume).toLocaleString("en-GB")} {U} · {totalSets} {totalSets === 1 ? "set" : "sets"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setBarMinimisedSaved(true)}
+              aria-label="Minimise the workout bar"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-dim transition-[transform,color] hover:text-fg active:scale-90"
+            >
+              <IconChevron className="h-[18px] w-[18px] rotate-90" />
+            </button>
+            <button
+              type="button"
+              onClick={onFinish}
+              disabled={saving || savedOffline}
+              className="h-11 shrink-0 rounded-full bg-accent px-5 text-[15px] font-semibold text-black transition-[transform,background-color] hover:bg-accent-2 active:scale-[0.96] disabled:opacity-60"
+            >
+              {savedOffline ? "Saved" : saving ? "Saving..." : "Finish"}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onFinish}
-            disabled={saving || savedOffline}
-            className="h-11 shrink-0 rounded-full bg-accent px-5 text-[15px] font-semibold text-black transition-[transform,background-color] hover:bg-accent-2 active:scale-[0.96] disabled:opacity-60"
-          >
-            {savedOffline ? "Saved" : saving ? "Saving..." : "Finish"}
-          </button>
-        </div>
+        )}
       </div>
 
       {finishConfirm ? (
@@ -1403,14 +1484,7 @@ function ExerciseCard({ row, showTips = false, unit = "kg", last, rirTarget = nu
         <div className="min-w-0 flex-1">
           <h3 className="font-sans text-[17px] font-semibold leading-snug tracking-[-0.01em] text-fg">{exercise.name}</h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-            <span className="flex items-center gap-1.5 text-[13px] text-dim">
-              <span
-                aria-hidden="true"
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: `var(--muscle-${muscleKey(exercise.muscle)})` }}
-              />
-              {exercise.muscle}
-            </span>
+            <MusclePill muscle={exercise.muscle} />
             {row.targetSets ? <StatPill label="Sets" value={row.targetSets} /> : null}
             {row.targetReps ? <StatPill label={timeBased ? "Time" : "Reps"} value={row.targetReps} /> : null}
             {rirTarget != null && !timeBased ? <StatPill label="RIR" value={rirTarget} tone="accent" /> : null}

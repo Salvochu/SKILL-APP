@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getEducationVideos } from "@/lib/data/education";
 import EducationList from "@/components/library/EducationList";
+import EmptyState from "@/components/ui/EmptyState";
 
 export const metadata = { title: "Education Library" };
 
@@ -27,9 +28,11 @@ async function VideoList() {
   const videos = await getEducationVideos();
   if (videos.length === 0) {
     return (
-      <p className="rounded-2xl bg-surface p-8 text-center text-[15px] text-muted">
-        Lessons are being added. Check back soon.
-      </p>
+      <EmptyState
+        icon={<IconPlayCircle className="h-6 w-6" />}
+        title="Lessons on the way"
+        body="Short videos on training and progress land here as they're recorded."
+      />
     );
   }
   return <EducationList videos={videos} />;
@@ -52,5 +55,14 @@ function BackLink() {
 function Skeleton() {
   return (
     <div className="h-80 w-full rounded-2xl skeleton bg-surface-2" />
+  );
+}
+
+function IconPlayCircle(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m10 8.75 5 3.25-5 3.25z" fill="currentColor" />
+    </svg>
   );
 }

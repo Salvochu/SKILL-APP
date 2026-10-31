@@ -34,5 +34,5 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 // hydration mismatch). Expects a YYYY-MM-DD string.
 export function shortDate(iso) {
   const [, m, d] = String(iso).split("-");
-  return `${MONTHS[Number(m) - 1] ?? "?"} ${Number(d)}`;
+  return `${Number(d)} ${MONTHS[Number(m) - 1] ?? "?"}`;
 }

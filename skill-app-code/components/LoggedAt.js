@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 function fallback(iso) {
   const [, m, d] = String(iso).slice(0, 10).split("-");
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${months[Number(m) - 1] ?? "?"} ${Number(d)}`;
+  return `${Number(d)} ${months[Number(m) - 1] ?? "?"}`;
 }
 
 function hasRealTime(d) {
@@ -23,7 +23,7 @@ export default function LoggedAt({ iso, withYear = false }) {
   useEffect(() => {
     function localize() {
       const d = new Date(iso);
-      const datePart = d.toLocaleDateString("en-US", {
+      const datePart = d.toLocaleDateString("en-GB", {
         month: "short",
         day: "numeric",
         ...(withYear ? { year: "numeric" } : {}),
@@ -32,7 +32,7 @@ export default function LoggedAt({ iso, withYear = false }) {
         setText(datePart);
         return;
       }
-      const timePart = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+      const timePart = d.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" });
       setText(`${datePart}, ${timePart}`);
     }
     localize();

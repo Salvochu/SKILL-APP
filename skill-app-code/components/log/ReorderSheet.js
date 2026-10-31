@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { muscleKey } from "@/lib/exercises";
 import Sheet from "@/components/Sheet";
+import MusclePill from "@/components/MusclePill";
 
 // A slide-up sheet for dragging the workout's exercises into a new order.
 // Touch-first: press the handle on a row and drag it up or down. The
@@ -124,16 +124,11 @@ export default function ReorderSheet({ rows, onSave, onClose }) {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[16px] font-semibold text-fg">{r.exercise.name}</span>
-                    <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-dim">
-                      {primary ? (
-                        <span
-                          aria-hidden="true"
-                          className="h-2 w-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: `var(--muscle-${muscleKey(primary)})` }}
-                        />
-                      ) : null}
-                      {primary}
-                    </span>
+                    {primary ? (
+                      <span className="mt-1 flex">
+                        <MusclePill muscle={primary} />
+                      </span>
+                    ) : null}
                   </span>
                   {/* The grip sits on the right, where iOS puts it. */}
                   <button

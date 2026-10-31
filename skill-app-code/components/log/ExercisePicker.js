@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import VideoModal from "@/components/log/VideoModal";
 import { MUSCLE_ORDER, sortEquipment, muscleKey, exerciseSearchScore } from "@/lib/exercises";
+import MusclePill from "@/components/MusclePill";
 
 // Every muscle an exercise touches, primary first; falls back to the
 // parent-group name when a row has no tags.
@@ -180,19 +181,10 @@ export default function ExercisePicker({
                   }`}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[16px] font-semibold text-fg">{e.name}</span>
-                    <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-dim">
-                      {primary ? (
-                        <span
-                          aria-hidden="true"
-                          className="h-2 w-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: `var(--muscle-${muscleKey(primary)})` }}
-                        />
-                      ) : null}
-                      <span className="truncate">
-                        {primary}
-                        {e.equipment ? ` · ${e.equipment}` : ""}
-                      </span>
+                    <span className="block line-clamp-2 text-[16px] font-semibold leading-snug text-fg">{e.name}</span>
+                    <span className="mt-1 flex min-w-0 items-center gap-2">
+                      {primary ? <MusclePill muscle={primary} /> : null}
+                      {e.equipment ? <span className="truncate text-[13px] text-dim">{e.equipment}</span> : null}
                     </span>
                   </span>
                   {multiple ? (

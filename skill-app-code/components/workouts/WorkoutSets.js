@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { roundForInput, toKg, formatWeight } from "@/lib/units";
-import { muscleKey, isTimeBasedExercise } from "@/lib/exercises";
+import { isTimeBasedExercise } from "@/lib/exercises";
 import DeleteWorkoutButton from "@/components/workouts/DeleteWorkoutButton";
 import { Group, Row, rowInput } from "@/components/ui/Grouped";
 import { updateWorkoutSession } from "@/app/(app)/workouts/actions";
+import MusclePill from "@/components/MusclePill";
 
 // The exercises + sets of one past session, with an "Edit numbers" mode
 // for fixing a mistyped weight, rep count or RIR (or the name / date)
@@ -273,13 +274,8 @@ function ExerciseHeading({ exercise }) {
         {exercise?.name ?? "Exercise"}
       </h3>
       {exercise?.muscle ? (
-        <span className="flex items-center gap-1.5 text-[13px] text-dim">
-          <span
-            aria-hidden="true"
-            className="h-2 w-2 shrink-0 rounded-full"
-            style={{ backgroundColor: `var(--muscle-${muscleKey(exercise.muscle)})` }}
-          />
-          {exercise.muscle}
+        <span className="mt-1 flex">
+          <MusclePill muscle={exercise.muscle} />
         </span>
       ) : null}
     </div>
