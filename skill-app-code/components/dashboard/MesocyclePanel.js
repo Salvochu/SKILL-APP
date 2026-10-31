@@ -15,6 +15,21 @@ const primaryBtn =
   "flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]";
 const secondaryBtn =
   "flex w-full items-center justify-center gap-2 rounded-2xl bg-fg/10 px-4 py-4 text-[17px] font-semibold text-fg transition-transform active:scale-[0.98]";
+const textLink =
+  "py-1 text-[15px] font-semibold text-accent transition-opacity active:opacity-60";
+const quietLink =
+  "py-1 text-[15px] font-semibold text-muted transition-opacity active:opacity-60";
+
+// After Day 14 the app stays open for a few grace days, then pauses
+// (proxy.js and lib/data/challenge.js: locked once past day 14 + 3).
+const CHALLENGE_DAYS = 14;
+const GRACE_DAYS = 3;
+function graceLine(challengeDay) {
+  const left = CHALLENGE_DAYS + GRACE_DAYS - (challengeDay ?? CHALLENGE_DAYS);
+  if (left <= 0) return "Today is the last day before your app pauses.";
+  return `Your app stays open for ${left} more day${left === 1 ? "" : "s"}, then pauses until you continue.`;
+}
+
 const menuRow =
   "flex items-center justify-between gap-3 px-4 py-2.5 text-left text-[15px] transition-colors hover:bg-fg/5 active:bg-fg/10";
 
@@ -286,19 +301,30 @@ export default function MesocyclePanel({
             <p className="text-[15px] leading-relaxed text-muted">
               {challengeLapsed
                 ? "Training is paused. Pick it back up and keep your streak, your level and your history."
-                : `${active.sessionsLogged} session${active.sessionsLogged === 1 ? "" : "s"} logged. Keep the momentum, don't lose your streak and your level.`}
+                : active.sessionsLogged > 0
+                  ? `${active.sessionsLogged} session${active.sessionsLogged === 1 ? "" : "s"} logged. Keep the momentum going, your streak and your level come with you.`
+                  : "Pick it up now and everything you've set up stays with you."}
             </p>
           </div>
-          <div className="flex flex-col gap-2.5">
+          {/* One clear next step. 1:1 and training on during the grace
+              days are quieter text links underneath. */}
+          <div className="flex flex-col gap-3">
             <CheckoutButton className={`btn-shine ${primaryBtn}`}>
               Keep training for &pound;7.99/mo
             </CheckoutButton>
-            <TapLink
-              href="/work-with-me"
-              className="flex w-full items-center justify-center rounded-2xl bg-accent-soft px-4 py-4 text-[17px] font-semibold text-accent transition-transform active:scale-[0.98]"
-            >
-              Work with Salvador 1:1
-            </TapLink>
+            {!challengeLapsed ? (
+              <p className="text-center text-[13px] leading-snug text-dim">{graceLine(active.challengeDay)}</p>
+            ) : null}
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
+              <TapLink href="/work-with-me" className={textLink}>
+                Work with Salvador 1:1
+              </TapLink>
+              {!challengeLapsed && active.nextDay ? (
+                <GuardedStartLink href={dayHref(active.nextDay.dayTemplateId)} className={quietLink}>
+                  Start {active.nextDay.name}
+                </GuardedStartLink>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : isFoundations && active.isComplete ? (
@@ -360,15 +386,15 @@ export default function MesocyclePanel({
         </div>
       ) : null}
 
-      {error || !challengeLapsed ? (
+      {error || !challengeOver ? (
         <div className="relative flex flex-col gap-2">
           {error ? <p className="text-[14px] text-danger">{error}</p> : null}
-          {challengeLapsed ? null : active.nextDay ? (
-            // Once the challenge fork is showing, buying in is the main
-            // action and training on is the quieter one.
+          {challengeOver ? null : active.nextDay ? (
+            // Once the challenge fork is showing, the start link moves into
+            // it as a quieter text link (see above).
             <GuardedStartLink
               href={dayHref(active.nextDay.dayTemplateId)}
-              className={challengeOver ? secondaryBtn : primaryBtn}
+              className={primaryBtn}
             >
               <IconPlay className="h-4 w-4" />
               Start {active.nextDay.name}
