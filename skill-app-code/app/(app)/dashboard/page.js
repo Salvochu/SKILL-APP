@@ -6,6 +6,7 @@ import { fromKg, unitLabel } from "@/lib/units";
 import TapLink from "@/components/TapLink";
 import LevelBadge from "@/components/dashboard/LevelBadge";
 import MesocycleSection from "@/components/dashboard/MesocycleSection";
+import MembershipEndingBanner from "@/components/membership/MembershipEndingBanner";
 
 export const metadata = { title: "Dashboard" };
 
@@ -20,6 +21,10 @@ export default function DashboardPage() {
           <HeaderStats />
         </Suspense>
       </header>
+
+      <Suspense fallback={null}>
+        <MembershipEndingBanner />
+      </Suspense>
 
       <Suspense fallback={<div className="h-72 rounded-2xl skeleton bg-surface-2" />}>
         <MesocycleSection />

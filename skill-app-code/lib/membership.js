@@ -93,10 +93,35 @@ export async function activatePaidMembership(userId, { customerId } = {}) {
     .eq("status", "active");
 
   const { data: updated } = await supabase.auth.admin.updateUserById(userId, {
-    app_metadata: { billing: "stripe", ...(customerId ? { stripe_customer_id: customerId } : {}) },
+    app_metadata: {
+      billing: "stripe",
+      membership_ends_at: null,
+      ...(customerId ? { stripe_customer_id: customerId } : {}),
+    },
   });
   await updateGhlTags(updated?.user?.email, { add: ["skill app checkout"], remove: ["skill app lapsed"] });
 
   return { ok: true, membership: "member" };
+}
+
+// A member cancelled (their subscription now ends at the end of the
+// paid month) or changed their mind and renewed it. Saves the end date
+// on their account, or clears it, so Profile and the dashboard can say
+// when access stops and offer to keep it. Only subscriptions started in
+// the app carry the user id; others are left alone.
+export async function recordMembershipEnd(subscription) {
+  const userId = subscription?.metadata?.skill_user_id;
+  if (!userId) return { ok: true, skipped: "not started in the app" };
+
+  const ending = Boolean(subscription.cancel_at_period_end || subscription.cancel_at);
+  const endsAtSeconds = subscription.cancel_at || subscription.current_period_end;
+  const membershipEndsAt = ending && endsAtSeconds ? new Date(endsAtSeconds * 1000).toISOString() : null;
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.auth.admin.updateUserById(userId, {
+    app_metadata: { membership_ends_at: membershipEndsAt },
+  });
+  if (error) throw new Error(`could not save the end date: ${error.message}`);
+  return { ok: true, membership_ends_at: membershipEndsAt };
 }
 

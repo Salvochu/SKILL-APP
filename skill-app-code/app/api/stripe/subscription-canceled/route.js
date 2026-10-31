@@ -1,5 +1,5 @@
 import { verifyStripeSignature, jsonResponse } from "@/lib/stripe/webhook";
-import { lapseMembershipByEmail, activateFromCheckoutSession } from "@/lib/membership";
+import { lapseMembershipByEmail, activateFromCheckoutSession, recordMembershipEnd } from "@/lib/membership";
 
 // Stripe fires this the moment a subscription is actually, definitively
 // cancelled - whether that's someone using the Customer Portal, or Smart
@@ -43,7 +43,7 @@ export async function POST(request) {
     }
   }
 
-  if (event.type !== "customer.subscription.deleted") {
+  if (event.type !== "customer.subscription.deleted" && event.type !== "customer.subscription.updated") {
     return jsonResponse({ ok: true, skipped: `ignoring event type ${event.type}` });
   }
 
@@ -68,6 +68,17 @@ export async function POST(request) {
     );
   if (!isAppSubscription) {
     return jsonResponse({ ok: true, skipped: "not an app membership subscription" });
+  }
+
+  // Cancelled for the end of the month, or renewed: remember (or forget)
+  // the date access stops. The account itself only pauses on "deleted".
+  if (event.type === "customer.subscription.updated") {
+    try {
+      return jsonResponse(await recordMembershipEnd(subscription));
+    } catch (err) {
+      console.error("stripe subscription update failed:", err?.message);
+      return jsonResponse({ error: "could not save the end date" }, 502);
+    }
   }
 
   const customerId = subscription?.customer;

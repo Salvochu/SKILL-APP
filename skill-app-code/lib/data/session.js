@@ -21,7 +21,14 @@ export const getSessionUser = cache(async () => {
   if (!claims?.sub) return null;
   // aal is "aal2" once this session has also passed the authenticator
   // code (two-factor), "aal1" for a password or email link alone.
-  return { id: claims.sub, email: claims.email ?? null, aal: claims.aal ?? "aal1" };
+  // appMetadata rides in the token, so it can be up to an hour behind a
+  // change made on the server (getAuthUserRecord is the fresh copy).
+  return {
+    id: claims.sub,
+    email: claims.email ?? null,
+    aal: claims.aal ?? "aal1",
+    appMetadata: claims.app_metadata ?? {},
+  };
 });
 
 // The full auth user record, from the auth server. Only for the rare

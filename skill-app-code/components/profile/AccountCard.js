@@ -1,5 +1,6 @@
 import { getMembership } from "@/lib/data/profile";
 import { getAuthUserRecord } from "@/lib/data/session";
+import { membershipEndDate, formatEndDate } from "@/lib/membershipEnd";
 import { signOut } from "@/app/actions";
 import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
 import DangerZone from "@/components/profile/DangerZone";
@@ -16,13 +17,27 @@ export default async function AccountCard() {
   const coachInvited =
     billing === "coach" || (!billing && authUser?.user_metadata?.source === "coach_invite");
   const isMember = membership === "member" && !coachInvited;
+  // Cancelled but still paid up: say when access stops, and offer to undo
+  // it (Stripe's billing page shows "Renew plan" for exactly this).
+  const endsAt = isMember ? membershipEndDate(authUser?.app_metadata) : null;
   return (
     <div className="flex flex-col gap-7">
       <Group
         title="Account"
-        footer={isMember ? "Update your card or cancel your subscription directly with Stripe." : null}
+        footer={
+          endsAt
+            ? `Your membership ends on ${formatEndDate(endsAt)}. You keep full access until then. Changed your mind? Keep it and nothing changes.`
+            : isMember
+              ? "Update your card or cancel your subscription directly with Stripe."
+              : null
+        }
       >
-        {isMember ? (
+        {endsAt ? (
+          <a href="/membership/manage" className={`${rowButton} font-semibold text-accent`}>
+            Keep my membership
+            <IconExternal className="h-4 w-4 shrink-0 text-accent/70" />
+          </a>
+        ) : isMember ? (
           <a href="/membership/manage" className={`${rowButton} text-fg`}>
             Manage membership
             <IconExternal className="h-4 w-4 shrink-0 text-dim" />
