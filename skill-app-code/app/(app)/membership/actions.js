@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { getSessionUser, getProfileRow } from "@/lib/data/session";
+import { getSessionUser, getProfileRow, getAuthUserRecord } from "@/lib/data/session";
 import { createMembershipCheckoutUrl, siteOrigin } from "@/lib/stripe/checkout";
 import { KEEP_TRAINING_URL } from "@/lib/links";
 import { safeNext } from "@/lib/safeNext";
@@ -17,8 +17,10 @@ export async function startMembershipCheckout(formData) {
   const profile = await getProfileRow();
   if (profile?.membership === "member" || profile?.role === "coach") redirect("/dashboard");
 
+  const record = await getAuthUserRecord();
   const url = await createMembershipCheckoutUrl({
     user,
+    customerId: record?.app_metadata?.stripe_customer_id,
     site: siteOrigin(await headers()),
     back: safeNext(String(formData?.get("back") ?? "")),
   });

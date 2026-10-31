@@ -14,7 +14,6 @@ export async function GET(request) {
   // can write it, so the saved customer id can't be swapped by the user.
   const record = await getAuthUserRecord();
   const url = await createBillingPortalUrl({
-    user,
     customerId: record?.app_metadata?.stripe_customer_id,
     site: siteOrigin(request.headers),
   });

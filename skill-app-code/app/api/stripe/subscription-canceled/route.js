@@ -47,7 +47,30 @@ export async function POST(request) {
     return jsonResponse({ ok: true, skipped: `ignoring event type ${event.type}` });
   }
 
-  const customerId = event.data?.object?.customer;
+  // Only the app membership. The same Stripe account also runs 1:1
+  // coaching and other subscriptions, and one of those ending must never
+  // pause someone's app access. App subscriptions are the ones started
+  // in the app (they carry the user id), on the in-app price, or on a
+  // product listed in STRIPE_APP_PRODUCT_IDS (GHL's own "SKILL App
+  // Membership" product, for anyone who paid through GHL's link).
+  const subscription = event.data?.object;
+  const appProducts = (process.env.STRIPE_APP_PRODUCT_IDS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const items = subscription?.items?.data ?? [];
+  const isAppSubscription =
+    Boolean(subscription?.metadata?.skill_user_id) ||
+    items.some(
+      (i) =>
+        (process.env.STRIPE_PRICE_ID && i?.price?.id === process.env.STRIPE_PRICE_ID) ||
+        appProducts.includes(i?.price?.product),
+    );
+  if (!isAppSubscription) {
+    return jsonResponse({ ok: true, skipped: "not an app membership subscription" });
+  }
+
+  const customerId = subscription?.customer;
   if (!customerId) {
     return jsonResponse({ error: "no customer id on event" }, 422);
   }
@@ -68,7 +91,7 @@ export async function POST(request) {
   try {
     // Subscriptions started in the app carry the user id; those also get
     // the GHL tag, since GHL's own cancellation trigger never sees them.
-    const fromApp = Boolean(event.data?.object?.metadata?.skill_user_id);
+    const fromApp = Boolean(subscription?.metadata?.skill_user_id);
     const result = await lapseMembershipByEmail(email, { tagGhl: fromApp });
     return jsonResponse({ ...result, email });
   } catch (err) {

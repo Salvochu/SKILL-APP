@@ -9,14 +9,18 @@ import { stripe } from "@/lib/stripe/api";
 // they back out. Returns the page's URL, or null if it can't be made
 // (STRIPE_PRICE_ID unset, or Stripe unreachable), so callers can fall
 // back to the GHL payment link.
-export async function createMembershipCheckoutUrl({ user, site, back = "/dashboard" }) {
+//
+// Each member gets their own Stripe customer for the app, saved on their
+// account when they first pay (customerId). It is never matched by email,
+// because the same email may already be a 1:1 coaching customer, and
+// Stripe's billing page shows every subscription a customer has: this
+// way it only ever shows the app membership. A returning member reuses
+// theirs, so their invoices and card stay in one place.
+export async function createMembershipCheckoutUrl({ user, customerId, site, back = "/dashboard" }) {
   const price = process.env.STRIPE_PRICE_ID;
   if (!price || !user?.email) return null;
   try {
-    // Someone who paid before (a lapsed member coming back) keeps their
-    // Stripe customer, so their invoices and card stay in one place.
-    const existing = await stripe("GET", "/customers", { email: user.email, limit: 1 });
-    const customer = existing?.data?.[0]?.id;
+    const customer = customerId || null;
     const session = await stripe("POST", "/checkout/sessions", {
       mode: "subscription",
       line_items: [{ price, quantity: 1 }],
@@ -35,21 +39,16 @@ export async function createMembershipCheckoutUrl({ user, site, back = "/dashboa
 }
 
 // Stripe's billing page (the Customer Portal) opened straight into one
-// member's own subscription: cancel, change card, invoices, with no email
-// code to sign in. Uses the Stripe customer saved when they paid in the
-// app, otherwise the Stripe customer with their login email (members who
-// paid through GHL). Returns null if there's no customer or Stripe
-// refuses, so callers can fall back to the portal's email sign-in page.
-export async function createBillingPortalUrl({ user, customerId, site, back = "/profile" }) {
+// member's app subscription: cancel, change card, invoices, with no email
+// code to sign in. Only ever the app's own customer saved on their
+// account (see above), so nothing else they pay for shows up there.
+// Returns null without one, or if Stripe refuses, so callers can fall
+// back to the portal's email sign-in page.
+export async function createBillingPortalUrl({ customerId, site, back = "/profile" }) {
+  if (!customerId) return null;
   try {
-    let customer = customerId;
-    if (!customer && user?.email) {
-      const existing = await stripe("GET", "/customers", { email: user.email, limit: 1 });
-      customer = existing?.data?.[0]?.id;
-    }
-    if (!customer) return null;
     const session = await stripe("POST", "/billing_portal/sessions", {
-      customer,
+      customer: customerId,
       return_url: `${site}${back}`,
     });
     return session?.url ?? null;

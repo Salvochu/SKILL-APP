@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser, getProfileRow } from "@/lib/data/session";
+import { getSessionUser, getProfileRow, getAuthUserRecord } from "@/lib/data/session";
 import { createMembershipCheckoutUrl, siteOrigin } from "@/lib/stripe/checkout";
 import { KEEP_TRAINING_URL } from "@/lib/links";
 
@@ -18,6 +18,11 @@ export async function GET(request) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  const url = await createMembershipCheckoutUrl({ user, site: siteOrigin(request.headers) });
+  const record = await getAuthUserRecord();
+  const url = await createMembershipCheckoutUrl({
+    user,
+    customerId: record?.app_metadata?.stripe_customer_id,
+    site: siteOrigin(request.headers),
+  });
   return NextResponse.redirect(url || KEEP_TRAINING_URL, 303);
 }
