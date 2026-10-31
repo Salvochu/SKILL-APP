@@ -122,7 +122,10 @@ export async function proxy(request) {
 
     const lapsed = profile?.membership === "lapsed";
 
-    if (lapsed && pathname !== "/paused") {
+    // The checkout link (/membership/checkout) is how a locked-out
+    // account pays to get back in, so it is never redirected away.
+    const isCheckout = pathname === "/membership/checkout";
+    if (lapsed && pathname !== "/paused" && !isCheckout) {
       const url = request.nextUrl.clone();
       url.pathname = "/paused";
       url.search = "";
@@ -158,7 +161,7 @@ export async function proxy(request) {
         challengeLapsed = daysSince + 1 > CHALLENGE_DAYS + GRACE_DAYS;
       }
 
-      if (challengeLapsed && pathname !== "/challenge-ended") {
+      if (challengeLapsed && pathname !== "/challenge-ended" && !isCheckout) {
         const url = request.nextUrl.clone();
         url.pathname = "/challenge-ended";
         url.search = "";
