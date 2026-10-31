@@ -347,7 +347,7 @@ const TOUR = [
   },
   {
     title: "Log as you lift",
-    body: "Start the day's workout and enter the weight and reps for each set. Your numbers from last time sit right next to them, so you always know what to beat.",
+    body: "Start the day's workout and your weight and reps from last time are already filled in, so you know exactly what to beat. Change what you need and log each set.",
     icon: IconTourLog,
   },
   {
