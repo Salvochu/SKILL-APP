@@ -17,6 +17,8 @@ export default function NavigationOverlay() {
   const [visible, setVisible] = useState(false);
   const delay = useRef(null);
   const safety = useRef(null);
+  // The screen actually on show, to compare against the address bar.
+  const shown = useRef("");
 
   function start() {
     clearTimeout(delay.current);
@@ -35,6 +37,8 @@ export default function NavigationOverlay() {
   // Route (or query) committed -> done.
   useEffect(() => {
     function settle() {
+      const q = search?.toString() ?? "";
+      shown.current = pathname + (q ? `?${q}` : "");
       stop();
     }
     settle();
@@ -76,11 +80,25 @@ export default function NavigationOverlay() {
     window.history.pushState = wrap(pushState);
     window.history.replaceState = wrap(replaceState);
 
+    // Back and forward. A screen Next still has in memory can be on show
+    // before this listener even runs, and then no route change follows to
+    // clear the veil: it would sit over a ready screen until the safety
+    // timeout. So check on the next frame whether we have already arrived.
+    function onPopState() {
+      // Same encoding as useSearchParams ("Full+Gym", not "Full%20Gym").
+      const q = new URLSearchParams(window.location.search).toString();
+      const target = window.location.pathname + (q ? `?${q}` : "");
+      start();
+      requestAnimationFrame(() => {
+        if (shown.current === target) stop();
+      });
+    }
+
     document.addEventListener("click", onClick, true);
-    window.addEventListener("popstate", start);
+    window.addEventListener("popstate", onPopState);
     return () => {
       document.removeEventListener("click", onClick, true);
-      window.removeEventListener("popstate", start);
+      window.removeEventListener("popstate", onPopState);
       window.history.pushState = pushState;
       window.history.replaceState = replaceState;
     };

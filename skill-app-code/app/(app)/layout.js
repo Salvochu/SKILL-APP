@@ -22,7 +22,7 @@ export default function AppLayout({ children }) {
       <Suspense fallback={null}>
         <NavigationOverlay />
       </Suspense>
-      <Suspense fallback={<div className="glass-bar fixed inset-x-0 top-0 z-40 h-14 md:h-16" />}>
+      <Suspense fallback={<div className="app-topbar glass-bar fixed inset-x-0 top-0 z-40 h-14 md:h-16" />}>
         <NavBarShell />
       </Suspense>
       {/* Mounted once, app-wide, so a workout queued offline on the Log

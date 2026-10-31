@@ -28,7 +28,7 @@ export default function NavBar({ streak = null, challenge = false, avatarUrl = n
 
   return (
     <>
-      <header className="glass-bar fixed inset-x-0 top-0 z-40 h-14 md:h-16">
+      <header className="app-topbar glass-bar fixed inset-x-0 top-0 z-40 h-14 md:h-16">
         <div className="mx-auto flex h-full w-full max-w-2xl items-center gap-6 px-4 md:max-w-5xl md:px-6">
           <Link href="/dashboard" aria-label="SKILL home" className="shrink-0">
             <Wordmark height="22px" />
@@ -83,7 +83,7 @@ export default function NavBar({ streak = null, challenge = false, avatarUrl = n
           stack above it (rest timer, workout pill, sticky Save/Finish)
           use matching offsets. The wrapper lets taps beside the capsule
           through to the page. */}
-      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(2.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] md:hidden">
+      <nav className="app-tabbar pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(2.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] md:hidden">
         <div className={`glass pointer-events-auto relative mx-auto grid max-w-md rounded-full p-1.5 ${gridCols}`}>
           {/* One shared pill that glides between tabs, instead of a
               separate highlight per tab that pops in/out on navigation. */}

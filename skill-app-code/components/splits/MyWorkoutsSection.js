@@ -13,8 +13,8 @@ const NEW_GROUP = "__new__";
 // logged date only); tapping the chevron reveals the muscle summary and
 // a control to file it under a group. Tapping the card body itself starts
 // a session from it (GuardedStartLink warns first if another workout is
-// unsaved); the pencil opens the builder to edit it. Always shows the
-// "Build a workout" entry point, even with an empty list.
+// unsaved); the pencil opens the builder to edit it. The list always ends
+// with one "New workout" row, which is the whole section when it's empty.
 export default function MyWorkoutsSection({ myWorkouts }) {
   const groups = useMemo(() => groupWorkouts(myWorkouts), [myWorkouts]);
   const groupNames = useMemo(
@@ -24,26 +24,9 @@ export default function MyWorkoutsSection({ myWorkouts }) {
 
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="px-1 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">My workouts</h2>
-        <TapLink
-          href="/workouts/mine/new"
-          className="flex items-center gap-1 rounded-lg px-1 py-1 text-[14px] font-semibold text-accent transition-opacity active:opacity-60"
-        >
-          <IconPlus className="h-3.5 w-3.5" />
-          Build a workout
-        </TapLink>
-      </div>
+      <h2 className="px-1 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">My workouts</h2>
 
-      {myWorkouts.length === 0 ? (
-        <TapLink
-          href="/workouts/mine/new"
-          className="flex flex-col items-center gap-1 rounded-2xl bg-surface p-6 text-center transition-colors hover:bg-surface-2 active:bg-surface-2"
-        >
-          <span className="text-sm font-medium text-fg">Build your own workout</span>
-          <span className="text-xs text-dim">Save a set of exercises you can start any day</span>
-        </TapLink>
-      ) : groupNames.length > 0 ? (
+      {myWorkouts.length === 0 ? null : groupNames.length > 0 ? (
         // At least one real group exists: every bucket, Ungrouped
         // included, renders as a collapsed folder - a fanned stack plus
         // a count - instead of a permanently-open list.
@@ -61,6 +44,24 @@ export default function MyWorkoutsSection({ myWorkouts }) {
           ))}
         </ul>
       )}
+
+      <TapLink
+        href="/workouts/mine/new"
+        className="flex w-full items-center gap-4 rounded-2xl bg-surface p-4 text-left transition-colors hover:bg-surface-2 active:bg-surface-2"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+          <IconStack className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-base font-semibold text-fg">
+            {myWorkouts.length === 0 ? "Build a workout" : "New workout"}
+          </span>
+          <span className="block truncate text-sm text-muted">
+            {myWorkouts.length === 0 ? "Save your go-to lifts" : "Save another set of lifts"}
+          </span>
+        </span>
+        <IconPlus className="h-4 w-4 shrink-0 text-dim" />
+      </TapLink>
     </section>
   );
 }
@@ -304,6 +305,14 @@ function IconPlus(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+function IconStack(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="4" y="8" width="16" height="12" rx="2.5" />
+      <path d="M7 5h10M9.5 2.5h5" />
     </svg>
   );
 }

@@ -37,3 +37,13 @@ export function roundForInput(kg, unit) {
   const step = unit === "lb" ? 1 : 0.5;
   return String(Math.round(v / step) * step);
 }
+
+// A lifetime-volume style total, short enough for a stat line: 850,
+// 12.4k, 128k, 1.2M. No unit, and no "0.0k" for a fresh account.
+export function formatVolumeShort(value) {
+  const n = Math.max(0, Number(value) || 0);
+  if (n < 1000) return String(Math.round(n));
+  if (n < 100_000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  if (n < 1_000_000) return `${Math.round(n / 1000)}k`;
+  return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+}

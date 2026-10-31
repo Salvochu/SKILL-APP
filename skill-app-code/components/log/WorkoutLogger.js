@@ -17,6 +17,9 @@ import Switch from "@/components/ui/Switch";
 import { Group, Row, rowInput } from "@/components/ui/Grouped";
 import Explain from "@/components/Explain";
 import ConfirmModal from "@/components/ConfirmModal";
+import EdgeSwipeBack from "@/components/EdgeSwipeBack";
+import FocusMode from "@/components/FocusMode";
+import { FOCUS_LAYOUT } from "@/components/log/focusLayout";
 import { formatSet, formatElapsed, EFFORT_LABELS, startingWeightHint } from "@/lib/training";
 import { queueWorkout, isLikelyNetworkError } from "@/lib/offlineQueue";
 import { saveDraft, getDraft, clearDraft } from "@/lib/activeWorkout";
@@ -134,57 +137,74 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   });
   const [showRest, setShowRest] = useState(false);
   const [restTimerOn, setRestTimerOn] = useState(restTimer);
-  // The timer / volume / Finish card starts collapsed to a slim pill so
-  // it never covers the sets. `finishHintSeen` gates a one-time nudge
-  // that points at the pill (that is where Finish lives).
-  const [barMinimised, setBarMinimised] = useState(true);
-  const [finishHintSeen, setFinishHintSeen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
   const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [finishConfirm, setFinishConfirm] = useState(null); // unticked set count
   const [completedSummary, setCompletedSummary] = useState(null);
   const [summaryExtras, setSummaryExtras] = useState(null);
   const [effort, setEffort] = useState(null);
   const [savingEffort, setSavingEffort] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
+  // The large title scrolling under the top bar swaps in the bar's small
+  // title, the way an iOS navigation bar collapses.
+  const [titleTucked, setTitleTucked] = useState(false);
+  const rootRef = useRef(null);
+  const titleRef = useRef(null);
+  // What this screen opened with, to tell "tapped in and straight back
+  // out" (nothing to keep) from a workout that is actually under way.
+  const openingRows = useRef(rows);
+  const resumed = useRef(false);
+  const shownBefore = useRef(false);
 
   // Keep the screen awake while a workout is being logged, so the phone
   // does not auto-lock between sets. Released once it is finished.
   useWakeLock(!completedSummary && !savedOffline);
 
-  // Show the "Finish lives in the pill" nudge only until it has been seen
-  // once on this device. localStorage read has to wait for mount (SSR has
-  // no window); the functional updater keeps this a no-op once seen.
   useEffect(() => {
-    function readFinishHint() {
-      let seen = true;
-      try {
-        seen = localStorage.getItem("skill.log.finishHintSeen") === "1";
-      } catch {
-        /* private mode and the like: treat as seen, skip the nudge */
-      }
-      setFinishHintSeen((v) => (seen ? v : false));
-    }
-    readFinishHint();
-  }, []);
-
-  function dismissFinishHint() {
-    setFinishHintSeen(true);
-    try {
-      localStorage.setItem("skill.log.finishHintSeen", "1");
-    } catch {
-      /* ignore */
-    }
-  }
+    const el = titleRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setTitleTucked(!entry.isIntersecting), {
+      rootMargin: "-64px 0px 0px 0px",
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [completedSummary]);
 
   // On mount, resume a matching in-progress draft (same URL: same day,
   // same query), so navigating away and back via ActiveWorkoutBar
   // actually restores what was typed instead of a blank form. A draft
   // for a different URL is stale (GuardedStartLink already confirmed
   // discarding it before this page was reached) and is cleared.
+  //
+  // Next keeps a recently left screen alive but hidden, and shows that
+  // same copy again on a return to the same URL; effects re-run when it
+  // does. So a return with no draft to resume means that workout was
+  // finished or discarded: start a fresh one rather than show it again.
   useEffect(() => {
+    function startFresh() {
+      const fresh = initial.exercises.map((e) => makeExercise(e.exercise, e.sets, e.reps, history[e.exercise.id]));
+      openingRows.current = fresh;
+      resumed.current = false;
+      setRows(fresh);
+      setTitle(initial.title);
+      setDate(initial.date);
+      setStartedAt(Date.now());
+      setNow(Date.now());
+      setPausedAt(null);
+      setPausedTotalMs(0);
+      setFinished(false);
+      setSaving(false);
+      setSavedOffline(false);
+      setError(null);
+      setShowRest(false);
+      setSettingsOpen(false);
+      setCompletedSummary(null);
+      setSummaryExtras(null);
+      setEffort(null);
+    }
     function resumeIfMatching() {
       const href = window.location.pathname + window.location.search;
       const draft = getDraft();
@@ -195,12 +215,16 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         setStartedAt(draft.startedAt);
         setPausedAt(draft.pausedAt ?? null);
         setPausedTotalMs(draft.pausedTotalMs ?? 0);
-      } else if (draft) {
-        clearDraft();
+        resumed.current = true;
+      } else {
+        if (draft) clearDraft();
+        if (shownBefore.current) startFresh();
       }
+      shownBefore.current = true;
       setDraftReady(true);
     }
     resumeIfMatching();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Keeps the draft in sync as the form changes, so ActiveWorkoutBar and
@@ -419,6 +443,36 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     router.push("/dashboard");
   }
 
+  // Finish straight away when every planned set is ticked; otherwise
+  // say how many are not, since a stray tap on Finish mid-workout would
+  // otherwise end it early.
+  function onFinish() {
+    const unticked = rows.reduce(
+      (n, r) => n + r.sets.filter((set) => !set.completed && !set.warmup).length,
+      0,
+    );
+    if (unticked > 0 && totalSets > 0) setFinishConfirm(unticked);
+    else onSave();
+  }
+
+  // Back leaves the workout running: the clock keeps going and the
+  // floating pill on every other screen brings you straight back. The
+  // exception is tapping in and right back out, untouched, which just
+  // never started it.
+  function leave() {
+    const untouched =
+      !resumed.current &&
+      rows === openingRows.current &&
+      title === initial.title &&
+      Date.now() - startedAt < 5 * 60 * 1000;
+    if (untouched) {
+      setFinished(true);
+      clearDraft();
+    }
+    if (window.history.length > 1) router.back();
+    else router.push("/dashboard");
+  }
+
   async function onSelectEffort(n) {
     setEffort(n);
     if (!completedSummary?.sessionId) return;
@@ -460,42 +514,66 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     );
   }
 
+  const shownTitle = title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "") || "Workout";
+
   return (
-    <div className="flex flex-col gap-6 py-2">
-      {/* iOS large-title layout: a small action row, then the title on
-          its own line so a long workout name wraps instead of truncating. */}
-      <header className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
+    <>
+    {/* Focus mode slides the app's own bars away while a workout is on
+        screen: this screen is the whole phone. */}
+    <FocusMode />
+    <div ref={rootRef} className={`flex flex-col gap-6 pb-2 ${FOCUS_LAYOUT}`}>
+      {/* iOS navigation bar: back and settings stay in reach however far
+          down the workout you are. The large title below scrolls under
+          it, and the bar turns to glass and takes a small copy of the
+          title as it does. A direct child of the screen, so it stays
+          pinned for the whole page rather than just its own section. */}
+      <div
+        className={`sticky top-0 z-30 -mx-4 -mb-5 px-4 pb-2 pt-[max(0.625rem,env(safe-area-inset-top))] transition-[background-color,box-shadow,backdrop-filter] duration-200 md:-mx-6 md:px-6 ${
+          titleTucked ? "glass-bar" : ""
+        }`}
+      >
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setCancelConfirm(true)}
-            aria-label="Cancel workout"
-            className="-ml-1 rounded-lg px-1 py-1 text-[16px] font-medium text-danger transition-opacity active:opacity-50"
+            onClick={leave}
+            aria-label="Back. Your workout keeps running."
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform duration-150 active:scale-90"
           >
-            Cancel
+            <IconChevron className="h-[18px] w-[18px] rotate-180" />
           </button>
+          <span
+            aria-hidden={!titleTucked}
+            className={`min-w-0 flex-1 truncate text-center text-[16px] font-semibold tracking-[-0.01em] text-fg transition-[opacity,transform] duration-200 ${
+              titleTucked ? "opacity-100" : "translate-y-1 opacity-0"
+            }`}
+          >
+            {shownTitle}
+          </span>
           <button
             type="button"
             onClick={() => setSettingsOpen((v) => !v)}
             aria-expanded={settingsOpen}
             aria-label="Workout settings"
-            className={`flex h-9 w-9 items-center justify-center rounded-full transition-[background-color,color,transform] duration-150 active:scale-90 ${
-              settingsOpen ? "bg-accent text-black" : "bg-surface-2 text-muted hover:text-fg"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-[background-color,color,transform] duration-150 active:scale-90 ${
+              settingsOpen ? "bg-accent text-black" : "bg-fg/10 text-fg"
             }`}
           >
             <IconGear className="h-[18px] w-[18px]" />
           </button>
         </div>
-        <h1 className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">
-          {title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "") || "Workout"}
-        </h1>
-      </header>
+      </div>
+      <h1
+        ref={titleRef}
+        className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg"
+      >
+        {shownTitle}
+      </h1>
 
       {cancelConfirm ? (
         <ConfirmModal
-          title="Cancel this workout?"
-          message="Anything you have logged on this screen will not be saved."
-          confirmLabel="Discard it"
+          title="Discard this workout?"
+          message="Nothing from this session will be saved."
+          confirmLabel="Discard"
           cancelLabel="Keep logging"
           danger
           onConfirm={onCancelWorkout}
@@ -611,10 +689,23 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {rows.map((row) => (
+          {rows.map((row, index) => {
+            // A first-time tip like "start with the empty bar" is said
+            // once, on the first lift it applies to, not on every one.
+            const hint =
+              mesoContext?.kind === "foundations" && !history[row.exercise.id]
+                ? startingWeightHint(row.exercise.equipment)
+                : null;
+            const firstWithHint =
+              hint &&
+              rows.findIndex(
+                (r) => !history[r.exercise.id] && startingWeightHint(r.exercise.equipment) === hint,
+              ) === index;
+            return (
             <ExerciseCard
               key={row.key}
               row={row}
+              showTips={index === 0}
               unit={U}
               last={history[row.exercise.id] ?? null}
               onPatch={(p) => patchRow(row.key, p)}
@@ -627,11 +718,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               onReorder={rows.length > 1 ? () => setReorderOpen(true) : null}
               onVideo={() => setVideoFor(row.exercise)}
               inlineVideo={inlineVideos}
-              startHint={
-                mesoContext?.kind === "foundations"
-                  ? startingWeightHint(row.exercise.equipment)
-                  : null
-              }
+              startHint={firstWithHint ? hint : null}
               rirTarget={advanced ? mesoContext?.rirTarget ?? null : null}
               showRir={advanced && mesoContext?.kind !== "foundations"}
               showFailure={!advanced && mesoContext?.kind !== "foundations"}
@@ -643,7 +730,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
                     : null
               }
             />
-          ))}
+            );
+          })}
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
@@ -653,6 +741,16 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
           </button>
         </div>
       )}
+
+      {/* Where Strong and Hevy keep it: out of the way at the end, so it
+          is never hit by accident mid-set. */}
+      <button
+        type="button"
+        onClick={() => setCancelConfirm(true)}
+        className="self-center rounded-lg px-3 py-1.5 text-[15px] font-medium text-danger transition-opacity active:opacity-50"
+      >
+        Discard workout
+      </button>
 
       {error ? (
         <p className="rounded-2xl bg-danger/10 px-4 py-3 text-[14px] text-danger">{error}</p>
@@ -670,107 +768,57 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         <RestTimer key={restKey} startSeconds={restSeconds} onDismiss={() => setShowRest(false)} />
       ) : null}
 
-      <div className="sticky bottom-[max(7.5rem,calc(env(safe-area-inset-bottom)+5.5rem))] z-40 flex flex-col gap-2 md:bottom-4">
-
-        {barMinimised ? (
-        <>
-          {!finishHintSeen && !finished ? (
-            <div className="pop-in flex items-center gap-2 self-center rounded-full bg-accent px-3.5 py-1.5 text-xs font-semibold text-black shadow-lg shadow-black/30">
-              <span>Total volume and Finish are in here</span>
-              <IconChevron className="h-3.5 w-3.5 shrink-0 rotate-90" aria-hidden="true" />
-              <button
-                type="button"
-                onClick={dismissFinishHint}
-                aria-label="Got it"
-                className="ml-0.5 rounded-full p-0.5 text-black/70 hover:text-black"
-              >
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M6 6l12 12M18 6L6 18" />
-                </svg>
-              </button>
-            </div>
-          ) : null}
+      {/* The workout bar sits exactly where the tab bar was (same
+          capsule, same height off the bottom), so it reads as the tab bar
+          turning into the workout's controls. */}
+      <div className="sticky bottom-[max(2.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] z-40 md:bottom-6">
+        <div className="glass mx-auto flex max-w-md items-center gap-2.5 rounded-full p-1.5">
           <button
             type="button"
-            onClick={() => {
-              setBarMinimised(false);
-              dismissFinishHint();
-            }}
-            aria-label="Expand timer and save"
-            className="glass flex items-center gap-2 self-center rounded-full px-4 py-2.5 transition-transform active:scale-[0.97]"
+            onClick={togglePause}
+            disabled={finished}
+            aria-label={pausedAt ? "Resume timer" : "Pause timer"}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90 disabled:opacity-50"
           >
-            <span
-              className={`h-2 w-2 shrink-0 rounded-full ${
-                pausedAt || finished ? "bg-dim" : "animate-pulse bg-accent"
-              }`}
-              aria-hidden="true"
-            />
-            <span className="text-sm font-semibold tabular-nums text-fg">{formatElapsed(elapsedSeconds)}</span>
-            <span className="text-dim" aria-hidden="true">·</span>
-            <span className="text-sm font-semibold tabular-nums text-fg">{Math.round(totalVolume).toLocaleString("en-GB")} {U}</span>
-            <span className="text-dim" aria-hidden="true">·</span>
-            <span className="text-sm font-semibold tabular-nums text-fg">{totalSets} {totalSets === 1 ? "set" : "sets"}</span>
-            <IconChevron className="h-3.5 w-3.5 shrink-0 -rotate-90 text-dim" />
+            {pausedAt ? <IconPlay className="ml-0.5 h-4 w-4" /> : <IconPause className="h-4 w-4" />}
           </button>
-        </>
-      ) : (
-        <div className="glass-strong pop-in flex flex-col gap-4 rounded-3xl p-4">
-          <div className="flex items-center gap-2">
-            <span
-              className={`h-2 w-2 shrink-0 rounded-full ${
-                pausedAt || finished ? "bg-dim" : "animate-pulse bg-accent"
-              }`}
-              aria-hidden="true"
-            />
-            <span className="text-[15px] font-semibold tabular-nums text-fg">{formatElapsed(elapsedSeconds)}</span>
-            <span className="text-[13px] text-muted">
-              {finished ? "stopped" : pausedAt ? "paused" : "recording"}
-            </span>
-            <div className="ml-auto flex shrink-0 items-center gap-1.5">
-              {!finished ? (
-                <button
-                  type="button"
-                  onClick={togglePause}
-                  aria-label={pausedAt ? "Resume timer" : "Pause timer"}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90"
-                >
-                  {pausedAt ? <IconPlay className="h-4 w-4" /> : <IconPause className="h-4 w-4" />}
-                </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => setBarMinimised(true)}
-                aria-label="Minimise timer bar"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90"
-              >
-                <IconChevron className="h-4 w-4 rotate-90" />
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[12px] font-medium text-muted">Total volume</span>
-              <span className="text-[26px] font-bold leading-none tabular-nums tracking-[-0.02em] text-fg">
-                {Math.round(totalVolume).toLocaleString("en-GB")}
-                <span className="ml-1 text-[15px] font-semibold tracking-normal text-muted">{U}</span>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="flex items-baseline gap-1.5">
+              <span className="text-[17px] font-semibold leading-tight tabular-nums tracking-[-0.01em] text-fg">
+                {formatElapsed(elapsedSeconds)}
               </span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[12px] font-medium text-muted">Sets logged</span>
-              <span className="text-[26px] font-bold leading-none tabular-nums tracking-[-0.02em] text-fg">{totalSets}</span>
-            </div>
+              {pausedAt && !finished ? (
+                <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-dim">Paused</span>
+              ) : null}
+            </span>
+            <span className="truncate text-[13px] leading-tight tabular-nums text-muted">
+              {Math.round(totalVolume).toLocaleString("en-GB")} {U} · {totalSets} {totalSets === 1 ? "set" : "sets"}
+            </span>
           </div>
           <button
             type="button"
-            onClick={onSave}
+            onClick={onFinish}
             disabled={saving || savedOffline}
-            className="w-full rounded-2xl bg-accent py-4 text-center text-[16px] font-semibold text-black transition-[transform,background-color] hover:bg-accent-2 active:scale-[0.98] disabled:opacity-60"
+            className="h-11 shrink-0 rounded-full bg-accent px-5 text-[15px] font-semibold text-black transition-[transform,background-color] hover:bg-accent-2 active:scale-[0.96] disabled:opacity-60"
           >
-            {savedOffline ? "Saved on this device" : saving ? "Finishing..." : "Finish workout"}
+            {savedOffline ? "Saved" : saving ? "Saving..." : "Finish"}
           </button>
         </div>
-        )}
       </div>
+
+      {finishConfirm ? (
+        <ConfirmModal
+          title="Finish this workout?"
+          message={`${finishConfirm} planned ${finishConfirm === 1 ? "set isn't" : "sets aren't"} ticked off yet. Only what you've logged gets saved.`}
+          confirmLabel="Finish"
+          cancelLabel="Keep going"
+          onConfirm={() => {
+            setFinishConfirm(null);
+            onSave();
+          }}
+          onCancel={() => setFinishConfirm(null)}
+        />
+      ) : null}
 
       {pickerOpen ? (
         <ExercisePicker
@@ -793,6 +841,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       ) : null}
       {videoFor ? <VideoModal exercise={videoFor} onClose={() => setVideoFor(null)} /> : null}
     </div>
+    <EdgeSwipeBack targetRef={rootRef} onBack={leave} enabled={!saving && !savedOffline} />
+    </>
   );
 }
 
@@ -1301,7 +1351,7 @@ function IconFlame(props) {
   );
 }
 
-function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, showRir = true, showFailure = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onSwap, onReorder, onVideo }) {
+function ExerciseCard({ row, showTips = false, unit = "kg", last, rirTarget = null, beatLabel = null, inlineVideo = false, startHint = null, showRir = true, showFailure = false, onPatch, onPatchSet, onToggleSet, onAddSet, onRemoveSet, onRemove, onSwap, onReorder, onVideo }) {
   const { exercise, sets } = row;
   const embedUrl = inlineVideo && exercise.video_url ? loomEmbedUrl(exercise.video_url) : null;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1596,12 +1646,14 @@ function ExerciseCard({ row, unit = "kg", last, rirTarget = null, beatLabel = nu
           </span>
         ) : null}
       </div>
-      <p className="text-[12px] leading-snug text-dim">
-        Tap a set number for a warm-up. Swipe left to delete.{" "}
-        <span className="inline-flex align-middle">
-          <Explain k="warmup" />
-        </span>
-      </p>
+      {showTips ? (
+        <p className="text-[12px] leading-snug text-dim">
+          Tap a set number for a warm-up. Swipe left to delete.{" "}
+          <span className="inline-flex align-middle">
+            <Explain k="warmup" />
+          </span>
+        </p>
+      ) : null}
 
       {row.showNote ? (
         <div className="flex items-start gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
