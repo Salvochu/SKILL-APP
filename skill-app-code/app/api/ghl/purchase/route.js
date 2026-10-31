@@ -165,6 +165,10 @@ async function applyPlan(supabase, userId, plan, name, age) {
     await supabase
       .from("profiles")
       .upsert({ user_id: userId, membership: "member", ...patch }, { onConflict: "user_id" });
+    // Pays through Stripe: Profile shows them "Manage membership" (even
+    // if the coach had invited them before). app_metadata, because only
+    // the service role can write it.
+    await supabase.auth.admin.updateUserById(userId, { app_metadata: { billing: "stripe" } });
 
     // A challenge account that just bought in still has its 14-day run
     // marked active, which would leave the dashboard showing the

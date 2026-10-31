@@ -35,6 +35,9 @@ export default function OnboardingQuiz({ show = false, initialName = "", initial
   // The Home Screen step, when showing: { platform, then }, where then
   // is "done" (on to the You're all set screen) or "close" (they skipped).
   const [homeStep, setHomeStep] = useState(null);
+  // The "How SKILL works" cards, when showing: "done" or "close", same
+  // meaning as homeStep.then. They come before the Home Screen step.
+  const [tour, setTour] = useState(null);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({
     fullName: initialName,
@@ -59,6 +62,21 @@ export default function OnboardingQuiz({ show = false, initialName = "", initial
 
   const firstName = answers.fullName.trim().split(/\s+/)[0] || "";
   const isBeginner = answers.experienceLevel === "Beginner";
+
+  if (tour) {
+    return (
+      <HowItWorks
+        onFinish={() => {
+          const then = tour;
+          setTour(null);
+          const platform = homeScreenPlatform();
+          if (platform) setHomeStep({ platform, then });
+          else if (then === "done") setDone(true);
+          else setDismissed(true);
+        }}
+      />
+    );
+  }
 
   if (homeStep) {
     return (
@@ -138,9 +156,7 @@ export default function OnboardingQuiz({ show = false, initialName = "", initial
     fd.set("completeOnboarding", "1");
     await saveProfile(fd);
     setSaving(false);
-    const platform = homeScreenPlatform();
-    if (platform) setHomeStep({ platform, then: "done" });
-    else setDone(true);
+    setTour("done");
   }
 
   // Close the flow. Navigation (when there is any) is a real <Link>, so
@@ -160,11 +176,9 @@ export default function OnboardingQuiz({ show = false, initialName = "", initial
     setStep((s) => Math.max(0, s - 1));
   }
   async function skipAll() {
-    // Skipping the questions still shows the Home Screen tip: it matters
-    // more to how the app works than any of the profile answers.
-    const platform = homeScreenPlatform();
-    if (platform) setHomeStep({ platform, then: "close" });
-    else setDismissed(true);
+    // Skipping the questions still shows how the app works and the Home
+    // Screen tip: both matter more than any of the profile answers.
+    setTour("close");
     await completeOnboarding();
   }
 
@@ -322,6 +336,116 @@ function HomeScreenStep({ platform, onContinue }) {
 const PRIMARY =
   "w-full rounded-2xl bg-accent px-4 py-3.5 text-center text-[16px] font-semibold text-black transition-[transform,background-color] hover:bg-accent-2 active:scale-[0.98]";
 const TEXT_BUTTON = "self-center py-1 text-[15px] font-semibold text-dim transition-colors hover:text-fg";
+
+// A first look at the app for a new member, one card at a time: where
+// the plan lives, logging a workout, seeing progress, form videos.
+const TOUR = [
+  {
+    title: "Pick your plan",
+    body: "Open Train and choose a program. It lays out your week for you: every day comes with its exercises, sets and reps already set.",
+    icon: IconTourPlan,
+  },
+  {
+    title: "Log as you lift",
+    body: "Start the day's workout and enter the weight and reps for each set. Your numbers from last time sit right next to them, so you always know what to beat.",
+    icon: IconTourLog,
+  },
+  {
+    title: "Watch it add up",
+    body: "Progress charts your strength and training volume week by week. Body keeps your weight, measurements and progress photos in one place.",
+    icon: IconTourProgress,
+  },
+  {
+    title: "Never guess a lift",
+    body: "Tap any exercise to see a short form video and how to do it. The full Library is in Menu whenever you want to browse.",
+    icon: IconTourPlay,
+  },
+];
+
+function HowItWorks({ onFinish }) {
+  const [i, setI] = useState(0);
+  const card = TOUR[i];
+  const last = i === TOUR.length - 1;
+  const Icon = card.icon;
+  return (
+    <Panel label="How SKILL works">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
+          How SKILL works
+        </span>
+        <button type="button" onClick={onFinish} className="text-[15px] font-semibold text-dim transition-colors hover:text-fg">
+          Skip
+        </button>
+      </div>
+
+      <div key={i} className="pop-in flex flex-col gap-4">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-black">
+          <Icon className="h-6 w-6" />
+        </span>
+        <h2 className="text-balance font-display text-[1.5rem] font-bold leading-tight tracking-[-0.02em] text-fg">
+          {card.title}
+        </h2>
+        <p className="text-[15px] leading-relaxed text-muted">{card.body}</p>
+      </div>
+
+      <div className="flex justify-center gap-1.5" aria-label={`Card ${i + 1} of ${TOUR.length}`}>
+        {TOUR.map((c, n) => (
+          <span
+            key={c.title}
+            className={`h-1.5 rounded-full transition-all duration-300 ${n === i ? "w-5 bg-accent" : "w-1.5 bg-fg/20"}`}
+          />
+        ))}
+      </div>
+
+      <div className="flex gap-2">
+        {i > 0 ? (
+          <button
+            type="button"
+            onClick={() => setI(i - 1)}
+            className="flex-1 rounded-2xl bg-fg/10 px-4 py-3.5 text-[16px] font-semibold text-fg transition-transform active:scale-[0.98]"
+          >
+            Back
+          </button>
+        ) : null}
+        <button type="button" onClick={() => (last ? onFinish() : setI(i + 1))} className={`${PRIMARY} flex-1`}>
+          {last ? "Got it" : "Next"}
+        </button>
+      </div>
+    </Panel>
+  );
+}
+
+function IconTourPlan(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
+      <path d="M8 3v4M16 3v4M3.5 10h17M8 14.5h3M8 17h6" />
+    </svg>
+  );
+}
+function IconTourLog(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
+    </svg>
+  );
+}
+function IconTourProgress(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 19h16M5 15l4.5-4.5 3.5 3L19 7" />
+      <path d="M14.5 7H19v4.5" />
+    </svg>
+  );
+}
+function IconTourPlay(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="5" width="18" height="14" rx="3" />
+      <path d="M10.5 9.5v5l4-2.5z" fill="currentColor" />
+    </svg>
+  );
+}
 
 // The sheet every screen of this flow sits in: thick glass over a dimmed
 // page, rising from the bottom on a phone.

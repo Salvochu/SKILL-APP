@@ -31,6 +31,9 @@ export async function inviteToSkill({ name, email } = {}) {
     email: cleanEmail,
     email_confirm: true,
     user_metadata: { name: cleanName, source: "coach_invite" },
+    // No Stripe subscription behind this access: Profile hides "Manage
+    // membership" (see AccountCard). Only the service role can write it.
+    app_metadata: { billing: "coach" },
   });
   const alreadyExisted =
     createError &&

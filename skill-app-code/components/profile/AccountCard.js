@@ -1,4 +1,5 @@
 import { getMembership } from "@/lib/data/profile";
+import { getAuthUserRecord } from "@/lib/data/session";
 import { MANAGE_MEMBERSHIP_URL } from "@/lib/links";
 import { signOut } from "@/app/actions";
 import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
@@ -9,7 +10,13 @@ import { Group, rowButton } from "@/components/ui/Grouped";
 // and password up top, sign out on its own, and deleting the account in
 // a separate group at the bottom so it's never next to a routine action.
 export default async function AccountCard() {
-  const isMember = (await getMembership()) === "member";
+  const [membership, authUser] = await Promise.all([getMembership(), getAuthUserRecord()]);
+  // Members the coach invited have no Stripe subscription to manage.
+  // Older invites predate the billing flag and only carry their source.
+  const billing = authUser?.app_metadata?.billing;
+  const coachInvited =
+    billing === "coach" || (!billing && authUser?.user_metadata?.source === "coach_invite");
+  const isMember = membership === "member" && !coachInvited;
   return (
     <div className="flex flex-col gap-7">
       <Group
