@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { selectAll } from "@/lib/supabase/selectAll";
 import { CHALLENGE_TEMPLATE_ID, isChallengeDayComplete } from "@/lib/data/challenge";
+import { updateGhlTags } from "@/lib/ghl";
 
 // Daily report (Vercel Cron, Authorization: Bearer CRON_SECRET). For
 // anyone whose challenge day is exactly 7 today, splits them into
@@ -8,7 +9,13 @@ import { CHALLENGE_TEMPLATE_ID, isChallengeDayComplete } from "@/lib/data/challe
 // posts a formatted summary to a GHL inbound webhook. This is purely
 // informational for the coach to decide who to reach out to personally -
 // no in-app upsell or pressure on the challenge itself.
+//
+// The same daily run also tags everyone on their real Day 14 with
+// "challenge day 14" in GHL, which triggers the "your 14 days are up"
+// email. The day counts from when they tapped "Start my 14 days", which
+// GHL can't know (a fixed wait after sign-up lands days early).
 const DAY = 24 * 60 * 60 * 1000;
+const FINAL_DAY = 14;
 const REPORT_DAY = 7;
 const STRUGGLING_MISSED_THRESHOLD = 2;
 
@@ -19,9 +26,6 @@ export async function GET(request) {
     return new Response("forbidden", { status: 403 });
   }
   const webhookUrl = process.env.CHALLENGE_DAY7_REPORT_WEBHOOK_URL;
-  if (!webhookUrl) {
-    return Response.json({ error: "webhook not configured" }, { status: 503 });
-  }
 
   const admin = createAdminClient();
 
@@ -31,7 +35,7 @@ export async function GET(request) {
     .eq("membership", "challenge");
   const profileIds = (profileRows ?? []).map((p) => p.user_id);
   if (!profileIds.length) {
-    return Response.json({ ok: true, day7Count: 0, sent: false });
+    return Response.json({ ok: true, day7Count: 0, sent: false, day14Tagged: 0 });
   }
   const nameByUser = new Map((profileRows ?? []).map((p) => [p.user_id, p.full_name || ""]));
 
@@ -60,13 +64,24 @@ export async function GET(request) {
   }
 
   const todayMs = Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+  const challengeDayOf = (startedAt) =>
+    Math.max(0, Math.floor((todayMs - Date.parse(`${startedAt}T00:00:00Z`)) / DAY)) + 1;
+
+  // Day 14 tags for GHL (see the note at the top). Only challenge
+  // accounts are in `runs`, so anyone who already paid is left out.
+  const finalDayRuns = (runs ?? []).filter((r) => r.started_at && challengeDayOf(r.started_at) === FINAL_DAY);
+  await Promise.all(
+    finalDayRuns.map(async (r) => {
+      const { data } = await admin.auth.admin.getUserById(r.user_id);
+      await updateGhlTags(data?.user?.email, { add: ["challenge day 14"] });
+    }),
+  );
+  const day14Tagged = finalDayRuns.length;
 
   const day7Users = [];
   for (const run of runs ?? []) {
     if (!run.started_at) continue;
-    const startMs = Date.parse(`${run.started_at}T00:00:00Z`);
-    const daysSince = Math.max(0, Math.floor((todayMs - startMs) / DAY));
-    const challengeDay = daysSince + 1;
+    const challengeDay = challengeDayOf(run.started_at);
     if (challengeDay !== REPORT_DAY) continue;
 
     const complete = completeDaysByUser.get(run.user_id) ?? new Set();
@@ -95,7 +110,10 @@ export async function GET(request) {
   }
 
   if (!day7Users.length) {
-    return Response.json({ ok: true, day7Count: 0, sent: false });
+    return Response.json({ ok: true, day7Count: 0, sent: false, day14Tagged });
+  }
+  if (!webhookUrl) {
+    return Response.json({ ok: true, day7Count: day7Users.length, sent: false, reason: "report webhook not configured", day14Tagged });
   }
 
   // Emails live in auth.users, not profiles.
@@ -136,5 +154,6 @@ export async function GET(request) {
     doingWell: doingWell.length,
     struggling: struggling.length,
     webhookStatus: res.status,
+    day14Tagged,
   });
 }

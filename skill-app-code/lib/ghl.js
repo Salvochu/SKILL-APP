@@ -60,8 +60,8 @@ export async function syncProfileToGHL({ email, fullName, phone, age, country, f
 // Adds and removes tags on the GHL contact with this email (creating
 // the contact if GHL doesn't have it yet), so a GHL workflow triggered
 // on "Contact tag added" can take it from there. The app uses two:
-//   skill-app-checkout  paid for the membership inside the app
-//   skill-app-lapsed    that in-app subscription has ended
+//   skill app checkout  paid for the membership inside the app
+//   skill app lapsed    that in-app subscription has ended
 // Each removes the other, so a member who leaves and comes back fires
 // the workflows again. Best effort and inert without the same two env
 // vars as above.
