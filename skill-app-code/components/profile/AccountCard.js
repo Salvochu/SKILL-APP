@@ -1,6 +1,5 @@
 import { getMembership } from "@/lib/data/profile";
 import { getAuthUserRecord } from "@/lib/data/session";
-import { MANAGE_MEMBERSHIP_URL } from "@/lib/links";
 import { signOut } from "@/app/actions";
 import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
 import DangerZone from "@/components/profile/DangerZone";
@@ -24,7 +23,7 @@ export default async function AccountCard() {
         footer={isMember ? "Update your card or cancel your subscription directly with Stripe." : null}
       >
         {isMember ? (
-          <a href={MANAGE_MEMBERSHIP_URL} target="_blank" rel="noopener noreferrer" className={`${rowButton} text-fg`}>
+          <a href="/membership/manage" className={`${rowButton} text-fg`}>
             Manage membership
             <IconExternal className="h-4 w-4 shrink-0 text-dim" />
           </a>

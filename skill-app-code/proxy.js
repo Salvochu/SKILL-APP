@@ -123,8 +123,9 @@ export async function proxy(request) {
     const lapsed = profile?.membership === "lapsed";
 
     // The checkout link (/membership/checkout) is how a locked-out
-    // account pays to get back in, so it is never redirected away.
-    const isCheckout = pathname === "/membership/checkout";
+    // account pays to get back in, and /membership/manage opens their
+    // billing (invoices, card), so neither is ever redirected away.
+    const isCheckout = pathname === "/membership/checkout" || pathname === "/membership/manage";
     if (lapsed && pathname !== "/paused" && !isCheckout) {
       const url = request.nextUrl.clone();
       url.pathname = "/paused";

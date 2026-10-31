@@ -34,6 +34,31 @@ export async function createMembershipCheckoutUrl({ user, site, back = "/dashboa
   }
 }
 
+// Stripe's billing page (the Customer Portal) opened straight into one
+// member's own subscription: cancel, change card, invoices, with no email
+// code to sign in. Uses the Stripe customer saved when they paid in the
+// app, otherwise the Stripe customer with their login email (members who
+// paid through GHL). Returns null if there's no customer or Stripe
+// refuses, so callers can fall back to the portal's email sign-in page.
+export async function createBillingPortalUrl({ user, customerId, site, back = "/profile" }) {
+  try {
+    let customer = customerId;
+    if (!customer && user?.email) {
+      const existing = await stripe("GET", "/customers", { email: user.email, limit: 1 });
+      customer = existing?.data?.[0]?.id;
+    }
+    if (!customer) return null;
+    const session = await stripe("POST", "/billing_portal/sessions", {
+      customer,
+      return_url: `${site}${back}`,
+    });
+    return session?.url ?? null;
+  } catch (err) {
+    console.error("billing portal failed:", err.message);
+    return null;
+  }
+}
+
 // The app's own origin, for the URLs Stripe sends people back to.
 export function siteOrigin(headers) {
   return (
