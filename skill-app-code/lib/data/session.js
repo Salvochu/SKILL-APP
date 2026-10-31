@@ -19,7 +19,9 @@ export const getSessionUser = cache(async () => {
   const { data, error } = await supabase.auth.getClaims();
   const claims = error ? null : data?.claims;
   if (!claims?.sub) return null;
-  return { id: claims.sub, email: claims.email ?? null };
+  // aal is "aal2" once this session has also passed the authenticator
+  // code (two-factor), "aal1" for a password or email link alone.
+  return { id: claims.sub, email: claims.email ?? null, aal: claims.aal ?? "aal1" };
 });
 
 // The full auth user record, from the auth server. Only for the rare

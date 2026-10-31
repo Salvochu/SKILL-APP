@@ -11,6 +11,7 @@ const CHALLENGE_TEMPLATE_ID = "main-character-14";
 const CHALLENGE_DAYS = 14;
 const GRACE_DAYS = 3;
 const DAY_MS = 86400000;
+const NO_MFA_COOKIE = "skill-no-mfa";
 
 // Next.js 16 renamed middleware.js -> proxy.js (same mechanics, new name/
 // export). This runs on every matched request, before rendering.
@@ -90,9 +91,35 @@ export async function proxy(request) {
   if (user && !isPublicRoute) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("membership")
+      .select("membership, role")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    // Two-factor (coach only, turned on in Settings): a session that
+    // only has the password goes to the code screen first. The real lock
+    // is getIsCoach (lib/data/coach.js); this just takes the coach
+    // straight there. "No two-factor set up" is remembered for 10
+    // minutes so the coach's navigations don't each ask the auth server.
+    if (profile?.role === "coach" && claimsData.claims.aal !== "aal2") {
+      if (request.cookies.get(NO_MFA_COOKIE)?.value !== user.id) {
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        if ((factors?.totp ?? []).length > 0) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/auth/mfa";
+          url.search = "";
+          url.searchParams.set("next", pathname);
+          return NextResponse.redirect(url);
+        }
+        response.cookies.set(NO_MFA_COOKIE, user.id, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          path: "/",
+          maxAge: 600,
+        });
+      }
+    }
+
     const lapsed = profile?.membership === "lapsed";
 
     if (lapsed && pathname !== "/paused") {

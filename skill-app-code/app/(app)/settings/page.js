@@ -4,6 +4,8 @@ import { getNotificationPrefs } from "@/lib/data/notifications";
 import { getBeginnerContext } from "@/lib/data/profile";
 import NotificationSettings from "@/components/notifications/NotificationSettings";
 import TrainingModeSetting from "@/components/settings/TrainingModeSetting";
+import TwoFactorSetting from "@/components/settings/TwoFactorSetting";
+import { getProfileRow } from "@/lib/data/session";
 
 export const metadata = { title: "Settings" };
 
@@ -32,9 +34,10 @@ export default function SettingsPage() {
 }
 
 async function Body() {
-  const [prefs, beginner] = await Promise.all([
+  const [prefs, beginner, profile] = await Promise.all([
     getNotificationPrefs(),
     getBeginnerContext(),
+    getProfileRow(),
   ]);
   return (
     <div className="flex flex-col gap-7">
@@ -43,6 +46,8 @@ async function Body() {
         isExplicit={beginner.advancedIsExplicit}
       />
       <NotificationSettings initialPrefs={prefs} />
+      {/* Coach only for now: that login opens every client's data. */}
+      {profile?.role === "coach" ? <TwoFactorSetting /> : null}
     </div>
   );
 }

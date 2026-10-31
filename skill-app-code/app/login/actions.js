@@ -20,6 +20,12 @@ export async function login(formData) {
 
   if (error) retry(errorCode(error));
 
+  // Two-factor turned on: the password is only the first step.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+    redirect(`/auth/mfa?next=${encodeURIComponent(next)}`);
+  }
+
   redirect(next);
 }
 

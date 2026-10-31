@@ -21,6 +21,12 @@ const dayKey = (d) => new Date(d).toISOString().slice(0, 10);
 // Is the signed-in user a coach? Read through the user's own session
 // (not the admin client), so this can never be spoofed. Cached per
 // request - several coach screens check it.
+//
+// Everything behind this reads every client's data with the admin
+// client, so once the coach has turned on two-factor in Settings, the
+// password alone is not enough: the session must also have passed the
+// authenticator code (aal2). The list of factors comes from the auth
+// server, not the cookie, so it can't be faked either.
 export const getIsCoach = cache(async () => {
   const supabase = await getServerSupabase();
   const user = await getSessionUser();
@@ -30,7 +36,11 @@ export const getIsCoach = cache(async () => {
     .select("role")
     .eq("user_id", user.id)
     .maybeSingle();
-  return data?.role === "coach";
+  if (data?.role !== "coach") return false;
+  if (user.aal === "aal2") return true;
+  const { data: factors, error } = await supabase.auth.mfa.listFactors();
+  if (error) return false;
+  return (factors?.totp ?? []).length === 0;
 });
 
 // Pull everything the coach screens read, once. RLS is bypassed here, so

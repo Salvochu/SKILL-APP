@@ -27,6 +27,11 @@ export default function SetPasswordForm() {
     const supabase = createClient();
     const { error: updateError } = await supabase.auth.updateUser({ password });
     if (updateError) {
+      // Two-factor is on for this account: the code comes first.
+      if (updateError.code === "insufficient_aal" || /aal2/i.test(updateError.message)) {
+        router.push(`/auth/mfa?next=${encodeURIComponent("/auth/set-password")}`);
+        return;
+      }
       setStatus("error");
       setError(
         /session|jwt|auth/i.test(updateError.message)
