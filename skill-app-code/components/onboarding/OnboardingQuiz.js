@@ -279,7 +279,7 @@ function HomeScreenStep({ platform, onContinue }) {
               <>
                 Tap the <span className="font-semibold text-fg">Share</span> button
                 <IconShare className="mx-1 inline h-4 w-4 align-[-2px] text-accent" />
-                at the bottom of Safari
+                in your browser
               </>,
               <>
                 Scroll down and tap <span className="font-semibold text-fg">Add to Home Screen</span>

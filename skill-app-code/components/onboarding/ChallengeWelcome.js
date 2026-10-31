@@ -231,7 +231,7 @@ export default function ChallengeWelcome({ show = false, initialName = "" }) {
               </h2>
               <p className="mt-1 text-[15px] leading-relaxed text-muted">
                 {needsHomeScreen
-                  ? "iPhone only allows reminders for apps added to your Home Screen. Tap the Share button in Safari, then “Add to Home Screen”. Open SKILL from there and turn reminders on in Settings."
+                  ? "iPhone only allows reminders for apps added to your Home Screen. Tap the Share button in your browser, then “Add to Home Screen”. Open SKILL from there and turn reminders on in Settings."
                   : "Not required, but it opens like a real app instead of a browser tab. In Chrome’s menu, tap “Install and create shortcut”."}
               </p>
             </div>
