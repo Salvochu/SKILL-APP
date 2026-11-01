@@ -67,7 +67,12 @@ function drawMuscleBars(ctx, cx, top, rows, totalSets) {
   rows.forEach((r, i) => {
     const y = top + i * rowH;
     const label = String(r.group ?? r.name ?? "").toUpperCase();
-    const w = Math.max(56, Math.round((r.sets / max) * (barW - 104)));
+    // Never shorter than its own label, so a long name on a lightly
+    // trained muscle ("SHOULDERS") stays on the orange instead of running
+    // off the end of it onto the dark track.
+    ctx.font = `700 24px ${SYS_FONT}`;
+    const labelW = ctx.measureText(label).width + 40;
+    const w = Math.min(barW, Math.max(56, labelW, Math.round((r.sets / max) * (barW - 104))));
 
     ctx.fillStyle = "#241d16";
     roundRect(ctx, x0, y, barW, 34, 17);

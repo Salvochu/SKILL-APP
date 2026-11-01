@@ -17,18 +17,28 @@ function isLight() {
   return typeof document !== "undefined" && document.documentElement.classList.contains("light");
 }
 
-export default function ThemeToggle() {
+// The app's light / dark setting, for any control that switches it (the
+// header button below, the workout screen's settings). Every one of them
+// stays in step, since they all read the same <html> class.
+export function useTheme() {
   const light = useSyncExternalStore(subscribe, isLight, () => false);
-
-  function toggle() {
-    const next = !light;
+  function setLight(next) {
     document.documentElement.classList.toggle("light", next);
     try {
       localStorage.setItem(STORAGE_KEY, next ? "light" : "dark");
     } catch {
-      // private mode / storage blocked: the toggle still works for this view
+      // private mode / storage blocked: the switch still works for this view
     }
     listeners.forEach((cb) => cb());
+  }
+  return [light, setLight];
+}
+
+export default function ThemeToggle() {
+  const [light, setLight] = useTheme();
+
+  function toggle() {
+    setLight(!light);
   }
 
   return (

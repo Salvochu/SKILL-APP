@@ -18,6 +18,7 @@ import { Group, Row, rowInput } from "@/components/ui/Grouped";
 import Explain from "@/components/Explain";
 import ConfirmModal from "@/components/ConfirmModal";
 import Sheet from "@/components/Sheet";
+import { useTheme } from "@/components/ThemeToggle";
 import EdgeSwipeBack from "@/components/EdgeSwipeBack";
 import FocusMode from "@/components/FocusMode";
 import { FOCUS_LAYOUT } from "@/components/log/focusLayout";
@@ -157,6 +158,9 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [showRest, setShowRest] = useState(false);
   const [restTimerOn, setRestTimerOn] = useState(restTimer);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // The header's light / dark button is hidden while working out (focus
+  // mode), so the switch lives in this screen's settings too.
+  const [lightTheme, setLightTheme] = useTheme();
   // The bottom workout bar, full or shrunk to a clock pill. Remembered on
   // this device, since it is a matter of taste rather than per workout.
   const [barMinimised, setBarMinimised] = useState(false);
@@ -660,6 +664,27 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
                   onChange={(e) => setDate(e.target.value)}
                   className="min-w-0 appearance-none bg-transparent py-3 text-right text-[16px] text-muted outline-none focus:text-fg [&::-webkit-date-and-time-value]:text-right"
                 />
+              </div>
+            </Row>
+            <Row label="Appearance">
+              <div role="radiogroup" aria-label="Appearance" className="flex rounded-[10px] bg-surface-2 p-0.5">
+                {[
+                  [false, "Dark"],
+                  [true, "Light"],
+                ].map(([value, label]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    role="radio"
+                    aria-checked={lightTheme === value}
+                    onClick={() => setLightTheme(value)}
+                    className={`rounded-[8px] px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+                      lightTheme === value ? "bg-fg text-bg shadow-sm" : "text-muted"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </Row>
             <Row label="Rest timer">
