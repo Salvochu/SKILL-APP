@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { selectAll } from "@/lib/supabase/selectAll";
 import { computeWeekStreak, weekKeyOf } from "@/lib/training";
 import { currentWeek } from "@/lib/mesocycle";
-import { isChallengeDayComplete } from "@/lib/data/challenge";
+import { isChallengeDayComplete, CHALLENGE_DAYS } from "@/lib/data/challenge";
 import { muscleShareLabel } from "@/lib/exercises";
 import {
   patternForExercise,
@@ -84,9 +84,12 @@ async function loadEveryone() {
         .order("id"),
     ),
     selectAll(() =>
-      admin.from("user_mesocycles").select("user_id, template_id, start_date, status, sessions_per_week").order("id"),
+      admin
+        .from("user_mesocycles")
+        .select("user_id, template_id, start_date, started_at, status, sessions_per_week")
+        .order("id"),
     ),
-    admin.from("mesocycle_templates").select("id, name, weeks"),
+    admin.from("mesocycle_templates").select("id, name, weeks, kind"),
   ]);
   for (const r of [profilesRes, sessionsRes, setsRes, bodyRes, mesosRes, templatesRes]) {
     if (r.error) throw new Error(`Failed to load coach data: ${r.error.message}`);
@@ -150,10 +153,22 @@ function activeMeso(mesos, templateById) {
   if (!run) return null;
   const t = templateById.get(run.template_id);
   if (!t) return null;
+  // The challenge counts days, not weeks (same sum as getChallengeAccess):
+  // nothing until it is started, then day 1 on the start date.
+  let challengeDay = null;
+  if (t.kind === "challenge" && run.started_at) {
+    const basis = String(run.started_at || run.start_date).slice(0, 10);
+    const today = Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+    challengeDay = Math.max(0, Math.floor((today - Date.parse(`${basis}T00:00:00Z`)) / DAY)) + 1;
+  }
   return {
     name: t.name,
+    kind: t.kind ?? null,
     week: currentWeek(run.start_date, t.weeks),
     weeks: t.weeks,
+    challengeDay,
+    challengeDays: CHALLENGE_DAYS,
+    challengeStarted: t.kind === "challenge" ? Boolean(run.started_at) : null,
     sessionsPerWeek: run.sessions_per_week || 0,
     startDate: run.start_date,
   };

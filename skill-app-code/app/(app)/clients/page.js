@@ -28,7 +28,7 @@ async function Body() {
           <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Clients</h1>
           <InviteButton />
         </div>
-        <p className="text-[15px] text-muted">Who is training, who is progressing, who to talk to.</p>
+        <p className="text-balance text-[15px] text-muted">Who is training, who is progressing, and who to talk to.</p>
       </header>
       <ClientList data={data} unit={unit} />
     </div>

@@ -76,7 +76,7 @@ function upNextSession(active, access) {
     ? `Day ${active.challengeDay ?? 1} of ${active.challengeDays ?? 14}`
     : linear
       ? active.templateName
-      : `${active.templateName} · Week ${active.week} of ${active.weeks}`;
+      : `Week ${active.week} of ${active.weeks} · ${active.splitName}`;
   return {
     href: `/log?meso=${active.id}&split=${active.splitId}&day=${active.nextDay.dayTemplateId}&variant=${encodeURIComponent(active.variant)}`,
     title: active.nextDay.name,

@@ -74,7 +74,7 @@ export function formatSet(s, unit) {
   const w = weight == null ? "BW" : String(Number(weight));
   const r = s.reps == null ? "?" : s.reps;
   const rir = s.rir == null ? "" : ` @${s.rir}`;
-  return `${w} x ${r}${rir}`;
+  return `${w} × ${r}${rir}`;
 }
 
 // The 1 to 5 post-workout effort rating (workout_sessions.perceived_effort).

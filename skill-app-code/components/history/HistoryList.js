@@ -8,6 +8,7 @@ import { deleteAllWorkouts } from "@/app/(app)/workouts/actions";
 import { shortDate } from "@/components/progress/chartkit";
 import { useHydrated } from "@/components/useHydrated";
 import EmptyState from "@/components/ui/EmptyState";
+import WorkoutName from "@/components/history/WorkoutName";
 
 // Every logged workout, grouped by training week, with a type-to-confirm
 // "delete all" at the bottom. Used raw on the /history page and inside
@@ -65,7 +66,7 @@ export default function HistoryList({ sessions, onNavigate }) {
                   className="flex pl-4 transition-colors hover:bg-surface-2 active:bg-surface-2"
                 >
                   <span className="row-sep flex min-w-0 flex-1 items-center gap-3 border-t border-border/70 py-3.5 pr-4">
-                    <span className="min-w-0 flex-1 truncate text-[16px] text-fg">{w.title}</span>
+                    <WorkoutName title={w.title} />
                     <span className="shrink-0 text-[14px] text-muted">
                       <LoggedAt iso={w.started_at} />
                     </span>
@@ -200,3 +201,4 @@ function IconClock(props) {
     </svg>
   );
 }
+

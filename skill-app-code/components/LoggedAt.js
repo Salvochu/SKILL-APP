@@ -7,10 +7,13 @@ import { useEffect, useState } from "react";
 // never disagree on it (SSR shows the plain fallback, which is
 // timezone-independent). Workouts saved before real times were captured,
 // and backdated ones, sit exactly on 12:00 UTC: those show date only.
+// Spelled out here rather than left to the locale, which writes "Sept"
+// while every other date label in the app says "Sep".
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 function fallback(iso) {
   const [, m, d] = String(iso).slice(0, 10).split("-");
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${Number(d)} ${months[Number(m) - 1] ?? "?"}`;
+  return `${Number(d)} ${MONTHS[Number(m) - 1] ?? "?"}`;
 }
 
 function hasRealTime(d) {
@@ -23,11 +26,7 @@ export default function LoggedAt({ iso, withYear = false }) {
   useEffect(() => {
     function localize() {
       const d = new Date(iso);
-      const datePart = d.toLocaleDateString("en-GB", {
-        month: "short",
-        day: "numeric",
-        ...(withYear ? { year: "numeric" } : {}),
-      });
+      const datePart = `${d.getDate()} ${MONTHS[d.getMonth()]}${withYear ? ` ${d.getFullYear()}` : ""}`;
       if (!hasRealTime(d)) {
         setText(datePart);
         return;

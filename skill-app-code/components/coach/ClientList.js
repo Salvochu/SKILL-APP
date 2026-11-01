@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { fromKg, unitLabel } from "@/lib/units";
+import { clientStatus, STATUS_TONE, calendarDaysAgo } from "@/lib/coachStatus";
 
 const FLAG_TONE = {
   accent: "bg-accent-soft text-accent",
@@ -13,7 +14,7 @@ const FLAG_TONE = {
 
 function ago(iso) {
   if (!iso) return "never";
-  const d = Math.floor((Date.now() - new Date(iso)) / 86400000);
+  const d = calendarDaysAgo(iso);
   if (d <= 0) return "today";
   if (d === 1) return "1d ago";
   if (d < 21) return `${d}d ago`;
@@ -76,6 +77,7 @@ export default function ClientList({ data, unit = "kg" }) {
         <ul className="overflow-hidden rounded-2xl bg-surface [&>li:first-child_.row-sep]:border-transparent">
           {shown.map((c) => {
             const dir = DIR[c.strengthDir] ?? DIR.none;
+            const status = clientStatus(c);
             return (
               <li key={c.id}>
                 <Link href={`/clients/${c.id}`} className="flex pl-4 transition-colors hover:bg-surface-2 active:bg-surface-2">
@@ -88,8 +90,13 @@ export default function ClientList({ data, unit = "kg" }) {
                         </span>
                       </span>
 
-                      {c.flags.length > 0 ? (
+                      {status || c.flags.length > 0 ? (
                         <span className="flex flex-wrap gap-1.5">
+                          {status ? (
+                            <span className={`rounded-full px-2 py-0.5 text-[12px] font-semibold ${STATUS_TONE[status.tone]}`}>
+                              {status.label}
+                            </span>
+                          ) : null}
                           {c.flags.map((f) => (
                             <span
                               key={f.key}
@@ -101,21 +108,34 @@ export default function ClientList({ data, unit = "kg" }) {
                         </span>
                       ) : null}
 
+                      {/* Only the numbers there is something to say about:
+                          no "0w streak" or empty strength arrow. */}
+                      {!c.lastWorkoutAt ? (
+                        <span className="text-[13px] text-muted">No workouts yet</span>
+                      ) : (
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">
                         <span>Last {ago(c.lastWorkoutAt)}</span>
                         <span className="text-dim" aria-hidden="true">·</span>
                         <span><span className="font-semibold text-fg tabular-nums">{c.sessionsThisWeek}</span> this week</span>
-                        <span className="text-dim" aria-hidden="true">·</span>
-                        <span><span className="font-semibold text-fg tabular-nums">{c.streak}</span>w streak</span>
-                        <span className="text-dim" aria-hidden="true">·</span>
-                        <span>
-                          Strength <span className={`font-semibold ${dir.cls}`}>{dir.sym}</span>
-                          {c.strengthDelta != null && c.strengthDelta !== 0 ? (
-                            <span className={`ml-0.5 font-semibold tabular-nums ${dir.cls}`}>
-                              {c.strengthDelta > 0 ? "+" : ""}{c.strengthDelta}
+                        {c.streak > 0 ? (
+                          <>
+                            <span className="text-dim" aria-hidden="true">·</span>
+                            <span><span className="font-semibold text-fg tabular-nums">{c.streak}</span>-week streak</span>
+                          </>
+                        ) : null}
+                        {c.strengthDir !== "none" ? (
+                          <>
+                            <span className="text-dim" aria-hidden="true">·</span>
+                            <span>
+                              Strength <span className={`font-semibold ${dir.cls}`}>{dir.sym}</span>
+                              {c.strengthDelta != null && c.strengthDelta !== 0 ? (
+                                <span className={`ml-0.5 font-semibold tabular-nums ${dir.cls}`}>
+                                  {c.strengthDelta > 0 ? "+" : ""}{c.strengthDelta}
+                                </span>
+                              ) : null}
                             </span>
-                          ) : null}
-                        </span>
+                          </>
+                        ) : null}
                         {c.weightDelta != null ? (
                           <>
                             <span className="text-dim" aria-hidden="true">·</span>
@@ -130,6 +150,7 @@ export default function ClientList({ data, unit = "kg" }) {
                           </>
                         ) : null}
                       </span>
+                      )}
                     </span>
                     <IconChevron className="h-4 w-4 shrink-0 text-dim" />
                   </span>

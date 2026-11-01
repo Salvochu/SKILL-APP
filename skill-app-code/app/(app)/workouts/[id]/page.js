@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getWorkoutDetail } from "@/lib/data/workouts";
 import { getUnitPreference } from "@/lib/data/profile";
@@ -6,6 +5,8 @@ import { EFFORT_LABELS } from "@/lib/training";
 import { fromKg, unitLabel } from "@/lib/units";
 import LoggedAt from "@/components/LoggedAt";
 import WorkoutSets from "@/components/workouts/WorkoutSets";
+import BackButton from "@/components/ui/BackButton";
+import { splitWorkoutTitle } from "@/lib/workoutTitle";
 
 export const metadata = { title: "Workout" };
 
@@ -22,23 +23,19 @@ export default async function WorkoutDetailPage({ params }) {
   const volume = Math.round(fromKg(workout.volumeKg, unit) || 0).toLocaleString("en-GB");
   const mins = workout.durationMin;
   const effort = workout.perceivedEffort ? EFFORT_LABELS[workout.perceivedEffort] : null;
+  const { name, week } = splitWorkoutTitle(workout.title);
 
   return (
     <div className="flex flex-col gap-6 py-2">
-      <Link
-        href="/dashboard"
-        className="-ml-1 flex items-center gap-0.5 self-start py-1 text-[15px] font-medium text-accent transition-opacity active:opacity-60"
-      >
-        <IconBack className="h-5 w-5" />
-        Dashboard
-      </Link>
+      <BackButton />
 
       <header className="flex flex-col gap-1">
         <h1 className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">
-          {workout.title}
+          {name}
         </h1>
         <p className="text-[15px] text-muted">
           <LoggedAt iso={workout.date} withYear />
+          {week ? <span className="text-dim"> · {week}</span> : null}
         </p>
       </header>
 
@@ -93,10 +90,4 @@ function Stat({ label, value, unit = null, small = false }) {
   );
 }
 
-function IconBack(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m15 6-6 6 6 6" />
-    </svg>
-  );
-}
+

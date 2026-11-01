@@ -78,7 +78,7 @@ export function weekGuidance(week, weeks, startingRir = 3, advanced = true) {
   }
   if (week === 1) {
     return {
-      headline: advanced ? "Baseline week" : "Week 1",
+      headline: advanced ? "Baseline week" : "Find your weights",
       detail: advanced
         ? `Leave about ${startingRir} reps in the tank on every set. Pick weights you are sure of. These numbers become your reference for the whole block.`
         : "Pick weights you are sure of and leave a couple of reps in the tank. These numbers are your starting point for the block.",

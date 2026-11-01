@@ -5,6 +5,7 @@ import TapLink from "@/components/TapLink";
 import { compact } from "@/components/progress/chartkit";
 import { fromKg, unitLabel } from "@/lib/units";
 import { useHydrated } from "@/components/useHydrated";
+import WorkoutName from "@/components/history/WorkoutName";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -163,7 +164,7 @@ export default function Calendar({ sessions, bodyDates, unit = "kg" }) {
                   className="flex pl-4 transition-colors hover:bg-surface-2 active:bg-surface-2"
                 >
                   <span className="row-sep flex min-w-0 flex-1 items-center gap-3 border-t border-border/70 py-3.5 pr-4">
-                    <span className="min-w-0 flex-1 truncate text-[16px] text-fg">{s.title}</span>
+                    <WorkoutName title={s.title} />
                     <span className="tabular shrink-0 text-[14px] text-muted">{compact(Math.round(fromKg(s.volumeKg, unit)))} {unitLabel(unit)}</span>
                     <IconChevron className="h-4 w-4 shrink-0 text-dim" />
                   </span>

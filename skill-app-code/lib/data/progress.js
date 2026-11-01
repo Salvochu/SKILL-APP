@@ -1,5 +1,6 @@
 import "server-only";
 import { getServerSupabase } from "@/lib/data/session";
+import { splitWorkoutTitle } from "@/lib/workoutTitle";
 
 // Epley 1RM estimate, ignored above ~15 reps where it stops tracking
 // strength and just balloons.
@@ -59,7 +60,7 @@ export async function getProgressData(range = {}) {
   const sessionVolumes = rangeSessions.map((s) => ({
     id: s.id,
     date: dayKey(s.started_at),
-    label: s.title,
+    label: splitWorkoutTitle(s.title).name,
     volumeKg: Math.round(volBySession.get(s.id) || 0),
   }));
 

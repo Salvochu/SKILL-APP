@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { tierColorFor } from "@/lib/strength";
 import { fromKg, unitLabel } from "@/lib/units";
+import { clientStatus, STATUS_TONE, calendarDaysAgo } from "@/lib/coachStatus";
+import { splitWorkoutTitle } from "@/lib/workoutTitle";
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function fmtDate(iso) {
   if (!iso) return "unknown";
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 function ago(iso) {
   if (!iso) return "never";
-  const d = Math.floor((Date.now() - new Date(iso)) / 86400000);
+  const d = calendarDaysAgo(iso);
   if (d <= 0) return "today";
   if (d === 1) return "yesterday";
   if (d < 21) return `${d} days ago`;
@@ -33,7 +38,9 @@ function pitchLine(c) {
     return `Trained ${c.sessionsPrev4w} times the previous month, then stopped. A personal check-in could bring them back.`;
   }
   if (c.joinedDaysAgo != null && c.joinedDaysAgo <= 14) {
-    return `Joined ${c.joinedDaysAgo} days ago. Reaching out early sets the tone for coaching.`;
+    const days = calendarDaysAgo(c.joinedAt) ?? c.joinedDaysAgo;
+    const when = days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
+    return `Joined ${when}. Reaching out early sets the tone for coaching.`;
   }
   if (c.workoutsTotal === 0) {
     return "Has not logged a workout yet. A nudge to get started, then revisit.";
@@ -45,7 +52,7 @@ const DIR = {
   up: { sym: "↑", cls: "text-good", word: "climbing" },
   down: { sym: "↓", cls: "text-danger", word: "slipping" },
   flat: { sym: "→", cls: "text-dim", word: "flat" },
-  none: { sym: "·", cls: "text-dim", word: "no data" },
+  none: { sym: "", cls: "text-dim", word: "No data" },
 };
 
 // Weights come in kg (how they are stored) and are shown in the coach's
@@ -56,6 +63,8 @@ export default function ClientDetail({ client: c, unit = "kg" }) {
   const dir = DIR[c.strengthDir] ?? DIR.none;
   const tested = (c.strengthPatterns ?? []).filter((p) => p.e1rm > 0);
   const labelByKey = new Map((c.patternLabels ?? []).map((p) => [p.key, p.label]));
+  const status = clientStatus(c);
+  const program = c.activeProgram;
 
   return (
     <div className="flex flex-col gap-6">
@@ -76,6 +85,11 @@ export default function ClientDetail({ client: c, unit = "kg" }) {
           {c.phone ? <span>{c.phone}</span> : null}
         </div>
         <div className="flex flex-wrap gap-2 pt-1">
+          {status ? (
+            <span className={`rounded-full px-2.5 py-1 text-[13px] font-semibold ${STATUS_TONE[status.tone]}`}>
+              {status.label}
+            </span>
+          ) : null}
           {c.goal ? <Tag>{c.goal}</Tag> : null}
           {c.experience ? <Tag>{c.experience}</Tag> : null}
           <Tag>Joined {fmtDate(c.joinedAt)}</Tag>
@@ -121,12 +135,13 @@ export default function ClientDetail({ client: c, unit = "kg" }) {
         <Stat label="This week" value={c.sessionsThisWeek} />
         <Stat label="Week streak" value={c.streak} />
         <Stat label="Workouts" value={c.workoutsTotal} />
-        <Stat label="Last workout" value={ago(c.lastWorkoutAt)} />
+        <Stat label="Last workout" value={c.lastWorkoutAt ? ago(c.lastWorkoutAt) : "None yet"} />
         <Stat
           label="Strength (6wk)"
           value={
             <span className={dir.cls}>
-              {dir.sym} {c.strengthDelta != null && c.strengthDelta !== 0 ? `${c.strengthDelta > 0 ? "+" : ""}${c.strengthDelta}` : dir.word}
+              {dir.sym ? `${dir.sym} ` : ""}
+              {c.strengthDelta != null && c.strengthDelta !== 0 ? `${c.strengthDelta > 0 ? "+" : ""}${c.strengthDelta}` : dir.word}
             </span>
           }
         />
@@ -137,7 +152,7 @@ export default function ClientDetail({ client: c, unit = "kg" }) {
               ? `${c.weightDelta > 0 ? "+" : ""}${w1(c.weightDelta)} ${U}`
               : c.weightNow != null
                 ? `${w1(c.weightNow)} ${U}`
-                : "no data"
+                : "No data"
           }
         />
       </section>
@@ -154,13 +169,18 @@ export default function ClientDetail({ client: c, unit = "kg" }) {
         </div>
       </Section>
 
-      {c.activeProgram ? (
+      {program ? (
         <Section title="Current program">
           <div className="flex flex-col rounded-2xl bg-surface px-4 py-3.5">
-            <span className="text-[16px] font-semibold text-fg">{c.activeProgram.name}</span>
+            <span className="text-[16px] font-semibold text-fg">{program.name}</span>
             <span className="text-[13px] text-muted">
-              Week {c.activeProgram.week} of {c.activeProgram.weeks}
-              {c.activeProgram.sessionsPerWeek ? ` · aiming for ${c.activeProgram.sessionsPerWeek} a week` : ""}
+              {program.kind === "challenge"
+                ? program.challengeDay
+                  ? `Day ${Math.min(program.challengeDay, program.challengeDays)} of ${program.challengeDays}`
+                  : "Not started yet, in the 48-hour prep"
+                : `Week ${program.week} of ${program.weeks}${
+                    program.sessionsPerWeek ? ` · aiming for ${program.sessionsPerWeek} a week` : ""
+                  }`}
             </span>
           </div>
         </Section>
@@ -204,18 +224,24 @@ export default function ClientDetail({ client: c, unit = "kg" }) {
       {c.recentWorkouts.length > 0 ? (
         <Section title="Recent workouts">
           <ul className="overflow-hidden rounded-2xl bg-surface [&>*+*]:border-t [&>*+*]:border-border/70">
-            {c.recentWorkouts.map((w) => (
+            {c.recentWorkouts.map((w) => {
+              const { name, week } = splitWorkoutTitle(w.title);
+              return (
               <li key={w.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <span className="min-w-0">
-                  <span className="block truncate text-[16px] text-fg">{w.title}</span>
-                  <span className="text-[13px] text-dim">{fmtDate(w.date)}</span>
+                  <span className="block truncate text-[16px] text-fg">{name}</span>
+                  <span className="text-[13px] text-dim">
+                    {fmtDate(w.date)}
+                    {week ? ` · ${week}` : ""}
+                  </span>
                 </span>
                 <span className="tabular shrink-0 text-[13px] text-muted">
                   {w.sets} sets{w.minutes != null ? ` · ${w.minutes}m` : ""}
                   {w.effort ? ` · RPE ${w.effort}` : ""}
                 </span>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </Section>
       ) : null}

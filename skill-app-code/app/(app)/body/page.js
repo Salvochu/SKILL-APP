@@ -90,7 +90,7 @@ async function BodyBody() {
                 weightChange != null ? (
                   <span
                     className={`text-[13px] font-semibold tabular-nums ${
-                      weightChange === 0 ? "text-muted" : weightChange > 0 ? "text-good" : "text-accent"
+                      weightChange === 0 ? "text-muted" : "text-fg"
                     }`}
                   >
                     {weightChange > 0 ? "+" : ""}

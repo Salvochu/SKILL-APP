@@ -94,12 +94,12 @@ function GroupFolder({ name, items, groupNames }) {
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="flex w-full items-center gap-3 rounded-2xl bg-surface p-3 text-left transition-colors hover:bg-surface-2 active:bg-surface-2"
+        className="flex w-full items-center gap-4 rounded-2xl bg-surface p-4 text-left transition-colors hover:bg-surface-2 active:bg-surface-2"
       >
         <StackIcon open={expanded} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-display text-sm font-semibold text-fg">{name ?? "Ungrouped"}</span>
-          <span className="block text-xs text-dim">
+          <span className="block truncate font-display text-base font-semibold text-fg">{name ?? "Ungrouped"}</span>
+          <span className="block text-sm text-muted">
             {items.length} workout{items.length === 1 ? "" : "s"}
           </span>
         </span>
@@ -184,7 +184,7 @@ function WorkoutCard({ workout: w, groupNames }) {
           className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 p-4 text-left transition-colors hover:bg-surface-2"
         >
           <span className="block truncate font-display text-base font-semibold text-fg">{w.name}</span>
-          <span className="block truncate text-xs text-dim">
+          <span className="block truncate text-sm text-muted">
             {w.lastLoggedAt ? (
               <>
                 Last logged <LoggedAt iso={w.lastLoggedAt} />

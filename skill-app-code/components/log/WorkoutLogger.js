@@ -39,6 +39,13 @@ function namedForNow(title) {
   return `${part} workout`;
 }
 
+// "2026-09-07" -> "7 Sep", the way every other date in the app reads.
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function shortDay(ymd) {
+  const [, m, d] = String(ymd).slice(0, 10).split("-");
+  return m && d ? `${Number(d)} ${MONTHS_SHORT[Number(m) - 1]}` : String(ymd);
+}
+
 // Rest-timer start lengths offered in the logger's settings row. The
 // full list also lives in the Settings screen.
 const REST_LENGTHS = [30, 45, 60, 90, 120, 150, 180];
@@ -1571,7 +1578,7 @@ function ExerciseCard({ row, showTips = false, unit = "kg", last, rirTarget = nu
           <IconClock className="h-3.5 w-3.5 shrink-0 text-dim" />
           <span className="min-w-0 flex-1 text-muted">
             <span className={beatLabel ? "font-semibold text-accent" : "font-medium text-dim"}>
-              {beatLabel ?? `Last${last?.date ? ` (${last.date})` : ""}`}
+              {beatLabel ?? `Last${last?.date ? `, ${shortDay(last.date)}` : ""}`}
             </span>
             <span className="text-dim">{"  "}</span>
             {lastLine}

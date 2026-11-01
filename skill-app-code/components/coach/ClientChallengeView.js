@@ -19,9 +19,6 @@ export default function ClientChallengeView({ clientId, data, unit = "kg" }) {
       </Link>
 
       <header className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
-          14-Day Main Character
-        </span>
         <h1 className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">
           {name}&rsquo;s challenge
         </h1>
@@ -46,7 +43,12 @@ export default function ClientChallengeView({ clientId, data, unit = "kg" }) {
           />
 
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Day" value={`${Math.min(data.challengeDay, data.challengeDays)}/${data.challengeDays}`} />
+            {/* The day is the climb's headline already; the coach's other
+                question is whether they are weighing in. */}
+            <Stat
+              label="Weigh-ins"
+              value={`${Object.values(data.byDay ?? {}).filter((items) => items?.weight).length}/${Math.min(data.challengeDay, data.challengeDays)}`}
+            />
             <Stat label="Sessions" value={`${data.sessions}/${data.targetSessions}`} />
             <Stat label="Perfect days" value={`${data.perfectDays}/14`} />
             <Stat
