@@ -184,10 +184,10 @@ export async function deleteAccount() {
   return { ok: true };
 }
 
-// Every file in the user's own folder of each photo bucket. True once
-// they're all gone.
+// Every file in the user's own folder of each photo bucket (avatars,
+// progress photos, feedback screenshots). True once they're all gone.
 async function removeStoredPhotos(admin, userId) {
-  for (const bucket of ["avatars", "progress-photos"]) {
+  for (const bucket of ["avatars", "progress-photos", "feedback-shots"]) {
     for (;;) {
       const { data: files, error } = await admin.storage.from(bucket).list(userId, { limit: 1000 });
       if (error) return false;

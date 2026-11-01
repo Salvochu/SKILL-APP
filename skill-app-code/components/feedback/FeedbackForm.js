@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { sendFeedback } from "@/app/(app)/feedback/actions";
 import { FEEDBACK_KINDS } from "@/lib/feedbackKinds";
+import ShotPicker from "@/components/feedback/ShotPicker";
 
 const PLACEHOLDER = {
   bug: "What happened, and what were you trying to do?",
@@ -12,11 +13,13 @@ const PLACEHOLDER = {
   other: "What's on your mind?",
 };
 
-// Start a new feedback thread: pick what it's about, write, send.
+// Start a new feedback thread: pick what it's about, write, optionally
+// add a screenshot, send.
 export default function FeedbackForm() {
   const router = useRouter();
   const [kind, setKind] = useState("bug");
   const [body, setBody] = useState("");
+  const [shot, setShot] = useState(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
   const [sent, setSent] = useState(false);
@@ -25,13 +28,18 @@ export default function FeedbackForm() {
     e.preventDefault();
     setPending(true);
     setError(null);
-    const res = await sendFeedback({ kind, body });
+    const fd = new FormData();
+    fd.set("kind", kind);
+    fd.set("body", body);
+    if (shot) fd.set("shot", new File([shot.blob], "screenshot.jpg", { type: "image/jpeg" }));
+    const res = await sendFeedback(fd);
     setPending(false);
     if (res?.error) {
       setError(res.error);
       return;
     }
     setBody("");
+    setShot(null);
     setSent(true);
     router.refresh();
   }
@@ -68,6 +76,13 @@ export default function FeedbackForm() {
         placeholder={PLACEHOLDER[kind]}
         aria-label="Your message"
         className="w-full resize-y rounded-xl bg-surface-2 px-3.5 py-3 text-[16px] leading-relaxed text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-accent/60"
+      />
+      <ShotPicker
+        shot={shot}
+        onChange={(s) => {
+          setShot(s);
+          setSent(false);
+        }}
       />
       {error ? <p className="text-[14px] text-danger">{error}</p> : null}
       {sent ? <p className="text-[14px] text-good">Sent. Salvador will reply here.</p> : null}

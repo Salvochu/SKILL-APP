@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ShotPicker from "@/components/feedback/ShotPicker";
 import { useRouter } from "next/navigation";
 import { replyToFeedback, coachReply, setFeedbackStatus, markFeedbackRead, setFeedbackMuted } from "@/app/(app)/feedback/actions";
 import { FEEDBACK_KIND_LABEL } from "@/lib/feedbackKinds";
@@ -74,6 +75,7 @@ export default function FeedbackThreads({ threads, viewer, markRead = false, rea
 
 function Thread({ thread, viewer, readOnly = false, onChanged }) {
   const [body, setBody] = useState("");
+  const [shot, setShot] = useState(null);
   // A sent message shows straight away, until the refreshed thread (which
   // includes it) arrives, so nobody taps Send twice thinking it failed.
   const [sentLocal, setSentLocal] = useState([]);
@@ -90,22 +92,39 @@ function Thread({ thread, viewer, readOnly = false, onChanged }) {
     e.preventDefault();
     const text = body.trim();
     if (!text) return;
+    const attached = shot;
     const localId = `local-${Date.now()}`;
     setSentLocal((list) => [
       ...list,
-      { id: localId, fromCoach: viewer === "coach", body: text, createdAt: new Date().toISOString(), sending: true },
+      {
+        id: localId,
+        fromCoach: viewer === "coach",
+        body: text,
+        // Its own preview link: the picker frees the one it made.
+        imageUrl: attached ? URL.createObjectURL(attached.blob) : null,
+        createdAt: new Date().toISOString(),
+        sending: true,
+      },
     ]);
     setBody("");
+    setShot(null);
     setPending(true);
     setError(null);
-    const res =
-      viewer === "coach"
-        ? await coachReply({ feedbackId: thread.id, body: text })
-        : await replyToFeedback({ feedbackId: thread.id, body: text });
+    let res;
+    if (viewer === "coach") {
+      res = await coachReply({ feedbackId: thread.id, body: text });
+    } else {
+      const fd = new FormData();
+      fd.set("feedbackId", thread.id);
+      fd.set("body", text);
+      if (attached) fd.set("shot", new File([attached.blob], "screenshot.jpg", { type: "image/jpeg" }));
+      res = await replyToFeedback(fd);
+    }
     setPending(false);
     if (res?.error) {
       setSentLocal((list) => list.filter((m) => m.id !== localId));
       setBody(text);
+      setShot(attached ? { blob: attached.blob, url: URL.createObjectURL(attached.blob) } : null);
       return setError(res.error);
     }
     setSentLocal((list) => list.map((m) => (m.id === localId ? { ...m, sending: false } : m)));
@@ -134,6 +153,7 @@ function Thread({ thread, viewer, readOnly = false, onChanged }) {
           const mine = viewer === "coach" ? m.fromCoach : !m.fromCoach;
           return (
             <li key={m.id} className={`flex flex-col gap-1 ${mine ? "items-end" : "items-start"}`}>
+              {m.imageUrl ? <Shot url={m.imageUrl} mine={mine} /> : null}
               <span
                 className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[15px] leading-snug ${
                   mine ? "rounded-br-md bg-accent text-black" : "rounded-bl-md bg-surface-2 text-fg"
@@ -150,24 +170,28 @@ function Thread({ thread, viewer, readOnly = false, onChanged }) {
         })}
       </ol>
       {readOnly ? null : (
-      <form onSubmit={send} className="flex items-end gap-2">
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={2}
-          maxLength={2000}
-          placeholder={viewer === "coach" ? "Reply..." : "Add a message..."}
-          aria-label="Reply"
-          className="min-w-0 flex-1 resize-none rounded-xl bg-surface-2 px-3.5 py-2.5 text-[16px] text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-accent/60"
-        />
-        <button
-          type="submit"
-          disabled={pending || !body.trim()}
-          className="h-11 shrink-0 rounded-full bg-accent px-4 text-[15px] font-semibold text-black transition-transform active:scale-95 disabled:opacity-50"
-        >
-          Send
-        </button>
-      </form>
+        <form onSubmit={send} className="flex flex-col gap-2">
+          {viewer === "client" && shot ? <ShotPicker shot={shot} onChange={setShot} /> : null}
+          <div className="flex items-end gap-2">
+            {viewer === "client" && !shot ? <ShotPicker shot={null} onChange={setShot} compact /> : null}
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={2}
+              maxLength={2000}
+              placeholder={viewer === "coach" ? "Reply..." : "Add a message..."}
+              aria-label="Reply"
+              className="min-w-0 flex-1 resize-none rounded-xl bg-surface-2 px-3.5 py-2.5 text-[16px] text-fg outline-none placeholder:text-dim focus:ring-2 focus:ring-accent/60"
+            />
+            <button
+              type="submit"
+              disabled={pending || !body.trim()}
+              className="h-11 shrink-0 rounded-full bg-accent px-4 text-[15px] font-semibold text-black transition-transform active:scale-95 disabled:opacity-50"
+            >
+              Send
+            </button>
+          </div>
+        </form>
       )}
       {error ? <p className="text-[14px] text-danger">{error}</p> : null}
       {viewer === "coach" ? (
@@ -191,5 +215,22 @@ function Thread({ thread, viewer, readOnly = false, onChanged }) {
         </div>
       ) : null}
     </div>
+  );
+}
+
+// A screenshot on a message. Tapping opens it full size in a new tab
+// (the link is signed and lasts an hour).
+function Shot({ url, mine }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Open the screenshot"
+      className={`block max-w-[60%] overflow-hidden rounded-2xl ring-1 ring-border ${mine ? "rounded-br-md" : "rounded-bl-md"}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- signed private URL */}
+      <img src={url} alt="Screenshot" className="block max-h-72 w-full object-cover" loading="lazy" />
+    </a>
   );
 }

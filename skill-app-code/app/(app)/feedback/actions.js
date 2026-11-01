@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -7,6 +8,7 @@ import { getIsCoach } from "@/lib/data/coach";
 import { FEEDBACK_KINDS } from "@/lib/feedbackKinds";
 import { sendPush } from "@/lib/push";
 import { feedbackAccessFor } from "@/lib/data/feedback";
+import { sniffImage } from "@/lib/imageSniff";
 
 const KINDS = new Set(FEEDBACK_KINDS.map((k) => k.key));
 const MAX = 2000;
@@ -14,6 +16,7 @@ const MAX = 2000;
 // the coach's inbox. New conversations are capped per day as well.
 const PER_HOUR = 10;
 const NEW_PER_DAY = 3;
+const SHOTS = "feedback-shots";
 
 // Re-checked on every send, with the account read fresh from the auth
 // server (the session's copy of the mute flag can be up to an hour old).
@@ -33,6 +36,25 @@ function cleanBody(raw) {
   return { body };
 }
 
+// The optional screenshot from the form. The app always sends a JPEG it
+// has already shrunk (lib/imageResize); anything else didn't come from
+// the app. { file } when there is a good one, {} when there is none.
+async function readShot(formData) {
+  const file = formData.get("shot");
+  if (!file || typeof file !== "object" || file.size === 0) return {};
+  if (file.size > 5 * 1024 * 1024) return { error: "That screenshot is too large. Try another." };
+  if ((await sniffImage(file))?.type !== "image/jpeg") return { error: "That file isn't an image. Try another." };
+  return { file };
+}
+
+// Saves the screenshot in the client's own folder, through their session
+// (storage RLS). Returns the path to put on the message.
+async function storeShot(supabase, userId, file) {
+  const path = `${userId}/${randomUUID()}.jpg`;
+  const { error } = await supabase.storage.from(SHOTS).upload(path, file, { contentType: "image/jpeg", upsert: false });
+  return error ? { error: "Couldn't upload that screenshot. Try again." } : { path };
+}
+
 async function overLimit(supabase) {
   const since = new Date(Date.now() - 3600_000).toISOString();
   const { count } = await supabase
@@ -43,13 +65,36 @@ async function overLimit(supabase) {
   return (count ?? 0) >= PER_HOUR;
 }
 
+// One client message, with its screenshot if there is one. If the
+// message can't be saved, the screenshot is removed again (with the
+// service role: clients have no delete rights on the bucket).
+async function insertClientMessage(supabase, userId, feedbackId, body, file) {
+  let image_path = null;
+  if (file) {
+    const stored = await storeShot(supabase, userId, file);
+    if (stored.error) return stored;
+    image_path = stored.path;
+  }
+  const { error } = await supabase
+    .from("feedback_messages")
+    .insert({ feedback_id: feedbackId, author_id: userId, body, image_path });
+  if (error) {
+    if (image_path) await createAdminClient().storage.from(SHOTS).remove([image_path]);
+    return { error: "Couldn't send that. Try again." };
+  }
+  return { ok: true };
+}
+
 // A client starts a new thread.
-export async function sendFeedback({ kind, body: raw }) {
+export async function sendFeedback(formData) {
   const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
+  const kind = formData.get("kind");
   if (!KINDS.has(kind)) return { error: "Pick what it's about." };
-  const { body, error } = cleanBody(raw);
+  const { body, error } = cleanBody(formData.get("body"));
   if (error) return { error };
+  const shot = await readShot(formData);
+  if (shot.error) return { error: shot.error };
   const blocked = await canSend(user);
   if (blocked) return { error: blocked };
   const supabase = await getServerSupabase();
@@ -68,10 +113,11 @@ export async function sendFeedback({ kind, body: raw }) {
     .select("id")
     .single();
   if (tErr) return { error: "Couldn't send that. Try again." };
-  const { error: mErr } = await supabase
-    .from("feedback_messages")
-    .insert({ feedback_id: thread.id, author_id: user.id, body });
-  if (mErr) return { error: "Couldn't send that. Try again." };
+  const sent = await insertClientMessage(supabase, user.id, thread.id, body, shot.file);
+  if (sent.error) {
+    await createAdminClient().from("feedback").delete().eq("id", thread.id).eq("user_id", user.id);
+    return sent;
+  }
 
   revalidatePath("/feedback");
   return { ok: true };
@@ -79,19 +125,20 @@ export async function sendFeedback({ kind, body: raw }) {
 
 // A client adds to their own thread. Re-opens it for the coach if it was
 // marked done.
-export async function replyToFeedback({ feedbackId, body: raw }) {
+export async function replyToFeedback(formData) {
   const user = await getSessionUser();
   if (!user) return { error: "Please sign in again." };
-  const { body, error } = cleanBody(raw);
+  const feedbackId = String(formData.get("feedbackId") ?? "");
+  const { body, error } = cleanBody(formData.get("body"));
   if (error) return { error };
+  const shot = await readShot(formData);
+  if (shot.error) return { error: shot.error };
   const blocked = await canSend(user);
   if (blocked) return { error: blocked };
   const supabase = await getServerSupabase();
   if (await overLimit(supabase)) return { error: "That's a lot of messages in an hour. Try again a bit later." };
-  const { error: mErr } = await supabase
-    .from("feedback_messages")
-    .insert({ feedback_id: feedbackId, author_id: user.id, body });
-  if (mErr) return { error: "Couldn't send that. Try again." };
+  const sent = await insertClientMessage(supabase, user.id, feedbackId, body, shot.file);
+  if (sent.error) return sent;
   // RLS let the insert through only if the thread is theirs; the status
   // change needs the service role, still scoped to their own thread.
   await createAdminClient()

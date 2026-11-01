@@ -10,7 +10,19 @@ import { getChallengeAccess } from "@/lib/data/challenge";
 // through their session (RLS); the coach reads everyone's through the
 // service role, only after getIsCoach().
 
-function shapeThreads(threads, messages) {
+const SIGNED_TTL = 60 * 60; // 1 hour
+
+// Short-lived links for the screenshots on these messages (the bucket is
+// private). The client signs through their own session, the coach through
+// the service role.
+async function signShots(client, messages) {
+  const paths = (messages ?? []).map((m) => m.image_path).filter(Boolean);
+  if (!paths.length) return new Map();
+  const { data } = await client.storage.from("feedback-shots").createSignedUrls(paths, SIGNED_TTL);
+  return new Map((data ?? []).filter((s) => s.signedUrl).map((s) => [s.path, s.signedUrl]));
+}
+
+function shapeThreads(threads, messages, shotUrls = new Map()) {
   const byThread = new Map();
   for (const m of messages ?? []) {
     if (!byThread.has(m.feedback_id)) byThread.set(m.feedback_id, []);
@@ -18,6 +30,7 @@ function shapeThreads(threads, messages) {
       id: m.id,
       fromCoach: m.from_coach,
       body: m.body,
+      imageUrl: m.image_path ? shotUrls.get(m.image_path) ?? null : null,
       createdAt: m.created_at,
     });
   }
@@ -66,10 +79,10 @@ export const getMyFeedback = cache(async () => {
   if (error || !threads?.length) return [];
   const { data: messages } = await supabase
     .from("feedback_messages")
-    .select("id, feedback_id, from_coach, body, created_at")
+    .select("id, feedback_id, from_coach, body, image_path, created_at")
     .in("feedback_id", threads.map((t) => t.id))
     .order("created_at", { ascending: true });
-  return shapeThreads(threads, messages);
+  return shapeThreads(threads, messages, await signShots(supabase, messages));
 });
 
 // For the Menu row's "New reply" badge.
@@ -98,9 +111,10 @@ export async function getFeedbackInbox() {
   const ids = threads.map((t) => t.id);
   const userIds = [...new Set(threads.map((t) => t.user_id))];
   const [{ data: messages }, { data: profiles }] = await Promise.all([
-    admin.from("feedback_messages").select("id, feedback_id, from_coach, body, created_at").in("feedback_id", ids).order("created_at", { ascending: true }),
+    admin.from("feedback_messages").select("id, feedback_id, from_coach, body, image_path, created_at").in("feedback_id", ids).order("created_at", { ascending: true }),
     admin.from("profiles").select("user_id, full_name").in("user_id", userIds),
   ]);
+  const shotUrls = await signShots(admin, messages);
   const nameBy = new Map((profiles ?? []).map((p) => [p.user_id, (p.full_name || "").trim()]));
   const mutedBy = new Map();
   await Promise.all(
@@ -110,7 +124,7 @@ export async function getFeedbackInbox() {
     }),
   );
   return {
-    threads: shapeThreads(threads, messages).map((t) => ({
+    threads: shapeThreads(threads, messages, shotUrls).map((t) => ({
       ...t,
       clientName: nameBy.get(t.userId) || "A client",
       muted: mutedBy.get(t.userId) ?? false,
