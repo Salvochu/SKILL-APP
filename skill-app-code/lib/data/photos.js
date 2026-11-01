@@ -42,3 +42,15 @@ export async function getProgressPhotos() {
   const dates = [...byDate.entries()].map(([date, items]) => ({ date, items }));
   return { dates, count: photos.length };
 }
+
+// Just how many photos and the latest date, for the Body page's row
+// (which links to the full gallery). No signed URLs, so it stays cheap.
+export async function getProgressPhotoSummary() {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from("progress_photos")
+    .select("taken_on")
+    .order("taken_on", { ascending: false });
+  if (error || !data?.length) return { count: 0, lastDate: null };
+  return { count: data.length, lastDate: data[0].taken_on };
+}

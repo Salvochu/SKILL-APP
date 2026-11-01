@@ -1,11 +1,10 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getBodyLog } from "@/lib/data/body";
-import { getProgressPhotos } from "@/lib/data/photos";
+import { getProgressPhotoSummary } from "@/lib/data/photos";
 import { getUnitPreference } from "@/lib/data/profile";
 import { fromKg, unitLabel } from "@/lib/units";
 import BodyLogForm from "@/components/body/BodyLogForm";
-import ProgressPhotos from "@/components/body/ProgressPhotos";
 import MetricChart from "@/components/body/MetricChart";
 import { shortDate } from "@/components/progress/chartkit";
 
@@ -30,7 +29,7 @@ export default function BodyPage() {
 async function BodyBody() {
   const [{ entries, latest, weightChange, hasAny }, photos, unit] = await Promise.all([
     getBodyLog(),
-    getProgressPhotos(),
+    getProgressPhotoSummary(),
     getUnitPreference(),
   ]);
   const wu = unitLabel(unit);
@@ -45,10 +44,6 @@ async function BodyBody() {
     { key: "thigh", label: "Thigh", unit: " cm" },
     { key: "hip", label: "Hip", unit: " cm" },
   ];
-
-  const bodyByDate = Object.fromEntries(
-    entries.map((e) => [e.date, { weight: conv("weight", e.weight), fat: e.fat }]),
-  );
 
   // Each metric's own history: a check-in that only logged weight should
   // not hide the last waist measurement.
@@ -66,7 +61,24 @@ async function BodyBody() {
     <div className="flex flex-col gap-6">
       <BodyLogForm latest={latest} unit={unit} />
 
-      <ProgressPhotos dates={photos.dates} bodyByDate={bodyByDate} unit={wu} />
+      {/* Photos have their own screen; here, one row into it. */}
+      <Link
+        href="/body/photos"
+        className="flex items-center gap-4 rounded-2xl bg-surface p-4 transition-colors hover:bg-surface-2 active:bg-surface-2"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+          <IconCamera className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-base font-semibold text-fg">Progress photos</span>
+          <span className="block truncate text-sm text-muted">
+            {photos.count > 0
+              ? `${photos.count} ${photos.count === 1 ? "photo" : "photos"} · last ${shortDate(photos.lastDate)}`
+              : "Front, side and back, private to you"}
+          </span>
+        </span>
+        <IconChevron className="h-4 w-4 shrink-0 text-dim" />
+      </Link>
 
       {!hasAny ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl bg-surface px-6 py-10 text-center">
@@ -267,6 +279,15 @@ function IconScale(props) {
       <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
       <path d="M8.5 9.5a5 5 0 0 1 7 0" />
       <path d="m12 12 1.5-2.5" />
+    </svg>
+  );
+}
+
+function IconCamera(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.2l1.4-2h5.8l1.4 2h1.2A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z" />
+      <circle cx="12" cy="12.5" r="3.5" />
     </svg>
   );
 }

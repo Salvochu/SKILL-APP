@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "crypto";
+import { revalidatePath } from "next/cache";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { sniffImage } from "@/lib/imageSniff";
 
@@ -57,6 +58,8 @@ export async function uploadProgressPhoto(formData) {
     return { error: error.message };
   }
 
+  // The Body page's photos row shows the count and latest date.
+  revalidatePath("/body");
   return { ok: true };
 }
 
@@ -84,5 +87,6 @@ export async function deleteProgressPhoto(id) {
     .eq("user_id", user.id);
   if (error) return { error: error.message };
 
+  revalidatePath("/body");
   return { ok: true };
 }

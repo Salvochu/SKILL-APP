@@ -13,13 +13,13 @@
   /* dark is the default palette (see :root below); these @theme entries
      just register the utility names and fonts. */
   --color-bg: #000000;
-  --color-surface: #171614;
-  --color-surface-2: #221f1c;
-  --color-border: #35322d;
-  --color-border-strong: #4a4640;
+  --color-surface: #1f1d1b;
+  --color-surface-2: #312e2b;
+  --color-border: #3d3a35;
+  --color-border-strong: #55504a;
   --color-fg: #ffffff;
   --color-muted: #a49d95;
-  --color-dim: #7b756e;
+  --color-dim: #857f78;
 
   --color-accent: #fc7605;
   --color-accent-2: #ff9600;
@@ -47,16 +47,17 @@
 :root {
   color-scheme: dark;
   --color-bg: #000000;
-  /* Surfaces sit clearly above the black page, and borders are visible
-     hairlines - the near-black-on-black version made cards (the Log
-     screen especially) hard to make out. */
-  --color-surface: #171614;
-  --color-surface-2: #221f1c;
-  --color-border: #35322d;
-  --color-border-strong: #4a4640;
+  /* Cards are a warm grey on the black page (close to iOS's own dark
+     card, #1c1c1e), with fields inside them one step lighter again, so a
+     card always reads as a card even on a dim screen. The earlier
+     near-black cards (#171614) could vanish against the page. */
+  --color-surface: #1f1d1b;
+  --color-surface-2: #312e2b;
+  --color-border: #3d3a35;
+  --color-border-strong: #55504a;
   --color-fg: #ffffff;
   --color-muted: #a49d95;
-  --color-dim: #7b756e;
+  --color-dim: #857f78;
   --color-accent-soft: rgba(252, 118, 5, 0.13);
 
   /* One hue per muscle group. Validated as a categorical set (CVD-safe,
@@ -73,7 +74,7 @@
 
   /* Dashboard active-program panel: a warm near-black top fading into the
      surface, plus a soft accent glow bleeding from the corner. */
-  --panel-warm: #1c1409;
+  --panel-warm: #261b0f;
   --panel-glow: rgba(252, 118, 5, 0.22);
 }
 
@@ -477,18 +478,18 @@ h4 {
 .auth-stage {
   color-scheme: dark;
   --color-bg: #000000;
-  --color-surface: #171614;
-  --color-surface-2: #221f1c;
-  --color-border: #35322d;
-  --color-border-strong: #4a4640;
+  --color-surface: #1f1d1b;
+  --color-surface-2: #312e2b;
+  --color-border: #3d3a35;
+  --color-border-strong: #55504a;
   --color-fg: #ffffff;
   --color-muted: #a49d95;
-  --color-dim: #7b756e;
+  --color-dim: #857f78;
   --color-accent: #fc7605;
   --color-accent-2: #ff9600;
   --color-accent-soft: rgba(252, 118, 5, 0.13);
   --color-danger: #f0623a;
-  --panel-warm: #1c1409;
+  --panel-warm: #261b0f;
 
   position: relative;
   min-height: 100dvh;
@@ -622,8 +623,8 @@ input[type="number"] {
    and long lists scroll smoothly (glass on glass collapses legibility).
    ------------------------------------------------------------------ */
 :root {
-  --glass-bg: rgba(32, 30, 28, 0.58);
-  --glass-bg-strong: rgba(26, 24, 22, 0.8);
+  --glass-bg: rgba(44, 42, 39, 0.62);
+  --glass-bg-strong: rgba(36, 34, 31, 0.84);
   --glass-edge: rgba(255, 255, 255, 0.1);
   --glass-highlight: rgba(255, 255, 255, 0.16);
   --glass-shadow: 0 14px 34px -14px rgba(0, 0, 0, 0.75);

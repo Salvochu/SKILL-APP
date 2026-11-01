@@ -69,25 +69,23 @@ export default function ProgressPhotos({ dates, bodyByDate, unit }) {
 
   const hasPhotos = dates.length > 0;
 
+  // Its own screen (/body/photos): the add action up top, then Reveal /
+  // Compare, then one card per check-in date with its shots side by side.
   return (
-    <section className="flex flex-col gap-4 rounded-2xl bg-surface p-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="font-sans text-[17px] font-semibold tracking-[-0.01em] text-fg">Progress photos</h2>
-        <button
-          type="button"
-          onClick={() => setAdding((v) => !v)}
-          aria-expanded={adding}
-          className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[14px] font-semibold transition-transform active:scale-95 ${
-            adding ? "bg-fg/10 text-fg" : "bg-accent text-black"
-          }`}
-        >
-          {adding ? null : <IconPlus className="h-3.5 w-3.5" />}
-          {adding ? "Close" : "Add photo"}
-        </button>
-      </div>
-
+    <div className="flex flex-col gap-5">
       {adding ? (
-        <div className="flex flex-col gap-3">
+        <section className="flex flex-col gap-3 rounded-2xl bg-surface p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-fg">Add a photo</h2>
+            <button
+              type="button"
+              onClick={() => setAdding(false)}
+              aria-label="Close"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90"
+            >
+              <IconClose className="h-3.5 w-3.5" />
+            </button>
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <label className="flex items-center gap-2.5 text-[15px] text-fg">
               Date
@@ -115,49 +113,80 @@ export default function ProgressPhotos({ dates, bodyByDate, unit }) {
               ))}
             </div>
           </div>
-
           <label
             className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-[16px] font-semibold transition-transform active:scale-[0.98] ${
-              busy ? "bg-fg/[0.06] text-muted" : "bg-accent-soft text-accent"
+              busy ? "bg-fg/[0.06] text-muted" : "bg-accent text-black"
             }`}
           >
             <IconCamera className="h-5 w-5" />
             {busy ? "Uploading..." : "Choose or take a photo"}
-            <input
-              type="file"
-              accept="image/*"
-              disabled={busy}
-              onChange={onFile}
-              className="hidden"
-            />
+            <input type="file" accept="image/*" disabled={busy} onChange={onFile} className="hidden" />
           </label>
-        </div>
-      ) : null}
+        </section>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-4 text-[17px] font-semibold text-black shadow-[0_10px_28px_-12px_rgba(252,118,5,0.75)] transition-transform active:scale-[0.98]"
+        >
+          <IconPlus className="h-4 w-4" />
+          Add photo
+        </button>
+      )}
 
       {error ? <p className="text-[14px] text-danger">{error}</p> : null}
 
       {!hasPhotos ? (
-        <p className="py-3 text-center text-[15px] leading-relaxed text-muted">
-          No photos yet. Add a front, side and back shot to start a visual record.
-        </p>
+        <div className="flex flex-col items-center gap-3 rounded-2xl bg-surface px-6 py-10 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
+            <IconCamera className="h-6 w-6" />
+          </span>
+          <div className="flex flex-col gap-1">
+            <p className="text-[17px] font-semibold text-fg">No photos yet</p>
+            <p className="text-balance text-[15px] text-muted">
+              Add a front, side and back shot to start a visual record.
+            </p>
+          </div>
+        </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <>
+          <div className={`grid gap-2 ${dates.length >= 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+            <button
+              type="button"
+              onClick={() => setRevealed((v) => !v)}
+              className="flex items-center justify-center gap-2 rounded-xl bg-surface px-3 py-3 text-[15px] font-semibold text-fg transition-transform active:scale-[0.98]"
+            >
+              {revealed ? <IconEyeOff className="h-[18px] w-[18px]" /> : <IconEye className="h-[18px] w-[18px]" />}
+              {revealed ? "Hide" : "Reveal"}
+            </button>
+            {dates.length >= 2 ? (
+              <button
+                type="button"
+                onClick={() => setComparing(true)}
+                className="flex items-center justify-center gap-2 rounded-xl bg-surface px-3 py-3 text-[15px] font-semibold text-fg transition-transform active:scale-[0.98]"
+              >
+                <IconCompare className="h-[18px] w-[18px]" />
+                Compare
+              </button>
+            ) : null}
+          </div>
+
           {dates.map((group) => {
             const body = bodyByDate?.[group.date];
             return (
-              <div key={group.date} className="flex flex-col gap-2">
+              <section key={group.date} className="flex flex-col gap-3 rounded-2xl bg-surface p-4">
                 <div className="flex items-baseline gap-2 text-[13px] text-muted">
-                  <span className="text-[15px] font-semibold text-fg">{shortDate(group.date)}</span>
+                  <span className="text-[16px] font-semibold text-fg">{shortDate(group.date)}</span>
                   {body?.weight != null ? <span className="tabular-nums">{body.weight} {unit}</span> : null}
                   {body?.fat != null ? <span className="tabular-nums">{body.fat}% bf</span> : null}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {group.items.map((p) => (
                     <div key={p.id} className="relative">
                       <button
                         type="button"
                         onClick={() => (revealed ? setLightbox(p) : setRevealed(true))}
-                        className="block h-32 w-24 overflow-hidden rounded-xl bg-fg/[0.06] transition-transform active:scale-[0.97]"
+                        className="block aspect-[3/4] w-full overflow-hidden rounded-xl bg-fg/[0.06] transition-transform active:scale-[0.97]"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -182,36 +211,13 @@ export default function ProgressPhotos({ dates, bodyByDate, unit }) {
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
             );
           })}
-        </div>
+        </>
       )}
 
-      {hasPhotos ? (
-        <div className={`grid gap-2 ${dates.length >= 2 ? "grid-cols-2" : "grid-cols-1"}`}>
-          <button
-            type="button"
-            onClick={() => setRevealed((v) => !v)}
-            className="flex items-center justify-center gap-2 rounded-xl bg-fg/10 px-3 py-3 text-[15px] font-semibold text-fg transition-transform active:scale-[0.98]"
-          >
-            {revealed ? <IconEyeOff className="h-[18px] w-[18px]" /> : <IconEye className="h-[18px] w-[18px]" />}
-            {revealed ? "Hide" : "Reveal"}
-          </button>
-          {dates.length >= 2 ? (
-            <button
-              type="button"
-              onClick={() => setComparing(true)}
-              className="flex items-center justify-center gap-2 rounded-xl bg-fg/10 px-3 py-3 text-[15px] font-semibold text-fg transition-transform active:scale-[0.98]"
-            >
-              <IconCompare className="h-[18px] w-[18px]" />
-              Compare
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-
-      <p className="flex items-start gap-1.5 text-[13px] leading-snug text-dim">
+      <p className="flex items-start gap-1.5 px-1 text-[13px] leading-snug text-dim">
         <IconLock className="mt-px h-3.5 w-3.5 shrink-0" />
         Only you can see these. They are stored privately and never shown to anyone else.
       </p>
@@ -246,7 +252,7 @@ export default function ProgressPhotos({ dates, bodyByDate, unit }) {
           onCancel={() => setConfirmDelete(null)}
         />
       ) : null}
-    </section>
+    </div>
   );
 }
 
