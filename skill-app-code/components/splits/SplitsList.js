@@ -110,13 +110,14 @@ export default function SplitsList({
   );
 }
 
-// A small count for the badge: "N days" -> N; "2-3x per week" -> "3x".
+// Training days a week, for the badge: "5 days" -> "5", and a range
+// like "2-3x per week" -> "2-3", so every split reads the same way.
 function splitCount(split) {
   const c = String(split.cadence || "");
   const days = c.match(/(\d+)\s*days?/i);
   if (days) return days[1];
   const perWeek = c.match(/(\d+)(?:\s*-\s*(\d+))?\s*x/i);
-  if (perWeek) return `${perWeek[2] || perWeek[1]}x`;
+  if (perWeek) return perWeek[2] ? `${perWeek[1]}-${perWeek[2]}` : perWeek[1];
   return String(split.days?.length || "");
 }
 

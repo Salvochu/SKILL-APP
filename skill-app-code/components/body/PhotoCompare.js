@@ -44,6 +44,12 @@ export default function PhotoCompare({ dates, bodyByDate, unit, onClose }) {
 
   const deltaLines = useMemo(() => {
     const lines = [];
+    // How far apart the two photos are, which is half the story.
+    if (beforeDate && afterDate) {
+      const days = Math.round((Date.parse(`${afterDate}T00:00:00Z`) - Date.parse(`${beforeDate}T00:00:00Z`)) / 86400000);
+      if (days >= 14) lines.push(`${Math.round(days / 7)} weeks`);
+      else if (days >= 1) lines.push(`${days} ${days === 1 ? "day" : "days"}`);
+    }
     const b1 = bodyByDate?.[beforeDate];
     const b2 = bodyByDate?.[afterDate];
     if (b1?.weight != null && b2?.weight != null) {

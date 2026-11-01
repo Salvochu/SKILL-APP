@@ -471,7 +471,14 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       }
       clearDraft();
       setSaving(false);
-      setCompletedSummary({ sessionId: result.sessionId, durationMin, totalVolume, totalSets });
+      setCompletedSummary({
+        sessionId: result.sessionId,
+        durationMin,
+        totalVolume,
+        totalSets,
+        title: title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "").trim() || "Workout",
+        date,
+      });
     } catch (err) {
       if (isLikelyNetworkError(err)) {
         // No connection right now, most likely at the gym. Keep the
@@ -861,7 +868,14 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
             >
               {pausedAt ? <IconPlay className="ml-0.5 h-4 w-4" /> : <IconPause className="h-4 w-4" />}
             </button>
-            <div className="flex min-w-0 flex-1 flex-col pl-0.5">
+            {/* The middle of the bar is the big tap target for shrinking
+                it; the chevron beside it is the visible hint. */}
+            <button
+              type="button"
+              onClick={() => setBarMinimisedSaved(true)}
+              aria-label="Minimise the workout bar"
+              className="flex min-w-0 flex-1 flex-col self-stretch justify-center rounded-full pl-0.5 text-left transition-opacity active:opacity-70"
+            >
               <span className="flex items-baseline gap-1.5">
                 <span className="text-[17px] font-semibold leading-tight tabular-nums tracking-[-0.01em] text-fg">
                   {formatElapsed(elapsedSeconds)}
@@ -873,11 +887,12 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
               <span className="truncate text-[13px] leading-tight tabular-nums text-muted">
                 {Math.round(totalVolume).toLocaleString("en-GB")} {U} · {totalSets} {totalSets === 1 ? "set" : "sets"}
               </span>
-            </div>
+            </button>
             <button
               type="button"
               onClick={() => setBarMinimisedSaved(true)}
-              aria-label="Minimise the workout bar"
+              aria-hidden="true"
+              tabIndex={-1}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-dim transition-[transform,color] hover:text-fg active:scale-90"
             >
               <IconChevron className="h-[18px] w-[18px] rotate-90" />
@@ -944,11 +959,11 @@ function ShareCard({ summary, timeLabel, effortLabel, unit = "kg", muscles = nul
     let blob = null;
     try {
       blob = await buildShareImageBlob({
-        volumeLabel: `${Math.round(summary.totalVolume)} ${unit}`,
+        title: summary.title ?? null,
+        volumeLabel: `${Math.round(summary.totalVolume).toLocaleString("en-GB")} ${unit}`,
         timeLabel,
         effortLabel,
         topMuscles: muscles?.top ?? [],
-        totalSets: muscles?.totalSets ?? 0,
       });
     } catch {
       // Image generation failed (e.g. the logo did not load); fall back
@@ -1151,7 +1166,8 @@ function SaveWorkoutModal({ defaultName, exercises, sourceMyWorkoutId, sourceNam
   );
 }
 
-function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "kg", savingEffort, onSelectEffort, onDone, saveAsWorkout = null }) {
+// Exported for the dev-only preview at /design-preview/finish.
+export function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "kg", savingEffort, onSelectEffort, onDone, saveAsWorkout = null }) {
   const mins = summary.durationMin;
   const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
   const prs = extras?.newPRs ?? [];
@@ -1172,12 +1188,23 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
 
   return (
     <div className="flex flex-col gap-6 py-2">
+      {/* Which workout, and when: the same three lines Apple Fitness opens
+          a summary with, instead of a generic "Workout completed!". */}
       <header className="relative flex flex-col items-center gap-1 pt-2 text-center">
         <span className="check-pop flex h-16 w-16 items-center justify-center rounded-full bg-accent text-black shadow-[0_10px_30px_-8px_rgba(252,118,5,0.6)]">
           <IconCheck className="h-8 w-8" />
         </span>
-        <h1 className="mt-3 text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Workout completed!</h1>
-        <p className="text-[15px] text-muted">Nice work. Here is how it went.</p>
+        <span className="mt-3 text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">Workout complete</span>
+        <h1 className="text-balance font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">
+          {summary.title || "Nice work"}
+        </h1>
+        {summary.date ? (
+          <p className="text-[15px] text-muted">
+            {new Date(`${summary.date}T12:00:00`)
+              .toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })
+              .replace(",", "")}
+          </p>
+        ) : null}
         {canSave ? (
           <button
             type="button"
@@ -1215,9 +1242,13 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
             {prs.map((p) => (
               <li key={p.name} className="flex items-center justify-between gap-3 text-sm">
                 <span className="text-fg">{p.name}</span>
-                <span className="tabular shrink-0 text-muted">
-                  {formatWeight(p.weight, unit, { decimals: 0 })} x {p.reps}{" "}
-                  <span className="text-dim">~{formatWeight(p.e1rm, unit, { decimals: 0 })}</span>
+                <span className="tabular shrink-0 text-right text-muted">
+                  <span className="font-semibold text-fg">
+                    {formatWeight(p.weight, unit, { decimals: 0 })} × {p.reps}
+                  </span>
+                  <span className="block text-[12px] text-dim">
+                    1RM about {formatWeight(p.e1rm, unit, { decimals: 0 })}
+                  </span>
                 </span>
               </li>
             ))}
@@ -1291,7 +1322,7 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
 
       <section className="flex flex-col gap-4 rounded-2xl bg-surface p-4">
         <div className={`grid gap-3 ${showLevel ? "grid-cols-2" : "grid-cols-3"}`}>
-          <Metric label="Volume" value={`${Math.round(summary.totalVolume)} ${unit}`} />
+          <Metric label="Volume" value={`${Math.round(summary.totalVolume).toLocaleString("en-GB")} ${unit}`} />
           <Metric label="Sets" value={summary.totalSets ?? 0} />
           <Metric label="Time" value={timeLabel} />
           {showLevel ? (
@@ -1302,6 +1333,22 @@ function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "
             />
           ) : null}
         </div>
+
+        {extras?.muscles?.top?.length ? (
+          <div className="flex flex-col gap-2 border-t border-border pt-3">
+            <span className="text-[12px] font-medium text-muted">Muscles worked</span>
+            <div className="flex flex-wrap gap-x-3 gap-y-2">
+              {extras.muscles.top.slice(0, 4).map((m) => (
+                <span key={m.group} className="flex items-center gap-1.5">
+                  <MusclePill muscle={m.group} />
+                  <span className="text-[13px] tabular-nums text-muted">
+                    {m.sets} {m.sets === 1 ? "set" : "sets"}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {showLevel ? (
           <div className="flex flex-col gap-1.5 border-t border-border pt-3">

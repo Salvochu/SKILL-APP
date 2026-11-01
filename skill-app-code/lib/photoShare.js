@@ -91,17 +91,14 @@ export async function buildPhotoCompareBlob({ beforeUrl, afterUrl, beforeLabel, 
   ctx.fillText(beforeLabel, pad + colW / 2, imgTop + imgH + 44);
   ctx.fillText(afterLabel, pad + colW + gap + colW / 2, imgTop + imgH + 44);
 
-  // Delta stats in one horizontal row rather than stacked lines, so they
-  // read as a single result at a glance instead of a list.
-  const lines = deltaLines.slice(0, 3);
+  // The change between the two, as one centred line ("8 weeks · −4.2
+  // kg"): it belongs to the pair, not to either photo, so it is not split
+  // into columns under them. A real minus sign, not a hyphen.
+  const lines = deltaLines.slice(0, 3).map((l) => String(l).replace(/^-/, "\u2212"));
   if (lines.length) {
-    const rowY = imgTop + imgH + 110;
-    const segW = WIDTH / lines.length;
-    ctx.font = `700 34px ${SYS_FONT}`;
+    ctx.font = `700 36px ${SYS_FONT}`;
     ctx.fillStyle = COLORS.fg;
-    lines.forEach((line, i) => {
-      ctx.fillText(line, segW * i + segW / 2, rowY);
-    });
+    ctx.fillText(lines.join("  ·  "), WIDTH / 2, imgTop + imgH + 112);
   }
 
   const logo = await loadImage("/skill-logo.png");

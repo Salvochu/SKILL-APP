@@ -166,7 +166,7 @@ export async function buildClimbShareBlob({
     ctx.fillText(headline, W / 2, 750);
   }
 
-  const pillLabel = `${streak} day${streak === 1 ? "" : "s"} streak`;
+  const pillLabel = `${streak}-day streak`;
   const pillH = 76;
   ctx.font = `700 30px ${SYS}`;
   const pillW = ctx.measureText(pillLabel).width + 90;

@@ -46,57 +46,70 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// The muscles trained most, as short horizontal bars. `rows` is
-// [{ group|name, sets }], biggest first. `totalSets` (the session's own
-// working-set count) turns the right-hand label into "X/Y sets" - how
-// much of the session actually touched this muscle, not just a raw
-// count. A muscle trained via secondary role weighting can show a
-// fractional share, so the numbers across rows will not sum to Y.
-function drawMuscleBars(ctx, cx, top, rows, totalSets) {
-  const barW = 560;
-  const x0 = cx - barW / 2;
-  const rowH = 78;
-  const max = rows.reduce((m, r) => Math.max(m, r.sets || 0), 0) || 1;
+// One hue per muscle group, matching the app's dark-theme --muscle-*
+// (and the progress card, lib/progressShare.js).
+const MUSCLE_HEX = {
+  chest: "#e66767",
+  back: "#3987e5",
+  legs: "#1faa77",
+  shoulders: "#9085e9",
+  arms: "#cf8a1f",
+  core: "#d55181",
+};
+
+function hexA(hex, a) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ""));
+  if (!m) return `rgba(154,147,140,${a})`;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}
+
+// The muscles this session trained most, drawn exactly like the progress
+// card's rows: a dark track, a fill tinted with the muscle's own colour,
+// the name inside and the set count on the right, clear of the fill.
+// `rows` is [{ group|name, parent, sets }], biggest first.
+function drawMuscleRows(ctx, top, rows) {
+  const rowX = 90;
+  const rowW = WIDTH - 180;
+  const max = Math.max(1, ...rows.map((r) => r.sets || 0));
 
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.font = `600 22px ${SYS_FONT}`;
-  ctx.fillStyle = COLORS.muted;
-  ctx.fillText("MOST TRAINED", x0, top - 22);
+  ctx.fillStyle = COLORS.fg;
+  ctx.font = `700 42px ${SYS_FONT}`;
+  ctx.fillText("Most trained", rowX, top);
 
-  rows.forEach((r, i) => {
-    const y = top + i * rowH;
-    const label = String(r.group ?? r.name ?? "").toUpperCase();
-    const w = Math.max(56, Math.round((r.sets / max) * (barW - 104)));
+  let y = top + 80;
+  for (const r of rows) {
+    const name = String(r.group ?? r.name ?? "");
+    const hue = MUSCLE_HEX[String(r.parent ?? name).toLowerCase()] || COLORS.muted;
 
-    ctx.fillStyle = "#241d16";
-    roundRect(ctx, x0, y, barW, 34, 17);
+    ctx.fillStyle = "#221f1c";
+    roundRect(ctx, rowX, y - 30, rowW, 72, 16);
     ctx.fill();
 
-    const grad = ctx.createLinearGradient(x0, 0, x0 + w, 0);
-    grad.addColorStop(0, "#fc7605");
-    grad.addColorStop(1, "#ffab54");
-    ctx.fillStyle = grad;
-    roundRect(ctx, x0, y, w, 34, 17);
+    const fillW = Math.max(52, Math.min(rowW - 210, ((r.sets || 0) / max) * (rowW - 210)));
+    ctx.fillStyle = hexA(hue, 0.26);
+    roundRect(ctx, rowX, y - 30, fillW, 72, 16);
     ctx.fill();
 
-    ctx.font = `700 24px ${SYS_FONT}`;
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = hue;
+    ctx.beginPath();
+    ctx.arc(rowX + 34, y + 6, 9, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.textAlign = "left";
-    ctx.fillText(label, x0 + 20, y + 23);
-  });
+    ctx.fillStyle = COLORS.fg;
+    ctx.font = `600 32px ${SYS_FONT}`;
+    ctx.fillText(name, rowX + 60, y + 14);
 
-  // Set counts drawn as their own pass, outside and to the right of the
-  // bars, rather than inside them - a short bar for a lightly-trained
-  // muscle left the label crowding its own fill.
-  ctx.font = `600 20px ${SYS_FONT}`;
-  ctx.fillStyle = COLORS.muted;
-  ctx.textAlign = "left";
-  rows.forEach((r, i) => {
-    const y = top + i * rowH;
-    const setsLabel = totalSets ? `${Math.round(r.sets)}/${totalSets} sets` : `${Math.round(r.sets)} sets`;
-    ctx.fillText(setsLabel, x0 + barW + 16, y + 23);
-  });
+    const n = Math.round(r.sets || 0);
+    ctx.textAlign = "right";
+    ctx.font = `700 32px ${SYS_FONT}`;
+    ctx.fillText(`${n} ${n === 1 ? "set" : "sets"}`, rowX + rowW - 26, y + 14);
+
+    y += 100;
+  }
   ctx.textAlign = "center";
 }
 
@@ -132,11 +145,11 @@ function drawHandle(ctx, cx, y, glyph) {
 }
 
 export async function buildShareImageBlob({
+  title = null,
   volumeLabel,
   timeLabel,
   effortLabel,
   topMuscles = [],
-  totalSets = 0,
 }) {
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
@@ -159,6 +172,17 @@ export async function buildShareImageBlob({
   drawTrainedWith(ctx, WIDTH / 2, 330, logo);
 
   ctx.textAlign = "center";
+  // Which session it was ("BACK & PULL"), so the card isn't the same for
+  // every workout. Kept short enough to sit on one line.
+  if (title) {
+    ctx.font = `700 34px ${SYS_FONT}`;
+    ctx.fillStyle = COLORS.accent;
+    let t = String(title).toUpperCase();
+    while (t.length > 3 && ctx.measureText(t).width > WIDTH - 200) t = `${t.slice(0, -2).trimEnd()}…`;
+    if ("letterSpacing" in ctx) ctx.letterSpacing = "3px";
+    ctx.fillText(t, WIDTH / 2, 590);
+    if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+  }
   ctx.fillStyle = COLORS.fg;
   ctx.font = `800 110px ${SYS_FONT}`;
   ctx.fillText("Workout", WIDTH / 2, 720);
@@ -176,7 +200,7 @@ export async function buildShareImageBlob({
   });
 
   const rows = topMuscles.slice(0, 3);
-  if (rows.length) drawMuscleBars(ctx, WIDTH / 2, 1360, rows, totalSets);
+  if (rows.length) drawMuscleRows(ctx, 1300, rows);
 
   drawHandle(ctx, WIDTH / 2, HEIGHT - 150, glyph);
 
