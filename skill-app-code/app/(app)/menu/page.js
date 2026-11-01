@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import TapLink from "@/components/TapLink";
 import ExportRow from "@/components/menu/ExportRow";
 import { getIsCoach } from "@/lib/data/coach";
+import { getFeedbackUnreadCount } from "@/lib/data/feedback";
 import { getMembership } from "@/lib/data/profile";
 import { getChallengeAccess, getChallengeHistory } from "@/lib/data/challenge";
 
@@ -19,10 +20,6 @@ const LEARN = [
   { href: "/library", label: "Library", body: "Exercises and stretches, with videos", icon: IconLibrary, tint: "#9085e9" },
 ];
 
-const SUPPORT_EMAIL = "info@skfitness.uk";
-const REPORT_ISSUE_HREF = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
-  "SKILL app issue",
-)}&body=${encodeURIComponent("What happened?\n\n\nWhat were you trying to do?\n\n")}`;
 
 export default function MenuPage() {
   return (
@@ -57,7 +54,9 @@ export default function MenuPage() {
 
       <MenuGroup title="App">
         <MenuLink href="/settings" label="Settings" body="Notifications, rest timer, preferences" icon={IconGear} tint="#fc7605" />
-        <MenuLink href={REPORT_ISSUE_HREF} external label="Report an issue" body="Found a bug? Let me know" icon={IconFlag} tint="#8e8780" />
+        <Suspense fallback={<MenuLink href="/feedback" label="Send feedback" body="Bugs, missing videos, ideas" icon={IconFlag} tint="#8e8780" />}>
+          <FeedbackEntry />
+        </Suspense>
       </MenuGroup>
     </div>
   );
@@ -76,8 +75,8 @@ function MenuGroup({ title, children }) {
   );
 }
 
-function MenuLink({ href, label, body, icon, tint, external = false }) {
-  const row = <MenuRow label={label} body={body} icon={icon} tint={tint} />;
+function MenuLink({ href, label, body, icon, tint, external = false, badge = null }) {
+  const row = <MenuRow label={label} body={body} icon={icon} tint={tint} badge={badge} />;
   const cls = "block transition-colors hover:bg-surface-2 active:bg-surface-2";
   return external ? (
     <a href={href} className={cls}>
@@ -87,6 +86,22 @@ function MenuLink({ href, label, body, icon, tint, external = false }) {
     <TapLink href={href} className={cls}>
       {row}
     </TapLink>
+  );
+}
+
+// Feedback goes to Salvador in the app (/feedback). Shows "New reply"
+// when he has answered and the client hasn't opened it yet.
+async function FeedbackEntry() {
+  const unread = await getFeedbackUnreadCount();
+  return (
+    <MenuLink
+      href="/feedback"
+      label="Send feedback"
+      body={unread > 0 ? "Salvador replied" : "Bugs, missing videos, ideas"}
+      badge={unread > 0 ? "New reply" : null}
+      icon={IconFlag}
+      tint="#8e8780"
+    />
   );
 }
 
@@ -181,7 +196,7 @@ function IconClients(props) {
   );
 }
 
-function MenuRow({ label, body, icon: Icon, tint }) {
+function MenuRow({ label, body, icon: Icon, tint, badge = null }) {
   return (
     <div className="flex items-center gap-3 pl-4">
       <span
@@ -195,6 +210,9 @@ function MenuRow({ label, body, icon: Icon, tint }) {
           <span className="text-[16px] text-fg">{label}</span>
           <span className="truncate text-[13px] text-dim">{body}</span>
         </div>
+        {badge ? (
+          <span className="shrink-0 rounded-full bg-accent px-2.5 py-0.5 text-[12px] font-bold text-black">{badge}</span>
+        ) : null}
         <IconChevron className="h-4 w-4 shrink-0 text-dim" />
       </div>
     </div>
