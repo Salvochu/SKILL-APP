@@ -6,6 +6,7 @@ import Link from "next/link";
 import { compact } from "@/components/progress/chartkit";
 import { fromKg, unitLabel } from "@/lib/units";
 import { finishMesocycle } from "@/app/(app)/dashboard/actions";
+import Explain from "@/components/Explain";
 
 // The end-of-block moment: what got done, where strength moved, and the
 // nudge to check in and start the next block.
@@ -17,6 +18,9 @@ export default function MesocycleComplete({ active, summary, unit = "kg" }) {
   // The summary is in kg (how weights are stored); show the user's unit.
   const U = unitLabel(unit);
   const conv = (kg) => Math.round(fromKg(kg, unit));
+  // The split's own name ("Superman 6-Day Split"), not the internal
+  // program name, which already carries its length ("..., 5 Weeks").
+  const name = active.splitName || String(active.templateName || "").replace(/,?\s*\d+\s*weeks?$/i, "");
 
   async function onFinish() {
     setBusy(true);
@@ -41,8 +45,9 @@ export default function MesocycleComplete({ active, summary, unit = "kg" }) {
           Block complete
         </span>
         <h2 className="text-balance font-display text-[1.75rem] font-bold leading-[1.08] tracking-[-0.02em] text-fg">
-          {active.templateName}, all {active.weeks} weeks done
+          {name}
         </h2>
+        <p className="text-[15px] text-muted">All {active.weeks} weeks done</p>
       </div>
 
       {summary && summary.sessionCount > 0 ? (
@@ -54,13 +59,16 @@ export default function MesocycleComplete({ active, summary, unit = "kg" }) {
 
       {gains.length > 0 ? (
         <div className="relative flex flex-col gap-2">
-          <h3 className="font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">
-            Strength, start to finish
+          {/* These are estimated one-rep maxes from the best sets, not
+              weights lifted, so it says so. */}
+          <h3 className="flex items-center gap-1.5 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">
+            Estimated 1RM, start to finish
+            <Explain k="e1rm" />
           </h3>
           <ul className="flex flex-col [&>*+*]:border-t [&>*+*]:border-border/70">
             {gains.map((g) => (
               <li key={g.name} className="flex items-center justify-between gap-3 py-2.5">
-                <span className="min-w-0 truncate text-[15px] text-fg">{g.name}</span>
+                <span className="min-w-0 flex-1 text-[15px] leading-snug text-fg">{g.name}</span>
                 <span className="flex shrink-0 items-center gap-2">
                   <span className="tabular text-[15px] text-muted">
                     {conv(g.from)} <span className="text-dim">&rarr;</span> <span className="text-fg">{conv(g.to)}</span> {U}
@@ -102,7 +110,7 @@ export default function MesocycleComplete({ active, summary, unit = "kg" }) {
           disabled={busy}
           className="flex w-full items-center justify-center rounded-2xl bg-fg/10 px-4 py-4 text-[17px] font-semibold text-fg transition-transform active:scale-[0.98] disabled:opacity-60"
         >
-          {busy ? "Saving..." : "Not now"}
+          {busy ? "Closing..." : "Close this block"}
         </button>
       </div>
     </section>
