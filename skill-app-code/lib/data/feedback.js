@@ -3,6 +3,8 @@ import { cache } from "react";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getIsCoach } from "@/lib/data/coach";
+import { getMembership } from "@/lib/data/profile";
+import { getChallengeAccess } from "@/lib/data/challenge";
 
 // In-app feedback (migration 0049). Clients read their own threads
 // through their session (RLS); the coach reads everyone's through the
@@ -30,6 +32,25 @@ function shapeThreads(threads, messages) {
     messages: byThread.get(t.id) ?? [],
   }));
 }
+
+// Who can send feedback: active challengers (until their access ends after
+// Day 14) and paying members. Lapsed accounts (challenge ended unpaid, or a
+// cancelled membership) can still read past messages but not send. The
+// coach can mute an account (app_metadata.feedback_muted, which clients
+// can't change). "open" | "closed" | "muted".
+export async function feedbackAccessFor(user) {
+  if (!user) return "closed";
+  if (user.appMetadata?.feedback_muted) return "muted";
+  const membership = await getMembership();
+  if (membership === "lapsed") return "closed";
+  if (membership === "challenge") {
+    const access = await getChallengeAccess();
+    if (access.lapsed) return "closed";
+  }
+  return "open";
+}
+
+export const getFeedbackAccess = cache(async () => feedbackAccessFor(await getSessionUser()));
 
 // The signed-in client's own threads, newest activity first. Empty if the
 // table isn't there yet (migration not run), rather than breaking the page.
@@ -81,8 +102,19 @@ export async function getFeedbackInbox() {
     admin.from("profiles").select("user_id, full_name").in("user_id", userIds),
   ]);
   const nameBy = new Map((profiles ?? []).map((p) => [p.user_id, (p.full_name || "").trim()]));
+  const mutedBy = new Map();
+  await Promise.all(
+    userIds.map(async (id) => {
+      const { data } = await admin.auth.admin.getUserById(id);
+      mutedBy.set(id, Boolean(data?.user?.app_metadata?.feedback_muted));
+    }),
+  );
   return {
-    threads: shapeThreads(threads, messages).map((t) => ({ ...t, clientName: nameBy.get(t.userId) || "A client" })),
+    threads: shapeThreads(threads, messages).map((t) => ({
+      ...t,
+      clientName: nameBy.get(t.userId) || "A client",
+      muted: mutedBy.get(t.userId) ?? false,
+    })),
   };
 }
 

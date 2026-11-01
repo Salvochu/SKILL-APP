@@ -28,6 +28,15 @@ export async function createMembershipCheckoutUrl({ user, customerId, site, back
       client_reference_id: user.id,
       metadata: { skill_user_id: user.id },
       subscription_data: { metadata: { skill_user_id: user.id } },
+      // Shown under the Subscribe button: how to cancel, the refund
+      // promise, and the policies they're agreeing to (the full pages
+      // live on the challenge site).
+      custom_text: {
+        submit: {
+          message:
+            "Cancel any time in the app (Profile, then Manage membership). Full refund if you cancel within 14 days of your first payment. By subscribing you agree to our [Terms](https://14d.salvadorskfitness.com/terms), [Refund Policy](https://14d.salvadorskfitness.com/refunds) and [Privacy Policy](https://14d.salvadorskfitness.com/privacy).",
+        },
+      },
       success_url: `${site}/api/stripe/checkout-return?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${site}${back}`,
     });

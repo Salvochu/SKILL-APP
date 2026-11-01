@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import TapLink from "@/components/TapLink";
 import ExportRow from "@/components/menu/ExportRow";
 import { getIsCoach } from "@/lib/data/coach";
-import { getFeedbackUnreadCount } from "@/lib/data/feedback";
+import { getFeedbackUnreadCount, getFeedbackAccess } from "@/lib/data/feedback";
 import { getMembership } from "@/lib/data/profile";
 import { getChallengeAccess, getChallengeHistory } from "@/lib/data/challenge";
 
@@ -54,7 +54,7 @@ export default function MenuPage() {
 
       <MenuGroup title="App">
         <MenuLink href="/settings" label="Settings" body="Notifications, rest timer, preferences" icon={IconGear} tint="#fc7605" />
-        <Suspense fallback={<MenuLink href="/feedback" label="Send feedback" body="Bugs, missing videos, ideas" icon={IconFlag} tint="#8e8780" />}>
+        <Suspense fallback={null}>
           <FeedbackEntry />
         </Suspense>
       </MenuGroup>
@@ -92,7 +92,10 @@ function MenuLink({ href, label, body, icon, tint, external = false, badge = nul
 // Feedback goes to Salvador in the app (/feedback). Shows "New reply"
 // when he has answered and the client hasn't opened it yet.
 async function FeedbackEntry() {
-  const unread = await getFeedbackUnreadCount();
+  const [unread, access] = await Promise.all([getFeedbackUnreadCount(), getFeedbackAccess()]);
+  // Hidden once an account can't send (lapsed or muted), unless there's
+  // a reply from Salvador still waiting to be read.
+  if (access !== "open" && unread === 0) return null;
   return (
     <MenuLink
       href="/feedback"

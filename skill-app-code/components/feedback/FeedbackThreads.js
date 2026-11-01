@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { replyToFeedback, coachReply, setFeedbackStatus, markFeedbackRead } from "@/app/(app)/feedback/actions";
+import { replyToFeedback, coachReply, setFeedbackStatus, markFeedbackRead, setFeedbackMuted } from "@/app/(app)/feedback/actions";
 import { FEEDBACK_KIND_LABEL } from "@/lib/feedbackKinds";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -27,7 +27,7 @@ function statusLabel(t, viewer) {
 // A list of feedback conversations. `viewer` is "client" (their own
 // threads) or "coach" (the inbox: names, mark done). Each opens into the
 // messages and a reply box.
-export default function FeedbackThreads({ threads, viewer, markRead = false }) {
+export default function FeedbackThreads({ threads, viewer, markRead = false, readOnly = false }) {
   const router = useRouter();
   const [open, setOpen] = useState(() => (viewer === "client" ? threads.find((t) => t.clientUnread)?.id ?? null : null));
 
@@ -53,6 +53,9 @@ export default function FeedbackThreads({ threads, viewer, markRead = false }) {
             >
               <span className="flex flex-wrap items-center gap-2">
                 {viewer === "coach" ? <span className="text-[16px] font-semibold text-fg">{t.clientName}</span> : null}
+                {viewer === "coach" && t.muted ? (
+                  <span className="rounded-full bg-danger/15 px-2 py-0.5 text-[12px] font-semibold text-danger">Muted</span>
+                ) : null}
                 <span className="rounded-full bg-fg/10 px-2 py-0.5 text-[12px] font-semibold text-muted">
                   {FEEDBACK_KIND_LABEL[t.kind] ?? t.kind}
                 </span>
@@ -61,7 +64,7 @@ export default function FeedbackThreads({ threads, viewer, markRead = false }) {
               </span>
               {!isOpen && first ? <span className="line-clamp-2 text-[15px] leading-snug text-muted">{first.body}</span> : null}
             </button>
-            {isOpen ? <Thread thread={t} viewer={viewer} onChanged={() => router.refresh()} /> : null}
+            {isOpen ? <Thread thread={t} viewer={viewer} readOnly={readOnly} onChanged={() => router.refresh()} /> : null}
           </li>
         );
       })}
@@ -69,7 +72,7 @@ export default function FeedbackThreads({ threads, viewer, markRead = false }) {
   );
 }
 
-function Thread({ thread, viewer, onChanged }) {
+function Thread({ thread, viewer, readOnly = false, onChanged }) {
   const [body, setBody] = useState("");
   // A sent message shows straight away, until the refreshed thread (which
   // includes it) arrives, so nobody taps Send twice thinking it failed.
@@ -109,6 +112,14 @@ function Thread({ thread, viewer, onChanged }) {
     onChanged();
   }
 
+  async function toggleMute() {
+    setPending(true);
+    const res = await setFeedbackMuted({ userId: thread.userId, muted: !thread.muted });
+    setPending(false);
+    if (res?.error) return setError(res.error);
+    onChanged();
+  }
+
   async function toggleDone() {
     setPending(true);
     await setFeedbackStatus({ feedbackId: thread.id, status: thread.status === "done" ? "open" : "done" });
@@ -138,6 +149,7 @@ function Thread({ thread, viewer, onChanged }) {
           );
         })}
       </ol>
+      {readOnly ? null : (
       <form onSubmit={send} className="flex items-end gap-2">
         <textarea
           value={body}
@@ -156,16 +168,27 @@ function Thread({ thread, viewer, onChanged }) {
           Send
         </button>
       </form>
+      )}
       {error ? <p className="text-[14px] text-danger">{error}</p> : null}
       {viewer === "coach" ? (
-        <button
-          type="button"
-          onClick={toggleDone}
-          disabled={pending}
-          className="self-start rounded-lg py-1 text-[14px] font-semibold text-accent transition-opacity active:opacity-60 disabled:opacity-50"
-        >
-          {thread.status === "done" ? "Re-open" : "Mark as done"}
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={toggleDone}
+            disabled={pending}
+            className="rounded-lg py-1 text-[14px] font-semibold text-accent transition-opacity active:opacity-60 disabled:opacity-50"
+          >
+            {thread.status === "done" ? "Re-open" : "Mark as done"}
+          </button>
+          <button
+            type="button"
+            onClick={toggleMute}
+            disabled={pending}
+            className="rounded-lg py-1 text-[14px] font-medium text-muted transition-opacity active:opacity-60 disabled:opacity-50"
+          >
+            {thread.muted ? "Unmute this client" : "Mute this client"}
+          </button>
+        </div>
       ) : null}
     </div>
   );

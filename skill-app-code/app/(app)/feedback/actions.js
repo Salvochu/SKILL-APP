@@ -6,12 +6,25 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getIsCoach } from "@/lib/data/coach";
 import { FEEDBACK_KINDS } from "@/lib/feedbackKinds";
 import { sendPush } from "@/lib/push";
+import { feedbackAccessFor } from "@/lib/data/feedback";
 
 const KINDS = new Set(FEEDBACK_KINDS.map((k) => k.key));
 const MAX = 2000;
 // Enough for anyone with something real to say; stops a script filling
-// the coach's inbox.
+// the coach's inbox. New conversations are capped per day as well.
 const PER_HOUR = 10;
+const NEW_PER_DAY = 3;
+
+// Re-checked on every send, with the account read fresh from the auth
+// server (the session's copy of the mute flag can be up to an hour old).
+async function canSend(user) {
+  const { data } = await createAdminClient().auth.admin.getUserById(user.id);
+  const fresh = { ...user, appMetadata: data?.user?.app_metadata ?? user.appMetadata };
+  const access = await feedbackAccessFor(fresh);
+  if (access === "muted") return "Sending feedback is paused on your account.";
+  if (access === "closed") return "Feedback is for active challengers and members.";
+  return null;
+}
 
 function cleanBody(raw) {
   const body = String(raw ?? "").trim();
@@ -37,8 +50,17 @@ export async function sendFeedback({ kind, body: raw }) {
   if (!KINDS.has(kind)) return { error: "Pick what it's about." };
   const { body, error } = cleanBody(raw);
   if (error) return { error };
+  const blocked = await canSend(user);
+  if (blocked) return { error: blocked };
   const supabase = await getServerSupabase();
   if (await overLimit(supabase)) return { error: "That's a lot of messages in an hour. Try again a bit later." };
+  const { count: today } = await supabase
+    .from("feedback")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", new Date(Date.now() - 86400_000).toISOString());
+  if ((today ?? 0) >= NEW_PER_DAY) {
+    return { error: "You've started 3 conversations today. Add to one of them below, or try again tomorrow." };
+  }
 
   const { data: thread, error: tErr } = await supabase
     .from("feedback")
@@ -62,6 +84,8 @@ export async function replyToFeedback({ feedbackId, body: raw }) {
   if (!user) return { error: "Please sign in again." };
   const { body, error } = cleanBody(raw);
   if (error) return { error };
+  const blocked = await canSend(user);
+  if (blocked) return { error: blocked };
   const supabase = await getServerSupabase();
   if (await overLimit(supabase)) return { error: "That's a lot of messages in an hour. Try again a bit later." };
   const { error: mErr } = await supabase
@@ -128,6 +152,21 @@ export async function setFeedbackStatus({ feedbackId, status }) {
   if (!(await getIsCoach())) return { error: "Not allowed." };
   if (!["new", "open", "done"].includes(status)) return { error: "Unknown status." };
   await createAdminClient().from("feedback").update({ status }).eq("id", feedbackId);
+  revalidatePath("/clients/feedback");
+  return { ok: true };
+}
+
+// Coach mutes (or unmutes) a client's feedback. Stored on their auth
+// account's app_metadata, which only the server can change.
+export async function setFeedbackMuted({ userId, muted }) {
+  if (!(await getIsCoach())) return { error: "Not allowed." };
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.getUserById(userId);
+  if (error || !data?.user) return { error: "Couldn't find that account." };
+  const { error: uErr } = await admin.auth.admin.updateUserById(userId, {
+    app_metadata: { ...data.user.app_metadata, feedback_muted: Boolean(muted) },
+  });
+  if (uErr) return { error: "Couldn't change that. Try again." };
   revalidatePath("/clients/feedback");
   return { ok: true };
 }

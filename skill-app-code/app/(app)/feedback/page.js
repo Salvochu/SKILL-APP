@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getMyFeedback } from "@/lib/data/feedback";
+import { getMyFeedback, getFeedbackAccess } from "@/lib/data/feedback";
 import BackLink from "@/components/ui/BackLink";
 import FeedbackForm from "@/components/feedback/FeedbackForm";
 import FeedbackThreads from "@/components/feedback/FeedbackThreads";
@@ -18,21 +18,34 @@ export default function FeedbackPage() {
           Something broken, a video missing, or an idea? Tell me here and I’ll reply in the app.
         </p>
       </header>
-      <FeedbackForm />
-      <Suspense fallback={<div className="h-24 rounded-2xl skeleton bg-surface-2" />}>
-        <MyThreads />
+      <Suspense fallback={<div className="h-72 rounded-2xl skeleton bg-surface-2" />}>
+        <Body />
       </Suspense>
     </div>
   );
 }
 
-async function MyThreads() {
-  const threads = await getMyFeedback();
-  if (!threads.length) return null;
+// Lapsed and muted accounts can still read past messages, not send.
+async function Body() {
+  const [threads, access] = await Promise.all([getMyFeedback(), getFeedbackAccess()]);
+  const open = access === "open";
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="px-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">Your messages</h2>
-      <FeedbackThreads threads={threads} viewer="client" markRead />
-    </section>
+    <>
+      {open ? (
+        <FeedbackForm />
+      ) : (
+        <p className="rounded-2xl bg-surface p-4 text-[15px] leading-relaxed text-muted">
+          {access === "muted"
+            ? "Sending feedback is paused on your account."
+            : "Feedback is for active challengers and members. Join the SKILL App Membership to keep training and talking to Salvador."}
+        </p>
+      )}
+      {threads.length ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="px-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">Your messages</h2>
+          <FeedbackThreads threads={threads} viewer="client" markRead readOnly={!open} />
+        </section>
+      ) : null}
+    </>
   );
 }
