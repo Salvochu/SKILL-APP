@@ -354,34 +354,21 @@ export default function MesocyclePanel({
       ) : null}
 
       {railWeeks > 1 && !isChallenge ? (
-        <div className="relative flex flex-col gap-3">
-          <WeekRail
-            weeks={railWeeks}
-            currentWeek={currentRailWeek}
-            weekFill={weekFill}
-            startingRir={active.startingRir}
-            showRir={active.advanced && !linear}
-            hasDeload={!linear}
-          />
+        // The block's weeks, and beside them this week's sessions as a
+        // ring that fills as you log (in place of a row of tiny dots).
+        <div className="relative flex items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <WeekRail
+              weeks={railWeeks}
+              currentWeek={currentRailWeek}
+              weekFill={weekFill}
+              startingRir={active.startingRir}
+              showRir={active.advanced && !linear}
+              hasDeload={!linear}
+            />
+          </div>
           {active.sessionsPerWeek > 0 ? (
-            <div className="flex items-center gap-2 text-[13px]">
-              {active.sessionsPerWeek <= 6 ? (
-                <span className="flex gap-1">
-                  {Array.from({ length: active.sessionsPerWeek }, (_, i) => (
-                    <span
-                      key={i}
-                      className={`h-1.5 w-1.5 rounded-full ${i < active.sessionsThisWeek ? "bg-accent" : "bg-fg/15"}`}
-                    />
-                  ))}
-                </span>
-              ) : null}
-              <span className="text-muted">
-                <span className="font-semibold text-fg tabular-nums">
-                  {Math.min(active.sessionsThisWeek, active.sessionsPerWeek)} of {active.sessionsPerWeek}
-                </span>{" "}
-                sessions this week
-              </span>
-            </div>
+            <WeekRing done={active.sessionsThisWeek} target={active.sessionsPerWeek} />
           ) : null}
         </div>
       ) : null}
@@ -424,6 +411,50 @@ export default function MesocyclePanel({
 // current week fills with this week's sessions, future weeks are empty.
 // In the advanced app each bar is labelled with its RIR target and the
 // last week is a dashed deload; the simple app just numbers them.
+// This week's sessions against the plan, Apple Fitness ring style: fills
+// as sessions are logged and turns into a tick once the week is done.
+function WeekRing({ done, target }) {
+  const r = 20;
+  const c = 2 * Math.PI * r;
+  const n = Math.min(done, target);
+  const full = n >= target;
+  return (
+    <div
+      className="flex shrink-0 flex-col items-center gap-1"
+      role="img"
+      aria-label={`${n} of ${target} sessions this week`}
+    >
+      <div className="relative h-[50px] w-[50px]">
+        <svg viewBox="0 0 50 50" className="h-full w-full -rotate-90" aria-hidden="true">
+          <circle cx="25" cy="25" r={r} fill="none" strokeWidth="5.5" className="stroke-fg/10" />
+          <circle
+            cx="25"
+            cy="25"
+            r={r}
+            fill="none"
+            strokeWidth="5.5"
+            strokeLinecap="round"
+            className="stroke-accent transition-[stroke-dasharray] duration-700"
+            strokeDasharray={`${n > 0 ? c * (n / target) : 0} ${c}`}
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-[14px] font-bold tabular-nums text-fg">
+          {full ? (
+            <svg viewBox="0 0 24 24" className="h-5 w-5 text-accent" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            `${n}/${target}`
+          )}
+        </span>
+      </div>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-dim">
+        {full ? "Week done" : "This week"}
+      </span>
+    </div>
+  );
+}
+
 function WeekRail({ weeks, currentWeek, weekFill, startingRir, showRir, hasDeload }) {
   return (
     <div className="flex gap-1.5">
