@@ -1,8 +1,15 @@
 "use client";
 
+import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
+
 // Last-resort screen for when the root layout itself fails, so it can't
 // rely on the app's CSS or fonts: everything here is inline.
-export default function GlobalError({ reset }) {
+export default function GlobalError({ error, reset }) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
   return (
     <html lang="en">
       <body

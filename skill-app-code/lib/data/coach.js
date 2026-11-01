@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { selectAll } from "@/lib/supabase/selectAll";
 import { computeWeekStreak, weekKeyOf } from "@/lib/training";
 import { currentWeek } from "@/lib/mesocycle";
-import { isChallengeDayComplete, CHALLENGE_DAYS } from "@/lib/data/challenge";
+import { isChallengeDayComplete, CHALLENGE_DAYS, CHALLENGE_TEMPLATE_ID } from "@/lib/data/challenge";
 import { muscleShareLabel } from "@/lib/exercises";
 import {
   patternForExercise,
@@ -86,7 +86,7 @@ async function loadEveryone() {
     selectAll(() =>
       admin
         .from("user_mesocycles")
-        .select("user_id, template_id, start_date, started_at, status, sessions_per_week")
+        .select("id, user_id, template_id, start_date, started_at, created_at, status, sessions_per_week")
         .order("id"),
     ),
     admin.from("mesocycle_templates").select("id, name, weeks, kind"),
@@ -267,6 +267,53 @@ function summarize(userId, ctx, now = Date.now()) {
   };
 }
 
+// The 14-Day Challenge funnel, from the data the app already keeps: who
+// signed up (has a challenge run), tapped Start, logged a workout, logged
+// all 6, and then paid for the app. Each person is counted once, by their
+// latest challenge run. Computed for three windows (by sign-up date) so
+// the coach can see how a recent push is doing, not just the all-time mix.
+// `active` and `preparing` are people whose result isn't in yet, so a
+// drop between steps isn't read as people giving up when they simply
+// haven't had the time.
+const FUNNEL_TARGET_SESSIONS = 6;
+function challengeFunnel(clients, ctx, now) {
+  const rows = [];
+  for (const c of clients) {
+    const runs = (ctx.mesoByUser.get(c.id) ?? []).filter((m) => m.template_id === CHALLENGE_TEMPLATE_ID);
+    if (!runs.length) continue;
+    const run = runs.slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0];
+    const sessions = (ctx.sessionsByUser.get(c.id) ?? []).filter((s) => s.user_mesocycle_id === run.id).length;
+    const startMs = run.started_at ? Date.parse(`${String(run.started_at).slice(0, 10)}T00:00:00Z`) : null;
+    const today = Date.parse(`${new Date(now).toISOString().slice(0, 10)}T00:00:00Z`);
+    const day = startMs == null ? 0 : Math.floor((today - startMs) / DAY) + 1;
+    rows.push({
+      signedUpMs: Date.parse(run.created_at) || now,
+      started: Boolean(run.started_at),
+      trained: sessions >= 1,
+      allSix: sessions >= FUNNEL_TARGET_SESSIONS,
+      paid: c.membership === "member" || c.membership === "lapsed",
+      active: Boolean(run.started_at) && day <= CHALLENGE_DAYS && c.membership === "challenge",
+      preparing: !run.started_at && c.membership === "challenge",
+    });
+  }
+  const windowed = (days) => {
+    const pick = days ? rows.filter((r) => now - r.signedUpMs <= days * DAY) : rows;
+    const count = (k) => pick.filter((r) => r[k]).length;
+    return {
+      steps: [
+        { key: "signedUp", label: "Signed up", count: pick.length },
+        { key: "started", label: "Tapped Start", count: count("started") },
+        { key: "trained", label: "Logged a workout", count: count("trained") },
+        { key: "allSix", label: "Logged all 6 workouts", count: count("allSix") },
+        { key: "paid", label: "Paid for the app", count: count("paid") },
+      ],
+      active: count("active"),
+      preparing: count("preparing"),
+    };
+  };
+  return { all: windowed(null), d30: windowed(30), d7: windowed(7) };
+}
+
 // The client list for the coach overview. Returns null for non-coaches.
 export async function getClients() {
   if (!(await getIsCoach())) return null;
@@ -287,6 +334,7 @@ export async function getClients() {
 
   return {
     clients,
+    funnel: challengeFunnel(clients, ctx, now),
     totals: {
       count: clients.length,
       activeThisWeek: clients.filter((c) => c.sessionsThisWeek > 0).length,

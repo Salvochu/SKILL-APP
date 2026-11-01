@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import AuthShell from "@/components/auth/AuthShell";
 
@@ -10,6 +11,7 @@ import AuthShell from "@/components/auth/AuthShell";
 export default function Error({ error, reset }) {
   useEffect(() => {
     console.error(error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (

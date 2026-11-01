@@ -4,6 +4,7 @@ import { getClients } from "@/lib/data/coach";
 import { getUnitPreference } from "@/lib/data/profile";
 import ClientList from "@/components/coach/ClientList";
 import InviteButton from "@/components/coach/InviteButton";
+import ChallengeFunnel from "@/components/coach/ChallengeFunnel";
 
 export const metadata = { title: "Clients" };
 export const instant = false;
@@ -30,6 +31,7 @@ async function Body() {
         </div>
         <p className="text-balance text-[15px] text-muted">Who is training, who is progressing, and who to talk to.</p>
       </header>
+      <ChallengeFunnel funnel={data.funnel} />
       <ClientList data={data} unit={unit} />
     </div>
   );

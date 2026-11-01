@@ -1,3 +1,5 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
+
 /** @type {import('next').NextConfig} */
 // Sent with every response. HTTPS only; no other site may show the app
 // in a frame (clickjacking); browsers must trust the declared content
@@ -70,4 +72,21 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// Error tracking (Sentry). Browser reports arrive via /api/monitoring on
+// this domain, so the CSP above needs no new host. Readable stack traces
+// need SENTRY_AUTH_TOKEN, SENTRY_ORG and SENTRY_PROJECT at build time;
+// the source maps are uploaded to Sentry and deleted from the build, so
+// they are never served to browsers. Without the token the build still
+// works, just with minified traces.
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  tunnelRoute: "/api/monitoring",
+  silent: !process.env.CI,
+  telemetry: false,
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+    deleteSourcemapsAfterUpload: true,
+  },
+});
