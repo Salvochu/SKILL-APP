@@ -125,6 +125,9 @@ export async function saveWorkout(payload) {
       variant: payload.variant || null,
       user_mesocycle_id: userMesocycleId,
       my_workout_id: myWorkoutId,
+      // Asked on the way out (the Finish step), so it is saved with the
+      // session rather than as a second request after it. 1 to 5, or none.
+      perceived_effort: effortOrNull(payload.perceivedEffort),
     })
     .select("id")
     .single();
@@ -181,8 +184,13 @@ export async function getPostSaveSummary(sessionId, userMesocycleId) {
   };
 }
 
-// The coarse 1 to 5 "how hard was this" rating, set from the summary
-// screen after the session already exists.
+function effortOrNull(raw) {
+  const n = Math.round(Number(raw));
+  return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null;
+}
+
+// The coarse 1 to 5 "how hard was this" rating, for changing it once the
+// session already exists.
 export async function rateWorkout(sessionId, perceivedEffort) {
   const supabase = await getServerSupabase();
   const user = await getSessionUser();

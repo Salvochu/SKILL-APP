@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { saveWorkout, getPostSaveSummary, rateWorkout } from "@/app/(app)/log/actions";
+import { saveWorkout, getPostSaveSummary } from "@/app/(app)/log/actions";
 import { saveNotificationPrefs } from "@/app/(app)/settings/actions";
 import { createMyWorkout, updateMyWorkout } from "@/app/(app)/workouts/my-actions";
 import RestTimer from "@/components/log/RestTimer";
@@ -17,6 +17,7 @@ import Switch from "@/components/ui/Switch";
 import { Group, Row, rowInput } from "@/components/ui/Grouped";
 import Explain from "@/components/Explain";
 import ConfirmModal from "@/components/ConfirmModal";
+import Sheet from "@/components/Sheet";
 import EdgeSwipeBack from "@/components/EdgeSwipeBack";
 import FocusMode from "@/components/FocusMode";
 import { FOCUS_LAYOUT } from "@/components/log/focusLayout";
@@ -163,11 +164,12 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   const [saving, setSaving] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
   const [cancelConfirm, setCancelConfirm] = useState(false);
-  const [finishConfirm, setFinishConfirm] = useState(null); // unticked set count
+  // The Finish step: how hard it was, asked before saving. Holds the
+  // number of planned sets still unticked (0 when all are done).
+  const [finishStep, setFinishStep] = useState(null);
   const [completedSummary, setCompletedSummary] = useState(null);
   const [summaryExtras, setSummaryExtras] = useState(null);
   const [effort, setEffort] = useState(null);
-  const [savingEffort, setSavingEffort] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   // Name a free session before it first paints (resuming a draft below
   // puts the draft's own title back).
@@ -418,7 +420,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     setReorderOpen(false);
   }
 
-  async function onSave() {
+  async function onSave(perceivedEffort = null) {
+    setEffort(perceivedEffort);
     setError(null);
     setSavedOffline(false);
     setSaving(true);
@@ -449,6 +452,7 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
       dayTemplateId: initial.dayTemplateId,
       variant: initial.variant,
       userMesocycleId: initial.userMesocycleId,
+      perceivedEffort,
       exercises: rows.map((r) => ({
         exerciseId: r.exercise.id,
         note: r.note,
@@ -506,16 +510,16 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     router.push("/dashboard");
   }
 
-  // Finish straight away when every planned set is ticked; otherwise
-  // say how many are not, since a stray tap on Finish mid-workout would
-  // otherwise end it early.
+  // Finish opens one last step: how hard was it (saved with the session),
+  // which also says if planned sets are still unticked. Picking a number
+  // saves; dragging the sheet away goes back to the workout. It doubles
+  // as the guard against a stray tap on Finish mid-workout.
   function onFinish() {
     const unticked = rows.reduce(
       (n, r) => n + r.sets.filter((set) => !set.completed && !set.warmup).length,
       0,
     );
-    if (unticked > 0 && totalSets > 0) setFinishConfirm(unticked);
-    else onSave();
+    setFinishStep({ unticked: totalSets > 0 ? unticked : 0 });
   }
 
   // Back leaves the workout running: the clock keeps going and the
@@ -536,14 +540,6 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     else router.push("/dashboard");
   }
 
-  async function onSelectEffort(n) {
-    setEffort(n);
-    if (!completedSummary?.sessionId) return;
-    setSavingEffort(true);
-    await rateWorkout(completedSummary.sessionId, n);
-    setSavingEffort(false);
-  }
-
   if (completedSummary) {
     return (
       <WorkoutSummary
@@ -552,8 +548,6 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         isBenchmark={initial.splitId === "strength-check"}
         effort={effort}
         unit={U}
-        savingEffort={savingEffort}
-        onSelectEffort={onSelectEffort}
         onDone={() => router.push("/dashboard")}
         saveAsWorkout={(() => {
           const cleanName = title.replace(/\s*\.\s*Week \d+ of \d+.*$/, "").trim() || "My workout";
@@ -909,17 +903,11 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
         )}
       </div>
 
-      {finishConfirm ? (
-        <ConfirmModal
-          title="Finish this workout?"
-          message={`${finishConfirm} planned ${finishConfirm === 1 ? "set isn't" : "sets aren't"} ticked off yet. Only what you've logged gets saved.`}
-          confirmLabel="Finish"
-          cancelLabel="Keep going"
-          onConfirm={() => {
-            setFinishConfirm(null);
-            onSave();
-          }}
-          onCancel={() => setFinishConfirm(null)}
+      {finishStep ? (
+        <FinishSheet
+          unticked={finishStep.unticked}
+          onPick={(n) => onSave(n)}
+          onClose={() => setFinishStep(null)}
         />
       ) : null}
 
@@ -949,6 +937,79 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
   );
 }
 
+// The last step of a workout, between Finish and the summary: how hard
+// it was, 1 to 5, saved along with the session. One tap on a number
+// finishes; "Skip" finishes without one; dragging the sheet down (or
+// tapping outside it) goes back to the workout. When planned sets are
+// still unticked it says so here, instead of a separate confirm first.
+function FinishSheet({ unticked = 0, onPick, onClose }) {
+  return (
+    <Sheet onClose={onClose} ariaLabel="Finish workout">
+      {(close) => {
+        const pick = (n) => {
+          onPick(n);
+          close();
+        };
+        return (
+          <div className="flex flex-col gap-5 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3 sm:pb-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <h2 className="flex items-center gap-2 font-display text-[1.5rem] font-bold leading-tight tracking-[-0.02em] text-fg">
+                  How hard was that?
+                  <Explain k="effort" />
+                </h2>
+                <p className="text-[15px] text-muted">
+                  {unticked > 0
+                    ? `${unticked} planned ${unticked === 1 ? "set isn't" : "sets aren't"} ticked off. Only what you've logged is saved.`
+                    : "Pick one to finish your workout."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Back to the workout"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-fg/10 text-fg transition-transform active:scale-90"
+              >
+                <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => pick(n)}
+                    aria-label={`${n}, ${EFFORT_LABELS[n]}`}
+                    className="flex h-14 flex-1 items-center justify-center rounded-2xl bg-surface-2 text-[18px] font-semibold tabular-nums text-fg transition-[background-color,color,transform] active:scale-95 active:bg-accent active:text-black"
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between px-1 text-[13px] text-muted">
+                <span>{EFFORT_LABELS[1]}</span>
+                <span>{EFFORT_LABELS[5]}</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => pick(null)}
+              className="self-center rounded-lg px-3 py-1.5 text-[15px] font-medium text-muted transition-opacity active:opacity-60"
+            >
+              Skip and finish
+            </button>
+          </div>
+        );
+      }}
+    </Sheet>
+  );
+}
+
 function ShareCard({ summary, timeLabel, effortLabel, unit = "kg", muscles = null }) {
   const [status, setStatus] = useState("idle"); // idle | preparing | shared | downloaded | copied
 
@@ -959,11 +1020,11 @@ function ShareCard({ summary, timeLabel, effortLabel, unit = "kg", muscles = nul
     let blob = null;
     try {
       blob = await buildShareImageBlob({
-        title: summary.title ?? null,
         volumeLabel: `${Math.round(summary.totalVolume).toLocaleString("en-GB")} ${unit}`,
         timeLabel,
         effortLabel,
         topMuscles: muscles?.top ?? [],
+        totalSets: muscles?.totalSets ?? 0,
       });
     } catch {
       // Image generation failed (e.g. the logo did not load); fall back
@@ -1167,7 +1228,7 @@ function SaveWorkoutModal({ defaultName, exercises, sourceMyWorkoutId, sourceNam
 }
 
 // Exported for the dev-only preview at /design-preview/finish.
-export function WorkoutSummary({ summary, extras, isBenchmark = false, effort, unit = "kg", savingEffort, onSelectEffort, onDone, saveAsWorkout = null }) {
+export function WorkoutSummary({ summary, extras, isBenchmark = false, effort = null, unit = "kg", onDone, saveAsWorkout = null }) {
   const mins = summary.durationMin;
   const timeLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
   const prs = extras?.newPRs ?? [];
@@ -1204,6 +1265,13 @@ export function WorkoutSummary({ summary, extras, isBenchmark = false, effort, u
               .toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })
               .replace(",", "")}
           </p>
+        ) : null}
+        {/* The rating from the Finish step, as the same pill the plan
+            uses for Sets and Reps. */}
+        {effort ? (
+          <span className="mt-1.5">
+            <StatPill label="Effort" value={EFFORT_LABELS[effort]} />
+          </span>
         ) : null}
         {canSave ? (
           <button
@@ -1386,33 +1454,6 @@ export function WorkoutSummary({ summary, extras, isBenchmark = false, effort, u
             Level up. You reached Level {j.level}.
           </p>
         ) : null}
-      </section>
-
-      <section className="flex flex-col gap-3 rounded-2xl bg-surface p-4">
-        <h2 className="flex items-center gap-1.5 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">
-          How hard was this workout?
-          <Explain k="effort" />
-        </h2>
-        <div className="flex gap-2">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => onSelectEffort(n)}
-              disabled={savingEffort}
-              className={`flex-1 rounded-xl py-3 text-[15px] font-semibold transition-[background-color,color,transform] active:scale-95 disabled:opacity-60 ${
-                effort === n ? "bg-accent text-black" : "bg-surface-2 text-muted hover:text-fg"
-              }`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-        <div className="flex justify-between text-[13px] text-muted">
-          <span>{EFFORT_LABELS[1]}</span>
-          <span>{EFFORT_LABELS[5]}</span>
-        </div>
-        {effort ? <p className="text-center text-[14px] font-semibold text-accent">{EFFORT_LABELS[effort]}</p> : null}
       </section>
 
       <ShareCard summary={summary} timeLabel={timeLabel} unit={unit} effortLabel={effort ? EFFORT_LABELS[effort] : null} muscles={extras?.muscles} />

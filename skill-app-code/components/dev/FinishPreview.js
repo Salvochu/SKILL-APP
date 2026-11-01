@@ -73,7 +73,6 @@ const STATES = {
 
 export default function FinishPreview() {
   const [which, setWhich] = useState("regular");
-  const [effort, setEffort] = useState(null);
   const [images, setImages] = useState({});
 
   useEffect(() => {
@@ -82,7 +81,6 @@ export default function FinishPreview() {
     const jobs = {
       workout: () =>
         buildShareImageBlob({
-          title: "Back & Pull",
           volumeLabel: "8,650 kg",
           timeLabel: "1h 4m",
           effortLabel: "Hard",
@@ -149,7 +147,6 @@ export default function FinishPreview() {
             data-state={k}
             onClick={() => {
               setWhich(k);
-              setEffort(null);
             }}
             className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${which === k ? "bg-fg text-bg" : "bg-surface-2 text-muted"}`}
           >
@@ -163,10 +160,8 @@ export default function FinishPreview() {
           key={which}
           summary={st.summary}
           extras={st.extras}
-          effort={effort}
+          effort={which === "first" ? null : 4}
           unit="kg"
-          savingEffort={false}
-          onSelectEffort={setEffort}
           onDone={() => {}}
           saveAsWorkout={SAVE}
         />

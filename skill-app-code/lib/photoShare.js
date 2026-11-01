@@ -91,14 +91,24 @@ export async function buildPhotoCompareBlob({ beforeUrl, afterUrl, beforeLabel, 
   ctx.fillText(beforeLabel, pad + colW / 2, imgTop + imgH + 44);
   ctx.fillText(afterLabel, pad + colW + gap + colW / 2, imgTop + imgH + 44);
 
-  // The change between the two, as one centred line ("8 weeks · −4.2
+  // The change between the two, as one centred line ("8 weeks   −4.2
   // kg"): it belongs to the pair, not to either photo, so it is not split
-  // into columns under them. A real minus sign, not a hyphen.
+  // into columns under them. Each part is drawn on its own with a fixed
+  // gap between them, no separator. A real minus sign, not a hyphen.
   const lines = deltaLines.slice(0, 3).map((l) => String(l).replace(/^-/, "\u2212"));
   if (lines.length) {
+    const GAP = 56;
+    const rowY = imgTop + imgH + 112;
     ctx.font = `700 36px ${SYS_FONT}`;
     ctx.fillStyle = COLORS.fg;
-    ctx.fillText(lines.join("  ·  "), WIDTH / 2, imgTop + imgH + 112);
+    ctx.textAlign = "left";
+    const widths = lines.map((l) => ctx.measureText(l).width);
+    let x = (WIDTH - (widths.reduce((a, b) => a + b, 0) + GAP * (lines.length - 1))) / 2;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, x, rowY);
+      x += widths[i] + GAP;
+    });
+    ctx.textAlign = "center";
   }
 
   const logo = await loadImage("/skill-logo.png");
