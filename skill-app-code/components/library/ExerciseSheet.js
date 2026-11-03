@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { loomEmbedUrl } from "@/lib/exercises";
+import LoomFrame from "@/components/LoomFrame";
 import { figureMuscleFor } from "@/lib/muscleImage";
 import MusclePill from "@/components/MusclePill";
 import MuscleFigure from "@/components/MuscleFigure";
@@ -10,7 +11,7 @@ import Sheet from "@/components/Sheet";
 // Bottom-sheet detail for one exercise: form video, how-to, quick log link.
 export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
   if (!exercise) return null;
-  const embed = loomEmbedUrl(exercise.video_url);
+  const embed = loomEmbedUrl(exercise.video_url, { autoplay: true });
 
   const tags =
     exercise.muscles && exercise.muscles.length
@@ -35,13 +36,7 @@ export default function ExerciseSheet({ exercise, onClose, canLog = true }) {
 
           <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black">
             {embed ? (
-              <iframe
-                src={embed}
-                title={`${exercise.name} form video`}
-                allowFullScreen
-                loading="lazy"
-                className="h-full w-full"
-              />
+              <LoomFrame src={embed} title={`${exercise.name} form video`} />
             ) : (
               <div className="flex h-full items-center justify-center text-[14px] text-white/60">
                 Form video coming soon

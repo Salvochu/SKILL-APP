@@ -93,6 +93,11 @@ export default function RootLayout({ children }) {
         {/* Applies the saved theme before first paint (no flash). */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <style dangerouslySetInnerHTML={{ __html: splashCss }} />
+        {/* Form videos come from Loom: look its servers up ahead of the
+           first tap rather than during it. */}
+        <link rel="dns-prefetch" href="https://www.loom.com" />
+        <link rel="dns-prefetch" href="https://cdn.loom.com" />
+        <link rel="dns-prefetch" href="https://luna.loom.com" />
       </head>
       <body className="min-h-full">
         <div id="skill-splash" aria-hidden="true">

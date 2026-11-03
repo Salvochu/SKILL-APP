@@ -122,11 +122,17 @@ export const sortEquipment = (v) => orderedBy(EQUIPMENT_ORDER, v);
 export const sortVariants = (v) => orderedBy(VARIANT_ORDER, v);
 
 // Turn a Loom share URL into its embed URL. Returns null for anything that
-// is not a recognised Loom share link (or a missing video).
-export function loomEmbedUrl(videoUrl) {
+// is not a recognised Loom share link (or a missing video). The player's
+// owner, share and title bars are hidden. `autoplay` for a video someone
+// just tapped to open, so it starts without a second tap on Loom's play
+// button (a phone may still ask for that tap if the video has sound).
+export function loomEmbedUrl(videoUrl, { autoplay = false } = {}) {
   if (!videoUrl) return null;
   const match = videoUrl.match(/loom\.com\/(?:share|embed)\/([0-9a-f]{16,})/i);
-  return match ? `https://www.loom.com/embed/${match[1]}` : null;
+  if (!match) return null;
+  return `https://www.loom.com/embed/${match[1]}?hide_owner=true&hide_share=true&hideEmbedTopBar=true${
+    autoplay ? "&autoplay=1" : ""
+  }`;
 }
 
 // Typo-tolerant exercise search. Returns a score (lower is better) or

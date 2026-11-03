@@ -29,6 +29,7 @@ import { buildShareImageBlob } from "@/lib/shareCard";
 import { toKg, fromKg, formatWeight } from "@/lib/units";
 import { tierColorFor } from "@/lib/strength";
 import { loomEmbedUrl, isTimeBasedExercise } from "@/lib/exercises";
+import LoomFrame from "@/components/LoomFrame";
 import MusclePill from "@/components/MusclePill";
 
 // A free session (no plan behind it) is named for the time of day, the
@@ -1653,13 +1654,7 @@ function ExerciseCard({ row, showTips = false, unit = "kg", last, rirTarget = nu
       {embedUrl ? (
         <div className="relative w-full max-w-[260px] overflow-hidden rounded-xl bg-black">
           <div className="aspect-video">
-            <iframe
-              src={embedUrl}
-              title={`${exercise.name} form video`}
-              loading="lazy"
-              allowFullScreen
-              className="h-full w-full"
-            />
+            <LoomFrame src={embedUrl} title={`${exercise.name} form video`} lazy />
           </div>
           <button
             type="button"

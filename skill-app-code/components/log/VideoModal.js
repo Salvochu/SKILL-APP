@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { loomEmbedUrl } from "@/lib/exercises";
+import LoomFrame from "@/components/LoomFrame";
 import { figureMuscleFor } from "@/lib/muscleImage";
 import MuscleFigure from "@/components/MuscleFigure";
 
@@ -15,7 +16,7 @@ export default function VideoModal({ exercise, onClose, actionLabel = null, onAc
   }, [onClose]);
 
   if (!exercise) return null;
-  const embed = loomEmbedUrl(exercise.video_url);
+  const embed = loomEmbedUrl(exercise.video_url, { autoplay: true });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={exercise.name}>
@@ -36,7 +37,7 @@ export default function VideoModal({ exercise, onClose, actionLabel = null, onAc
         </div>
         <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black">
           {embed ? (
-            <iframe src={embed} title={`${exercise.name} form video`} allowFullScreen className="h-full w-full" />
+            <LoomFrame src={embed} title={`${exercise.name} form video`} />
           ) : (
             <div className="flex h-full items-center justify-center text-[14px] text-white/60">Form video coming soon</div>
           )}

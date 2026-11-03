@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sheet from "@/components/Sheet";
 import { loomEmbedUrl } from "@/lib/exercises";
+import LoomFrame from "@/components/LoomFrame";
 
 // The Education Library: a flat list of teaching videos, each opening in
 // a sheet with the Loom embed and its write-up.
@@ -43,7 +44,7 @@ export default function EducationList({ videos }) {
 }
 
 function LessonSheet({ video, onClose }) {
-  const embed = loomEmbedUrl(video.video_url);
+  const embed = loomEmbedUrl(video.video_url, { autoplay: true });
 
   return (
     <Sheet onClose={onClose} ariaLabel={video.title}>
@@ -65,7 +66,7 @@ function LessonSheet({ video, onClose }) {
 
           <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black">
             {embed ? (
-              <iframe src={embed} title={video.title} allowFullScreen loading="lazy" className="h-full w-full" />
+              <LoomFrame src={embed} title={video.title} />
             ) : (
               <div className="flex h-full items-center justify-center text-[14px] text-white/60">Video coming soon</div>
             )}
