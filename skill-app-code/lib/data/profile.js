@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { getSessionUser, getProfileRow, getAuthUserRecord } from "@/lib/data/session";
+import { getSessionUser, getProfileRow } from "@/lib/data/session";
 
 // The user's kg / lb display choice. Weights are always stored in kg;
 // this only changes display and input.
@@ -33,16 +33,18 @@ export async function getProfile() {
 // How much training detail to show: reps in reserve in the logger,
 // program weeks and RIR targets, the strength benchmark, the trend
 // charts. `advanced_tracking` on the profile is the user's explicit
-// choice (Settings); when they have not chosen, a new beginner starts
-// simple and everyone else starts full. A coach always gets the full
-// app. `simplified` and `showStrengthCheck` are kept as the inverse /
-// alias so existing callers keep working.
+// choice (Settings); when they have not chosen, only someone who said
+// they are Advanced (and the coach) starts with it on. Beginners,
+// intermediates and anyone who skipped the question start simple, and
+// can turn it on in Settings whenever they want. `isBeginner` is
+// separate: it drives the beginner-only extras (Foundations, the staple
+// lifts in the library). `simplified` and `showStrengthCheck` are kept
+// as the inverse / alias so existing callers keep working.
 export const getBeginnerContext = cache(async () => {
   const user = await getSessionUser();
   if (!user) {
     return {
       isBeginner: false,
-      daysSinceJoin: null,
       advanced: true,
       advancedIsExplicit: false,
       showStrengthCheck: true,
@@ -52,25 +54,15 @@ export const getBeginnerContext = cache(async () => {
 
   const data = await getProfileRow();
   const isCoach = data?.role === "coach";
-  const isBeginner = !isCoach && (data?.experience_level ?? "") === "Beginner";
-  // Account age only matters for a beginner, and isn't in the session
-  // token, so only they pay the extra lookup.
-  const createdAt = isBeginner ? (await getAuthUserRecord())?.created_at : null;
-  const daysSinceJoin = createdAt
-    ? Math.floor((Date.now() - new Date(createdAt)) / 86400000)
-    : null;
+  const level = data?.experience_level ?? "";
+  const isBeginner = !isCoach && level === "Beginner";
 
-  // A coach, an experienced lifter, or a beginner past their first month
-  // gets the full app by default; a new beginner starts simple. The
-  // Settings switch overrides the default for anyone, coach included.
-  const advancedByDefault =
-    isCoach || !isBeginner || (daysSinceJoin != null && daysSinceJoin >= 30);
+  const advancedByDefault = isCoach || level === "Advanced";
   const advancedIsExplicit = typeof data?.advanced_tracking === "boolean";
   const advanced = advancedIsExplicit ? data.advanced_tracking : advancedByDefault;
 
   return {
     isBeginner,
-    daysSinceJoin,
     advanced,
     advancedIsExplicit,
     showStrengthCheck: advanced,
