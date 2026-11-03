@@ -138,8 +138,8 @@ function InviteSheet({ onClose }) {
               </div>
               {error ? <p className="text-[14px] text-danger">{error}</p> : null}
               <p className="text-[13px] leading-snug text-dim">
-                The link logs them in once. If it expires before they open it, invite the same email again for
-                a fresh one. Their account and workouts stay as they are.
+                The link signs them in once, when they tap Continue on it. If it stops working, invite the same
+                email again for a fresh one. Their account and workouts stay as they are.
               </p>
               <button
                 type="button"
