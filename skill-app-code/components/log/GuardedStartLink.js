@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDraft } from "@/lib/activeWorkout";
 import ConfirmModal from "@/components/ConfirmModal";
+import { NAV_CANCEL } from "@/lib/navSignals";
 
 // A normal Link to /log, except: if there is already an unsaved workout
 // on this tab (lib/activeWorkout.js), confirm before navigating, since
@@ -38,6 +39,8 @@ export default function GuardedStartLink({ href, className, children, prefetch =
     // Already the same in-progress workout: no need to warn, just go.
     if (draft && draft.href !== href) {
       e.preventDefault();
+      // The loading bar and veil saw the tap; tell them nothing is coming.
+      window.dispatchEvent(new Event(NAV_CANCEL));
       setConfirming(true);
     }
   }

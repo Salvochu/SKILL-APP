@@ -3,6 +3,14 @@
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
 }
+/* The fixed top bar's height (h-14, md:h-16). Next.js reads this when it
+   decides whether a new screen is already at the top: without it a screen
+   whose top edge sat just under the bar counted as "at the top" and
+   opened hidden behind it. Focus and anchor scrolls also clear the bar. */
+html { scroll-padding-top: 3.5rem; }
+@media (min-width: 768px) {
+  html { scroll-padding-top: 4rem; }
+}
 
 /*
   SKILL theme. Dark by default, with an opt-in light mode (class "light" on

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { NAV_CANCEL, routeKey, urlKey } from "@/lib/navSignals";
 
 // A dim + blur veil with a spinner that drops over the whole app while a
 // navigation is in flight, so a slow page load reads as "loading", not
@@ -20,7 +21,10 @@ export default function NavigationOverlay() {
   // The screen actually on show, to compare against the address bar.
   const shown = useRef("");
 
-  function start() {
+  function start(target) {
+    // Already on show: an instant navigation that committed first, or Next
+    // recording one that just finished (it calls pushState at commit).
+    if (target === shown.current) return;
     clearTimeout(delay.current);
     delay.current = setTimeout(() => {
       setVisible(true);
@@ -37,8 +41,7 @@ export default function NavigationOverlay() {
   // Route (or query) committed -> done.
   useEffect(() => {
     function settle() {
-      const q = search?.toString() ?? "";
-      shown.current = pathname + (q ? `?${q}` : "");
+      shown.current = routeKey(pathname, search);
       stop();
     }
     settle();
@@ -58,8 +61,7 @@ export default function NavigationOverlay() {
         return;
       }
       if (url.origin !== window.location.origin) return;
-      if (url.pathname === window.location.pathname && url.search === window.location.search) return;
-      start();
+      start(urlKey(url));
     }
 
     const { pushState, replaceState } = window.history;
@@ -68,8 +70,7 @@ export default function NavigationOverlay() {
         const nextUrl = args[2];
         if (nextUrl != null) {
           try {
-            const u = new URL(String(nextUrl), window.location.href);
-            if (u.pathname !== window.location.pathname || u.search !== window.location.search) start();
+            start(urlKey(new URL(String(nextUrl), window.location.href)));
           } catch {
             /* ignore */
           }
@@ -85,10 +86,8 @@ export default function NavigationOverlay() {
     // clear the veil: it would sit over a ready screen until the safety
     // timeout. So check on the next frame whether we have already arrived.
     function onPopState() {
-      // Same encoding as useSearchParams ("Full+Gym", not "Full%20Gym").
-      const q = new URLSearchParams(window.location.search).toString();
-      const target = window.location.pathname + (q ? `?${q}` : "");
-      start();
+      const target = urlKey(window.location);
+      start(target);
       requestAnimationFrame(() => {
         if (shown.current === target) stop();
       });
@@ -96,9 +95,12 @@ export default function NavigationOverlay() {
 
     document.addEventListener("click", onClick, true);
     window.addEventListener("popstate", onPopState);
+    // A tap that ends up not navigating (GuardedStartLink asking first).
+    window.addEventListener(NAV_CANCEL, stop);
     return () => {
       document.removeEventListener("click", onClick, true);
       window.removeEventListener("popstate", onPopState);
+      window.removeEventListener(NAV_CANCEL, stop);
       window.history.pushState = pushState;
       window.history.replaceState = replaceState;
     };

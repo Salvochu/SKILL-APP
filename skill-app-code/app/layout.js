@@ -81,6 +81,11 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
+      // Lets Next.js switch smooth scrolling off while it moves a new
+      // screen to the top (globals.css turns it on for the page). Without
+      // it the jump became a slow scroll that got cut short, so screens
+      // opened partway down.
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
       className={`${inter.variable} ${archivo.variable} ${jetbrainsMono.variable} ${barlow.variable} h-full`}
     >

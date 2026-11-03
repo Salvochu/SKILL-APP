@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { NAV_CANCEL, routeKey, urlKey } from "@/lib/navSignals";
 
 // A thin bar across the very top that shows the moment a navigation
 // starts and finishes when the new route commits, so nothing in the app
@@ -11,25 +12,46 @@ import { usePathname, useSearchParams } from "next/navigation";
 //   - browser back / forward (popstate)
 // and completes on a pathname or query-string change, with a safety
 // timeout so it can never get stuck.
+//
+// A signal for the screen already on show never starts it. Next calls
+// pushState when a navigation commits, so with pages preloaded that call
+// can arrive after the new screen is up; starting then left the bar
+// crawling over a loaded page until the safety timeout.
 export default function RouteProgress() {
   const pathname = usePathname();
   const search = useSearchParams();
   const [phase, setPhase] = useState("idle"); // idle | loading | done
   const safety = useRef(null);
+  // The screen actually on show, in useSearchParams' encoding.
+  const shown = useRef("");
+  // Bumped when a tap is called off, so a start still waiting in its
+  // microtask (below) knows not to go ahead.
+  const cancels = useRef(0);
 
-  function start() {
+  function start(target) {
+    if (target === shown.current) return;
+    const ticket = cancels.current;
     // Deferred: start() is invoked synchronously from the patched
     // history.pushState/replaceState (see below), and Next's App Router
     // sometimes calls pushState/replaceState from inside its own
     // useInsertionEffect. Calling setPhase in that same tick trips React's
     // "useInsertionEffect must not schedule updates" guard, so push the
     // update to a microtask, safely outside that call stack.
-    queueMicrotask(() => setPhase((p) => (p === "loading" ? p : "loading")));
+    queueMicrotask(() => {
+      if (target === shown.current || ticket !== cancels.current) return;
+      setPhase((p) => (p === "loading" ? p : "loading"));
+      // Back / forward to a screen still in memory can be on show before
+      // any route change reaches the effect below: check next frame.
+      requestAnimationFrame(() => {
+        if (shown.current === target) setPhase((p) => (p === "loading" ? "done" : p));
+      });
+    });
   }
 
   // Route (or query) committed -> finish.
   useEffect(() => {
     function settle() {
+      shown.current = routeKey(pathname, search);
       setPhase((p) => (p === "loading" ? "done" : "idle"));
     }
     settle();
@@ -61,8 +83,7 @@ export default function RouteProgress() {
         return;
       }
       if (url.origin !== window.location.origin) return;
-      if (url.pathname === window.location.pathname && url.search === window.location.search) return;
-      start();
+      start(urlKey(url));
     }
 
     const { pushState, replaceState } = window.history;
@@ -71,8 +92,7 @@ export default function RouteProgress() {
         const nextUrl = args[2];
         if (nextUrl != null) {
           try {
-            const u = new URL(String(nextUrl), window.location.href);
-            if (u.pathname !== window.location.pathname || u.search !== window.location.search) start();
+            start(urlKey(new URL(String(nextUrl), window.location.href)));
           } catch {
             /* ignore */
           }
@@ -83,11 +103,22 @@ export default function RouteProgress() {
     window.history.pushState = wrap(pushState);
     window.history.replaceState = wrap(replaceState);
 
+    function onPopState() {
+      start(urlKey(window.location));
+    }
+    // A tap that ends up not navigating (GuardedStartLink asking first).
+    function onCancel() {
+      cancels.current += 1;
+      setPhase((p) => (p === "loading" ? "idle" : p));
+    }
+
     document.addEventListener("click", onClick, true);
-    window.addEventListener("popstate", start);
+    window.addEventListener("popstate", onPopState);
+    window.addEventListener(NAV_CANCEL, onCancel);
     return () => {
       document.removeEventListener("click", onClick, true);
-      window.removeEventListener("popstate", start);
+      window.removeEventListener("popstate", onPopState);
+      window.removeEventListener(NAV_CANCEL, onCancel);
       window.history.pushState = pushState;
       window.history.replaceState = replaceState;
     };
