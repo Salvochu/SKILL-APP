@@ -6,6 +6,7 @@ import OfflineQueueSync from "@/components/OfflineQueueSync";
 import ActiveWorkoutBar from "@/components/log/ActiveWorkoutBar";
 import UnfinishedWorkoutPrompt from "@/components/log/UnfinishedWorkoutPrompt";
 import OnboardingGate from "@/components/onboarding/OnboardingGate";
+import AppPreload from "@/components/AppPreload";
 
 // Shared chrome for every signed-in screen. NavBar reads the current path
 // (usePathname), which suspends while the static shell is generated for
@@ -44,6 +45,11 @@ export default function AppLayout({ children }) {
          at most once per fresh app load, not on every page. */}
       <Suspense fallback={null}>
         <OnboardingGate />
+      </Suspense>
+      {/* Loads Profile and Train's pages in the background after the app
+         opens, so their first tap is instant. */}
+      <Suspense fallback={null}>
+        <AppPreload />
       </Suspense>
       <main className="mx-auto w-full max-w-2xl px-4 pt-14 pb-[max(8.5rem,calc(env(safe-area-inset-bottom)+6.5rem))] md:max-w-5xl md:px-6 md:pt-16 md:pb-16">
         {children}

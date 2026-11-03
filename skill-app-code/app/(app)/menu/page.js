@@ -9,12 +9,11 @@ import { getChallengeAccess, getHasChallengeHistory } from "@/lib/data/challenge
 export const metadata = { title: "Menu" };
 
 // Grouped like iPhone Settings. Each row keeps its own colour, shown as a
-// solid rounded tile with a white symbol. The two most opened rows load
-// their whole page in the background while Menu is on screen, so they
-// open straight away (same as the tab bar, see NavBar.js).
+// solid rounded tile with a white symbol. Every row loads its page in the
+// background while Menu is on screen (TapLink), so it opens straight away.
 const TRAINING = [
-  { href: "/progress", label: "Progress", body: "Strength and volume over time", icon: IconProgress, tint: "#1faa77", prefetch: true },
-  { href: "/history", label: "Workout history", body: "Every session you have logged", icon: IconHistory, tint: "#cf8a1f", prefetch: true },
+  { href: "/progress", label: "Progress", body: "Strength and volume over time", icon: IconProgress, tint: "#1faa77" },
+  { href: "/history", label: "Workout history", body: "Every session you have logged", icon: IconHistory, tint: "#cf8a1f" },
   { href: "/calendar", label: "Calendar", body: "Every training day, at a glance", icon: IconCalendar, tint: "#3987e5" },
   { href: "/body", label: "Body", body: "Weight, measurements and photos", icon: IconBody, tint: "#d55181" },
 ];
@@ -155,7 +154,7 @@ function MenuGroup({ title, children }) {
   );
 }
 
-function MenuLink({ href, label, body, icon, tint, external = false, badge = null, prefetch }) {
+function MenuLink({ href, label, body, icon, tint, external = false, badge = null }) {
   const row = <MenuRow label={label} body={body} icon={icon} tint={tint} badge={badge} />;
   const cls = "block transition-colors hover:bg-surface-2 active:bg-surface-2";
   return external ? (
@@ -163,7 +162,7 @@ function MenuLink({ href, label, body, icon, tint, external = false, badge = nul
       {row}
     </a>
   ) : (
-    <TapLink href={href} className={cls} prefetch={prefetch}>
+    <TapLink href={href} className={cls}>
       {row}
     </TapLink>
   );

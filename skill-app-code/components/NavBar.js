@@ -62,6 +62,7 @@ export default function NavBar({ streak = null, challenge = false, avatarUrl = n
             <ThemeToggle />
             <Link
               href="/profile"
+              prefetch
               aria-label="Profile"
               aria-current={isActive(pathname, "/profile") ? "page" : undefined}
               className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full transition-colors ${

@@ -193,6 +193,7 @@ function DaySession({ day, split, eyebrow, programWeeks, onStartProgram, bare = 
           </button>
         ) : null}
         <GuardedStartLink
+          eager
           href={`/log?split=${split.id}&day=${day.template.id}&variant=${encodeURIComponent(variant)}`}
           className={
             canProgram

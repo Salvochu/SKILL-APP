@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDraft } from "@/lib/activeWorkout";
@@ -10,9 +10,16 @@ import ConfirmModal from "@/components/ConfirmModal";
 // on this tab (lib/activeWorkout.js), confirm before navigating, since
 // that would silently discard it. Used everywhere a "start a workout"
 // action exists: the mesocycle card, Splits, the FAB, the nav bar's Log
-// button.
-export default function GuardedStartLink({ href, className, children, ...rest }) {
+// button. Like TapLink, it loads the workout (plan, last numbers) in the
+// background while it's on screen, so Start opens it straight away.
+// `eager` loads it as soon as the button exists, even below the fold
+// (the Start button at the foot of a program page).
+export default function GuardedStartLink({ href, className, children, prefetch = true, eager = false, ...rest }) {
   const router = useRouter();
+  useEffect(() => {
+    // kind "full": same full load as <Link prefetch> (see components/Preload.js).
+    if (eager) router.prefetch(href, { kind: "full" });
+  }, [eager, href, router]);
   const [confirming, setConfirming] = useState(false);
   const [pressed, setPressed] = useState(false);
   const timer = useRef(null);
@@ -39,6 +46,7 @@ export default function GuardedStartLink({ href, className, children, ...rest })
     <>
       <Link
         href={href}
+        prefetch={prefetch}
         onClick={onClick}
         onPointerDown={press}
         onPointerUp={release}

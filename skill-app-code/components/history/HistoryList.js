@@ -60,8 +60,10 @@ export default function HistoryList({ sessions, onNavigate }) {
           <ul className="overflow-hidden rounded-2xl bg-surface [&>li:first-child_.row-sep]:border-transparent">
             {group.sessions.map((w) => (
               <li key={w.id}>
+                {/* Can run to hundreds of rows: no full preload for each. */}
                 <TapLink
                   href={`/workouts/${w.id}`}
+                  prefetch={null}
                   onClick={onNavigate}
                   className="flex pl-4 transition-colors hover:bg-surface-2 active:bg-surface-2"
                 >

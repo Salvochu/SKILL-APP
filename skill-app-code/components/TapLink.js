@@ -7,7 +7,11 @@ import Link from "next/link";
 // tapped until the component unmounts on navigation, so a slow route
 // change never feels like a dead tap. If nothing navigates (e.g. tapping
 // the page you're already on), the tint clears itself shortly after.
-export default function TapLink({ href, className = "", children, onClick, ...rest }) {
+//
+// It loads the whole page, data included, in the background as soon as
+// it's on screen, so the tap opens it straight away. Long lists (workout
+// history) pass prefetch={null} to get Next's lighter default instead.
+export default function TapLink({ href, className = "", children, onClick, prefetch = true, ...rest }) {
   const [pressed, setPressed] = useState(false);
   const timer = useRef(null);
 
@@ -23,6 +27,7 @@ export default function TapLink({ href, className = "", children, onClick, ...re
   return (
     <Link
       href={href}
+      prefetch={prefetch}
       onClick={onClick}
       onPointerDown={press}
       onPointerUp={release}

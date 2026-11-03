@@ -1,6 +1,15 @@
 import "server-only";
 import { getServerSupabase } from "@/lib/data/session";
 
+// Just each split's id and section, for warming up the split pages
+// (components/AppPreload.js) without loading every exercise.
+export async function getSplitIds() {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase.from("splits").select("id, section").order("position");
+  if (error) return [];
+  return data;
+}
+
 // All splits with their ordered days and each day's per-variant exercise
 // lists. Reference data, readable by any signed-in user.
 export async function getSplits() {
