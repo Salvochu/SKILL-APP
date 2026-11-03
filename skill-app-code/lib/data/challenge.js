@@ -182,6 +182,23 @@ export const hasRunChallenge = cache(async () => {
   return Boolean(data);
 });
 
+// Just whether getChallengeHistory would find a run (one that was
+// started), in one query, for the Menu row that links to it.
+export const getHasChallengeHistory = cache(async () => {
+  const user = await getSessionUser();
+  if (!user) return false;
+  const supabase = await getServerSupabase();
+  const { data } = await supabase
+    .from("user_mesocycles")
+    .select("started_at")
+    .eq("user_id", user.id)
+    .eq("template_id", CHALLENGE_TEMPLATE_ID)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return Boolean(data?.started_at);
+});
+
 // A finished (or abandoned) challenge run's final state, for the
 // post-challenge recap in Menu once someone has left the challenge tier
 // (almost always by converting to a paying member). Unlike

@@ -1,4 +1,4 @@
-import { getMembership } from "@/lib/data/profile";
+import { getMembership, coachInvited } from "@/lib/data/profile";
 import { getAuthUserRecord } from "@/lib/data/session";
 import { membershipEndDate, formatEndDate } from "@/lib/membershipEnd";
 import { signOut } from "@/app/actions";
@@ -12,11 +12,8 @@ import { Group, rowButton } from "@/components/ui/Grouped";
 export default async function AccountCard() {
   const [membership, authUser] = await Promise.all([getMembership(), getAuthUserRecord()]);
   // Members the coach invited have no Stripe subscription to manage.
-  // Older invites predate the billing flag and only carry their source.
-  const billing = authUser?.app_metadata?.billing;
-  const coachInvited =
-    billing === "coach" || (!billing && authUser?.user_metadata?.source === "coach_invite");
-  const isMember = membership === "member" && !coachInvited;
+  const isMember =
+    membership === "member" && !coachInvited(authUser?.app_metadata, authUser?.user_metadata);
   // Cancelled but still paid up: say when access stops, and offer to undo
   // it (Stripe's billing page shows "Renew plan" for exactly this).
   const endsAt = isMember ? membershipEndDate(authUser?.app_metadata) : null;

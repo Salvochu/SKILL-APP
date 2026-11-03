@@ -68,6 +68,15 @@ export async function inviteToSkill({ name, email } = {}) {
       console.error("inviteToSkill profile upsert failed:", upsertError.message);
       return { error: "The account exists but access couldn't be set. Try again." };
     }
+    // An existing challenge or lapsed account is now on free access too,
+    // so mark it like a new invite: no subscription to manage, no 1:1
+    // upsell. A paying member keeps their Stripe billing.
+    if (alreadyExisted && (profile?.membership === "challenge" || profile?.membership === "lapsed")) {
+      const { error: billingError } = await admin.auth.admin.updateUserById(userId, {
+        app_metadata: { billing: "coach", membership_ends_at: null },
+      });
+      if (billingError) console.error("inviteToSkill billing flag failed:", billingError.message);
+    }
     // A challenge account still mid-run would keep showing the Day 14
     // fork; close it out, same as a purchase does.
     await admin

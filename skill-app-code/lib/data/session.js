@@ -28,6 +28,7 @@ export const getSessionUser = cache(async () => {
     email: claims.email ?? null,
     aal: claims.aal ?? "aal1",
     appMetadata: claims.app_metadata ?? {},
+    userMetadata: claims.user_metadata ?? {},
   };
 });
 

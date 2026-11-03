@@ -88,6 +88,23 @@ export const getMembership = cache(async () => {
   return data?.membership ?? "member";
 });
 
+// Accounts the coach invited himself (Clients > Invite): his 1:1 clients
+// and testers. Free access, so no subscription to manage and no 1:1
+// upsell. Older invites predate the billing flag and only carry their
+// source.
+export function coachInvited(appMetadata, userMetadata) {
+  const billing = appMetadata?.billing;
+  return billing === "coach" || (!billing && userMetadata?.source === "coach_invite");
+}
+
+// The same check from the session token, with no extra round-trip (it
+// can be up to an hour behind an invite that upgraded an existing
+// account, see getSessionUser).
+export const getIsCoachInvited = cache(async () => {
+  const user = await getSessionUser();
+  return user ? coachInvited(user.appMetadata, user.userMetadata) : false;
+});
+
 // Whether the onboarding quiz (components/onboarding) should show. No
 // profile row at all (a brand new account) counts as needing it, same
 // as an explicit false.

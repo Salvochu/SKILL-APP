@@ -3,8 +3,8 @@ import TapLink from "@/components/TapLink";
 import ExportRow from "@/components/menu/ExportRow";
 import { getIsCoach } from "@/lib/data/coach";
 import { getFeedbackUnreadCount, getFeedbackAccess } from "@/lib/data/feedback";
-import { getMembership } from "@/lib/data/profile";
-import { getChallengeAccess, getChallengeHistory } from "@/lib/data/challenge";
+import { getMembership, getIsCoachInvited } from "@/lib/data/profile";
+import { getChallengeAccess, getHasChallengeHistory } from "@/lib/data/challenge";
 
 export const metadata = { title: "Menu" };
 
@@ -19,6 +19,8 @@ const TRAINING = [
 const LEARN = [
   { href: "/library", label: "Library", body: "Exercises and stretches, with videos", icon: IconLibrary, tint: "#9085e9" },
 ];
+// One menu row's height in px, for the loading outline.
+const ROW_HEIGHT = 68.5;
 
 
 export default function MenuPage() {
@@ -26,20 +28,69 @@ export default function MenuPage() {
     <div className="flex flex-col gap-7 py-2">
       <h1 className="font-display text-[2rem] font-bold leading-[1.05] tracking-[-0.025em] text-fg">Menu</h1>
 
-      <Suspense fallback={null}>
-        <CoachEntry />
+      {/* One boundary for the whole menu, so it lands in one go. Separate
+         boundaries per row made the top card arrive last and push
+         everything down. */}
+      <Suspense fallback={<MenuSkeleton />}>
+        <MenuBody />
       </Suspense>
-      <Suspense fallback={null}>
-        <WorkWithMeEntry />
-      </Suspense>
+    </div>
+  );
+}
+
+async function MenuBody() {
+  const [isCoach, invited, membership, challenge, hasChallengeHistory, unread, feedbackAccess] =
+    await Promise.all([
+      getIsCoach(),
+      getIsCoachInvited(),
+      getMembership(),
+      getChallengeAccess(),
+      getHasChallengeHistory(),
+      getFeedbackUnreadCount(),
+      getFeedbackAccess(),
+    ]);
+
+  // The 1:1 upsell goes to everyone except the coach, the people he
+  // invited himself (his clients and testers), and an active challenge
+  // account before Day 14 - same threshold as the VSL
+  // (components/challenge/VslCard.js): no early sales pitch before
+  // they've done the free 14 days.
+  const challengeRunning =
+    membership === "challenge" && (!challenge.challengeDay || challenge.challengeDay < challenge.challengeDays);
+  const showWorkWithMe = !isCoach && !invited && !challengeRunning;
+
+  // Once someone has left the challenge tier (converted to a paying
+  // member, most commonly) but has a finished run behind them, this is
+  // where the climb, streak and checklist history they earned still live -
+  // the live /challenge tab is gone along with the "challenge" membership.
+  const showChallengeHistory = membership !== "challenge" && hasChallengeHistory;
+
+  // Feedback goes to Salvador in the app (/feedback). Hidden once an
+  // account can't send (lapsed or muted), unless there's a reply from
+  // him still waiting to be read.
+  const showFeedback = feedbackAccess === "open" || unread > 0;
+
+  return (
+    <>
+      {isCoach ? (
+        <FeatureCard href="/clients" label="Clients" body="See who is training and progressing" icon={IconClients} />
+      ) : showWorkWithMe ? (
+        <FeatureCard href="/work-with-me" label="Work with Salvador" body="1:1 coaching, built around you" icon={IconCoach} />
+      ) : null}
 
       <MenuGroup title="Training">
         {TRAINING.map((it) => (
           <MenuLink key={it.href} {...it} />
         ))}
-        <Suspense fallback={null}>
-          <ChallengeHistoryRow />
-        </Suspense>
+        {showChallengeHistory ? (
+          <MenuLink
+            href="/challenge/history"
+            label="Your 14-Day Challenge"
+            body="Your climb, streak and checklist history"
+            icon={IconChallengeFlag}
+            tint="#fc7605"
+          />
+        ) : null}
       </MenuGroup>
 
       <MenuGroup title="Learn">
@@ -54,11 +105,38 @@ export default function MenuPage() {
 
       <MenuGroup title="App">
         <MenuLink href="/settings" label="Settings" body="Notifications, rest timer, preferences" icon={IconGear} tint="#fc7605" />
-        <Suspense fallback={null}>
-          <FeedbackEntry />
-        </Suspense>
+        {showFeedback ? (
+          <MenuLink
+            href="/feedback"
+            label="Send feedback"
+            body={unread > 0 ? "Salvador replied" : "Bugs, missing videos, ideas"}
+            badge={unread > 0 ? "New reply" : null}
+            icon={IconFlag}
+            tint="#8e8780"
+          />
+        ) : null}
       </MenuGroup>
-    </div>
+    </>
+  );
+}
+
+// The menu's outline while it loads: the real section headers over
+// placeholder groups sized to their usual number of rows.
+function MenuSkeleton() {
+  return (
+    <>
+      {[
+        ["Training", 4],
+        ["Learn", 1],
+        ["Your data", 1],
+        ["App", 2],
+      ].map(([title, rows]) => (
+        <section key={title} className="flex flex-col gap-2" aria-busy="true">
+          <h2 className="px-4 font-sans text-[13px] font-semibold uppercase tracking-[0.06em] text-dim">{title}</h2>
+          <div className="rounded-2xl skeleton bg-surface-2" style={{ height: `${rows * ROW_HEIGHT}px` }} />
+        </section>
+      ))}
+    </>
   );
 }
 
@@ -89,47 +167,6 @@ function MenuLink({ href, label, body, icon, tint, external = false, badge = nul
   );
 }
 
-// Feedback goes to Salvador in the app (/feedback). Shows "New reply"
-// when he has answered and the client hasn't opened it yet.
-async function FeedbackEntry() {
-  const [unread, access] = await Promise.all([getFeedbackUnreadCount(), getFeedbackAccess()]);
-  // Hidden once an account can't send (lapsed or muted), unless there's
-  // a reply from Salvador still waiting to be read.
-  if (access !== "open" && unread === 0) return null;
-  return (
-    <MenuLink
-      href="/feedback"
-      label="Send feedback"
-      body={unread > 0 ? "Salvador replied" : "Bugs, missing videos, ideas"}
-      badge={unread > 0 ? "New reply" : null}
-      icon={IconFlag}
-      tint="#8e8780"
-    />
-  );
-}
-
-async function CoachEntry() {
-  if (!(await getIsCoach())) return null;
-  return (
-    <FeatureCard href="/clients" label="Clients" body="See who is training and progressing" icon={IconClients} />
-  );
-}
-
-// Everyone who is not the coach gets the 1:1 upsell here - except an
-// active challenge account before Day 14, same threshold as the VSL
-// (components/challenge/VslCard.js): no early sales pitch before
-// they've done the free 14 days.
-async function WorkWithMeEntry() {
-  if (await getIsCoach()) return null;
-  if ((await getMembership()) === "challenge") {
-    const access = await getChallengeAccess();
-    if (!access.challengeDay || access.challengeDay < access.challengeDays) return null;
-  }
-  return (
-    <FeatureCard href="/work-with-me" label="Work with Salvador" body="1:1 coaching, built around you" icon={IconCoach} />
-  );
-}
-
 // The one highlighted card at the top (Clients for the coach, 1:1
 // coaching for everyone else): an accent tile on a soft accent card.
 function FeatureCard({ href, label, body, icon: Icon }) {
@@ -147,25 +184,6 @@ function FeatureCard({ href, label, body, icon: Icon }) {
       </span>
       <IconChevron className="h-4 w-4 shrink-0 text-accent" />
     </TapLink>
-  );
-}
-
-// Once someone has left the challenge tier (converted to a paying
-// member, most commonly) but has a finished run behind them, this is
-// where the climb, streak and checklist history they earned still live -
-// the live /challenge tab is gone along with the "challenge" membership.
-async function ChallengeHistoryRow() {
-  if ((await getMembership()) === "challenge") return null;
-  const history = await getChallengeHistory();
-  if (!history.found) return null;
-  return (
-    <MenuLink
-      href="/challenge/history"
-      label="Your 14-Day Challenge"
-      body="Your climb, streak and checklist history"
-      icon={IconChallengeFlag}
-      tint="#fc7605"
-    />
   );
 }
 
