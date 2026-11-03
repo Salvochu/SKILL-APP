@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getServerSupabase, getSessionUser } from "@/lib/data/session";
 
 const BOOL_KEYS = {
@@ -36,5 +37,9 @@ export async function saveNotificationPrefs(patch) {
     .from("notification_prefs")
     .upsert(row, { onConflict: "user_id" });
   if (error) return { error: error.message };
+  // The app keeps visited pages for a few minutes (staleTimes in
+  // next.config.mjs); without this, Settings could reopen showing the
+  // old values.
+  revalidatePath("/settings");
   return { ok: true };
 }

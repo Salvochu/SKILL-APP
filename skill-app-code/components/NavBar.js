@@ -9,6 +9,10 @@ import ThemeToggle from "@/components/ThemeToggle";
 // and Workout History all live behind Menu, so the bottom bar on mobile
 // stays uncrowded and desktop matches it. Challenge accounts get a
 // fourth tab, first, for the 14-day challenge home.
+//
+// Each tab link prefetches its whole page, data included, in the
+// background, so tapping a tab shows it straight away instead of a
+// skeleton (kept 5 minutes; a save clears it).
 const BASE_TABS = [
   { href: "/dashboard", label: "Dashboard", icon: IconHome },
   { href: "/splits", label: "Train", icon: IconSplits },
@@ -41,6 +45,7 @@ export default function NavBar({ streak = null, challenge = false, avatarUrl = n
                 <Link
                   key={tab.href}
                   href={tab.href}
+                  prefetch
                   aria-current={active ? "page" : undefined}
                   className={`rounded-full px-3.5 py-2 text-sm font-semibold transition-colors ${
                     active ? "bg-accent-soft text-accent" : "text-muted hover:text-fg"
@@ -103,6 +108,7 @@ export default function NavBar({ streak = null, challenge = false, avatarUrl = n
               <Link
                 key={tab.href}
                 href={tab.href}
+                prefetch
                 aria-current={active ? "page" : undefined}
                 className={`group relative flex flex-col items-center gap-0.5 rounded-full py-1.5 text-[10px] font-semibold transition-colors [-webkit-tap-highlight-color:transparent] ${
                   active ? "text-accent" : "text-muted hover:text-fg"

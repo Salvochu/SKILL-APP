@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { getIsCoach } from "@/lib/data/coach";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -97,5 +98,7 @@ export async function inviteToSkill({ name, email } = {}) {
     `${origin}/auth/confirm?token_hash=${encodeURIComponent(tokenHash)}` +
     `&type=recovery&next=${encodeURIComponent("/auth/set-password")}`;
 
+  // So the client list shows them next time, not a copy kept from before.
+  revalidatePath("/clients");
   return { ok: true, email: cleanEmail, name: cleanName, isNew: !alreadyExisted, url, appHost: new URL(origin).host };
 }

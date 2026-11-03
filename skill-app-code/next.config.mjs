@@ -63,6 +63,16 @@ const nextConfig = {
   // is a separate change to try and measure on its own.
   partialPrefetching: false,
   experimental: {
+    // Keep each visited page in the phone's memory for 5 minutes, so
+    // going back to a tab shows it straight away instead of a skeleton
+    // while the server re-renders it. Anything the user saves through a
+    // Server Action (revalidatePath / refresh) or router.refresh() clears
+    // this, so their own changes always show; only outside changes (a
+    // reply from the coach, the next challenge day) can wait up to 5
+    // minutes, or until the app is reopened.
+    staleTimes: {
+      dynamic: 300,
+    },
     // Server Actions default to a 1MB body, too small for a profile
     // photo straight off a phone camera. saveProfile still rejects
     // anything over 5MB itself (see app/(app)/profile/actions.js).
