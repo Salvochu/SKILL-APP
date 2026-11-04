@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ringRestAlarm } from "@/lib/restAlarm";
 
 const PRESETS = [60, 90, 120];
+
+// The moment `seconds` from now, as a timestamp. Only ever called from
+// effects and tap handlers.
+function secondsFromNow(seconds) {
+  return Date.now() + seconds * 1000;
+}
 
 // When the rest is over and the app is in the background, fire a local
 // notification through the service worker (no server round trip). Gated
@@ -40,6 +47,11 @@ export default function RestTimer({ startSeconds, onDismiss }) {
   const [expanded, setExpanded] = useState(false);
   const buzzed = useRef(false);
   const bar = useRef(null);
+  // When the rest ends, as a timestamp. The countdown is worked out from
+  // this rather than by counting ticks, because a phone pauses the page
+  // when it locks or switches apps; counting would fall behind and ring
+  // late. Set on mount, moved by +15 / -15, restart and resume.
+  const endAt = useRef(0);
 
   // Keep the bar on screen while the keyboard is up. With the number pad
   // open (typing weight or reps), iOS scrolls the visible part of the page
@@ -72,24 +84,34 @@ export default function RestTimer({ startSeconds, onDismiss }) {
 
   // The parent remounts this component (via key) to start a fresh rest, so
   // the useState initializers above are the reset.
+  useEffect(() => {
+    endAt.current = secondsFromNow(startSeconds);
+    // Mount only: later changes go through restart / resume.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!running) return;
-    const id = setInterval(() => {
-      setRemaining((r) => Math.max(0, r - 1));
-    }, 1000);
-    return () => clearInterval(id);
+    function tick() {
+      setRemaining(Math.max(0, Math.ceil((endAt.current - Date.now()) / 1000)));
+    }
+    tick();
+    const id = setInterval(tick, 250);
+    // Coming back to the app: catch up at once instead of on the next tick.
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
   }, [running]);
 
   useEffect(() => {
     if (remaining === 0 && running && !buzzed.current) {
       buzzed.current = true;
       setRunning(false);
-      try {
-        navigator.vibrate?.(200);
-      } catch {
-        /* not supported */
-      }
+      // Chime and buzz when it runs out on screen. Opening the app well
+      // after the rest ended just shows "Rest over", no surprise noise.
+      if (document.visibilityState === "visible" && Date.now() - endAt.current < 10000) ringRestAlarm();
       notifyRestDone();
     }
   }, [remaining, running]);
@@ -100,10 +122,19 @@ export default function RestTimer({ startSeconds, onDismiss }) {
   const done = remaining === 0;
 
   function restart(seconds = total) {
+    endAt.current = secondsFromNow(seconds);
     setTotal(seconds);
     setRemaining(seconds);
     setRunning(true);
     buzzed.current = false;
+  }
+  function togglePause() {
+    if (!running) endAt.current = secondsFromNow(remaining);
+    setRunning((v) => !v);
+  }
+  function shift(seconds) {
+    endAt.current += seconds * 1000;
+    setRemaining((r) => Math.max(0, r + seconds));
   }
 
   return (
@@ -145,10 +176,10 @@ export default function RestTimer({ startSeconds, onDismiss }) {
           </button>
           {!done ? (
             <>
-              <TimerButton label="Subtract 15 seconds" onClick={() => setRemaining((r) => Math.max(0, r - 15))}>
+              <TimerButton label="Subtract 15 seconds" onClick={() => shift(-15)}>
                 −15
               </TimerButton>
-              <TimerButton label="Add 15 seconds" onClick={() => setRemaining((r) => r + 15)}>
+              <TimerButton label="Add 15 seconds" onClick={() => shift(15)}>
                 +15
               </TimerButton>
             </>
@@ -191,7 +222,7 @@ export default function RestTimer({ startSeconds, onDismiss }) {
               ))}
             </div>
             {!done ? (
-              <TimerIcon label={running ? "Pause timer" : "Resume timer"} onClick={() => setRunning((v) => !v)}>
+              <TimerIcon label={running ? "Pause timer" : "Resume timer"} onClick={togglePause}>
                 {running ? <IconPause /> : <IconPlay />}
               </TimerIcon>
             ) : null}

@@ -6,6 +6,7 @@ import { saveWorkout, getPostSaveSummary } from "@/app/(app)/log/actions";
 import { saveNotificationPrefs } from "@/app/(app)/settings/actions";
 import { createMyWorkout, updateMyWorkout } from "@/app/(app)/workouts/my-actions";
 import RestTimer from "@/components/log/RestTimer";
+import { primeRestAlarm } from "@/lib/restAlarm";
 import { useWakeLock } from "@/components/log/useWakeLock";
 import ExercisePicker from "@/components/log/ExercisePicker";
 import ReorderSheet from "@/components/log/ReorderSheet";
@@ -378,6 +379,8 @@ export default function WorkoutLogger({ allExercises, history = {}, mesoContext 
     patchSet(key, i, { completed: next });
     // Warm-ups do not kick off the rest timer.
     if (next && restTimerOn && !row.sets[i].warmup) {
+      // Inside this tap, so the alarm is allowed to make a sound later.
+      primeRestAlarm();
       setRestKey((k) => k + 1);
       setShowRest(true);
     }
