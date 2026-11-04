@@ -7,6 +7,12 @@ import ActiveWorkoutBar from "@/components/log/ActiveWorkoutBar";
 import UnfinishedWorkoutPrompt from "@/components/log/UnfinishedWorkoutPrompt";
 import OnboardingGate from "@/components/onboarding/OnboardingGate";
 import AppPreload from "@/components/AppPreload";
+import Preload from "@/components/Preload";
+
+// Screens to load while the opening logo is up: the tabs, Profile and a
+// blank workout. Known without asking the server, so this starts with
+// the app itself; AppPreload adds the programs once it knows them.
+const START_PAGES = ["/dashboard", "/splits", "/menu", "/profile", "/log"];
 
 // Shared chrome for every signed-in screen. NavBar reads the current path
 // (usePathname), which suspends while the static shell is generated for
@@ -15,7 +21,9 @@ export default function AppLayout({ children }) {
   return (
     // isolate: its own stacking context, so the fixed ambient glow below
     // can sit behind the content but in front of the page background.
-    <div className="relative isolate min-h-full">
+    // data-skill-app: the opening logo waits for the preloads below only
+    // inside the signed-in app (lib/preloadGate.js).
+    <div className="relative isolate min-h-full" data-skill-app="">
       <div aria-hidden="true" className="app-ambient" />
       <Suspense fallback={null}>
         <RouteProgress />
@@ -46,8 +54,9 @@ export default function AppLayout({ children }) {
       <Suspense fallback={null}>
         <OnboardingGate />
       </Suspense>
-      {/* Loads Profile and Train's pages in the background after the app
-         opens, so their first tap is instant. */}
+      {/* Loads the main screens in the background while the opening logo
+         is up, so their first tap is instant. */}
+      <Preload hrefs={START_PAGES} />
       <Suspense fallback={null}>
         <AppPreload />
       </Suspense>
