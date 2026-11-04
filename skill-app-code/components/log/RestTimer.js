@@ -39,6 +39,36 @@ export default function RestTimer({ startSeconds, onDismiss }) {
   const [running, setRunning] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const buzzed = useRef(false);
+  const bar = useRef(null);
+
+  // Keep the bar on screen while the keyboard is up. With the number pad
+  // open (typing weight or reps), iOS scrolls the visible part of the page
+  // inside a taller layout, and a fixed top:0 bar stays at that layout's
+  // top, above what you can see. Follow the visible area's top edge
+  // instead; with no keyboard the offset is 0 and nothing moves.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const el = bar.current;
+    if (!vv || !el) return;
+    let frame = 0;
+    function follow() {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const offset = Math.max(0, Math.round(vv.offsetTop));
+        el.style.transform = offset ? `translate3d(0,${offset}px,0)` : "";
+      });
+    }
+    follow();
+    vv.addEventListener("resize", follow);
+    vv.addEventListener("scroll", follow);
+    return () => {
+      cancelAnimationFrame(frame);
+      vv.removeEventListener("resize", follow);
+      vv.removeEventListener("scroll", follow);
+      // Next keeps a left screen mounted but hidden; leave no offset behind.
+      el.style.transform = "";
+    };
+  }, []);
 
   // The parent remounts this component (via key) to start a fresh rest, so
   // the useState initializers above are the reset.
@@ -77,7 +107,7 @@ export default function RestTimer({ startSeconds, onDismiss }) {
   }
 
   return (
-    <div className="fixed inset-x-0 top-0 z-[45]">
+    <div ref={bar} className="fixed inset-x-0 top-0 z-[45]">
       <div role="timer" aria-label="Rest timer" className="glass-bar slide-down relative">
         {done ? <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-alert/10" /> : null}
         <div className="relative mx-auto flex h-14 w-full max-w-2xl items-center gap-1.5 px-4 md:h-16 md:max-w-5xl md:px-6">
