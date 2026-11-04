@@ -3,6 +3,7 @@ import "./globals.css";
 import { themeInitScript } from "@/components/ThemeToggle";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import SplashGate from "@/components/SplashGate";
+import NoZoom from "@/components/NoZoom";
 
 // Shown on first paint, before anything else loads: the logo with a
 // heartbeat glow. SplashGate fades it out once the app is up.
@@ -73,8 +74,14 @@ export const metadata = {
   },
 };
 
+// Fixed at 100%: no pinch or double-tap zoom, and iPhones don't zoom in
+// on a field when it's tapped. Safari ignores userScalable for pinching,
+// so components/NoZoom.js stops that gesture itself.
 export const viewport = {
   themeColor: "#000000",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }) {
@@ -106,6 +113,7 @@ export default function RootLayout({ children }) {
         </div>
         {children}
         <SplashGate />
+        <NoZoom />
         <ServiceWorkerRegister />
       </body>
     </html>
