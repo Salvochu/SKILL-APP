@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { saveProfile } from "@/app/(app)/profile/actions";
+import { compressImage } from "@/lib/imageResize";
 import { FITNESS_GOALS, EXPERIENCE_LEVELS } from "@/lib/profileOptions";
 import { COUNTRIES, splitPhone } from "@/lib/countries";
 import DialCodeField from "@/components/profile/DialCodeField";
@@ -24,11 +25,23 @@ export default function ProfileForm({ initial }) {
   const [saved, setSaved] = useState(false);
   const fileInput = useRef(null);
 
-  function onPickPhoto(e) {
+  // Phone photos can be 5MB+, and Vercel refuses any upload over about
+  // 4.5MB before the app sees it (the save then fails with "An
+  // unexpected response was received from the server"). A profile
+  // picture only needs to be small, so shrink it to a JPEG on the phone.
+  async function onPickPhoto(e) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    setAvatarFile(file);
-    setAvatarUrl(URL.createObjectURL(file));
+    setError(null);
+    try {
+      const { blob } = await compressImage(file, { maxEdge: 800, quality: 0.85 });
+      if (!blob) throw new Error("no image");
+      setAvatarFile(new File([blob], "avatar.jpg", { type: "image/jpeg" }));
+      setAvatarUrl(URL.createObjectURL(blob));
+    } catch {
+      setError("Couldn't read that photo. Try another one.");
+    }
   }
 
   async function onSubmit(e) {
@@ -49,7 +62,12 @@ export default function ProfileForm({ initial }) {
     fd.set("phone", phone);
     if (avatarFile) fd.set("avatar", avatarFile);
 
-    const result = await saveProfile(fd);
+    let result;
+    try {
+      result = await saveProfile(fd);
+    } catch {
+      result = { error: "Couldn't save just now. Check your connection and try again." };
+    }
     setSaving(false);
     if (result?.error) {
       setError(result.error);
