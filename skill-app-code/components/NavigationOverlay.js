@@ -10,8 +10,8 @@ import { NAV_CANCEL, routeKey, urlKey } from "@/lib/navSignals";
 // screen or its skeleton well before that, and a spinner over an
 // otherwise ready page makes the app feel slower than it is. It
 // clears the moment the new route commits, with a safety timeout so it
-// can never get stuck. RouteProgress draws the thin top bar; this is the
-// heavier cue for the ones that actually take a moment.
+// can never get stuck. It's the app's only loading cue (there is no top
+// bar), and it only shows for the navigations that actually take a moment.
 export default function NavigationOverlay() {
   const pathname = usePathname();
   const search = useSearchParams();

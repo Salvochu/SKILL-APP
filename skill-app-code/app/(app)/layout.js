@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import NavBarShell from "@/components/NavBarShell";
-import RouteProgress from "@/components/RouteProgress";
 import NavigationOverlay from "@/components/NavigationOverlay";
 import OfflineQueueSync from "@/components/OfflineQueueSync";
 import ActiveWorkoutBar from "@/components/log/ActiveWorkoutBar";
@@ -9,10 +8,23 @@ import OnboardingGate from "@/components/onboarding/OnboardingGate";
 import AppPreload from "@/components/AppPreload";
 import Preload from "@/components/Preload";
 
-// Screens to load while the opening logo is up: the tabs, Profile and a
-// blank workout. Known without asking the server, so this starts with
-// the app itself; AppPreload adds the programs once it knows them.
-const START_PAGES = ["/dashboard", "/splits", "/menu", "/profile", "/log"];
+// Screens to load while the opening logo is up: the tabs, Profile, a
+// blank workout, and every screen one tap from Menu. Known without asking
+// the server, so this starts with the app itself; AppPreload adds the
+// Challenge tab or the programs once it knows them.
+const START_PAGES = [
+  "/dashboard",
+  "/splits",
+  "/menu",
+  "/profile",
+  "/log",
+  "/progress",
+  "/history",
+  "/calendar",
+  "/body",
+  "/library",
+  "/settings",
+];
 
 // Shared chrome for every signed-in screen. NavBar reads the current path
 // (usePathname), which suspends while the static shell is generated for
@@ -25,9 +37,6 @@ export default function AppLayout({ children }) {
     // inside the signed-in app (lib/preloadGate.js).
     <div className="relative isolate min-h-full" data-skill-app="">
       <div aria-hidden="true" className="app-ambient" />
-      <Suspense fallback={null}>
-        <RouteProgress />
-      </Suspense>
       <Suspense fallback={null}>
         <NavigationOverlay />
       </Suspense>

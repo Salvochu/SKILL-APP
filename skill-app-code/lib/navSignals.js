@@ -1,5 +1,5 @@
-// Shared by the loading cues (components/RouteProgress.js,
-// components/NavigationOverlay.js) and the links that can cancel a tap.
+// Shared by the loading cue (components/NavigationOverlay.js) and the
+// links that can cancel a tap.
 
 // Fired on window when a tapped link decides not to navigate after all
 // (GuardedStartLink asking about an unsaved workout first).
